@@ -30,9 +30,8 @@ class ReviewQualityCollectorPlugin extends GenericPlugin {
 	/**
 	 * @copydoc Plugin::register()
 	 */
-	function register($category, $path) {
-		$success = parent::register($category, $path);
-
+	function register($category, $path, $mainContextId = null) {
+		$success = parent::register($category, $path, $mainContextId);
 		if ($success && $this->getEnabled()) {
 			HookRegistry::register('EditorAction::recordDecision', array($this, 'callbackDecisionWasMade'));
 			if (Config::getVar('debug', 'activate_developer_functions', false)) {
@@ -118,7 +117,7 @@ class ReviewQualityCollectorPlugin extends GenericPlugin {
 					$form->readInputData();
 					if ($form->validate()) {
 						$form->execute();
-						return new JSONMessage(true);
+						return new JSONMessage(true, $form->fetch($request));
 					}
 				} else {
 					$form->initData();
@@ -165,15 +164,16 @@ class ReviewQualityCollectorPlugin extends GenericPlugin {
 	function callbackDecisionWasMade($hookName, $args) {
 		$submission =& $args[0];
 		$editorDecision =& $args[1];
+		// TODO: act on decision
 	}
 
 	/**
 	 * Installs Handler class for our look-at-an-RQC-request page.
-	 * (See setupBrowserHandler in plugins/generic/browse for tech information.)
+	 * (See setupBrowseHandler in plugins/generic/browse for tech information.)
 	 */
 	function setupSpyHandler($hookName, $params) {
 		$page =& $params[0];
-		if ($page == 'rqcSpy') {
+		if ($page == 'rqcspy') {
 			define('HANDLER_CLASS', 'SpyHandler');
 			$handlerFile =& $params[2];
 			$handlerFile = $this->getHandlerPath() . 'SpyHandler.inc.php';

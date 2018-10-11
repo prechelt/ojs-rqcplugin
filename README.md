@@ -1,6 +1,8 @@
 # Review Quality Collector (RQC) plugin for OJS
 created 2017-08-30, Lutz Prechelt
 
+Version 2018-10-10 
+Status: unfinished, not yet usable
 
 ## What it is
 
@@ -55,4 +57,45 @@ Steps towards the latter:
 - create a second round of submission and reviews, test with that
 - write automated tests 
 - elaborate on "ask your publisher" in locale.xml
+
+
+## Development notes
+
+### About OJS 3
+
+- installation: https://pkp.sfu.ca/wiki/index.php?title=Github_Documentation_for_PKP_Contributors
+- Many hooks are provided in `pkp-lib` like this 
+  `HookRegistry::call(strtolower_codesafe(get_class($this) . '::validate')`
+  (this particular one is from `classes/form/Form.inc.php`)
+- DAO class names are in classes/core/Application.inc.php::getDAOmap())
+- Forum: [create plugin and custom URL](https://forum.pkp.sfu.ca/t/ojs-3-0-3-0-1-browse-plugin-doesnt-show/26145/9?u=prechelt)
+- see notes in 2018.3.txt of 2018-10-02
+- Editor assignment: 
+  "Can only recommend decision, authorized editor must record it."
+- Settings->Website->Plugins->Plugin Gallery
+- Plugins with Settings: 
+  Google Analytics (Settings fail) 
+  RQC (settings fail) 
+  Web Feed (2 radiobuttons, one with an integer textbox) 
+  Usage statistics (Sections, checkboxes, text fields, pulldown)
+- LoadHandler described in OSJ2.1 TechRef p. 46
+
+
+### About the RQC plugin
+
+- See
+  [my PKP forum thread](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/6)
+- In particular regarding 
+  [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
+
+
+
+## About RQC
+
+- OJS review rounds must create successive submission ids for RQC.
+- resubmit elsewhere counts as reject (or is its own decision?)
+- do not submit confidential comments as part of the review.
+- allow a file upload instead of review text???
+- submit flag that RQC should emphasize the MHS page link,
+  because grading-relevant material is only on the MHS page.
 
