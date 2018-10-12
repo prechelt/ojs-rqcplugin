@@ -1,13 +1,13 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/ReviewQualityCollectorPlugin.inc.php
+ * @file plugins/generic/reviewqualitycollector/RQCPlugin.inc.php
  *
  * Copyright (c) 2014-2017 Simon Fraser University
  * Copyright (c) 2003-2017 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
- * @class ReviewQualityCollectorPlugin
+ * @class RQCPlugin
  * @ingroup plugins_generic_reviewqualitycollector
  *
  * @brief Review Quality Collector (RQC) plugin class
@@ -18,14 +18,14 @@ import('lib.pkp.classes.plugins.GenericPlugin');
 
 
 /**
- * Class ReviewQualityCollectorPlugin.
- * We need to provide a settings dialog (for RQC journal ID and Key),
- * add a menu entry to send review data to RQC (to start the grading process manually),
- * and notify RQC upon the submission acceptance decision (to start the
+ * Class RQCPlugin.
+ * Provides a settings dialog (for RQC journal ID and Key),
+ * adds a menu entry to send review data to RQC (to start the grading process manually),
+ * and notifies RQC upon the submission acceptance decision (to start the
  * grading process automatically or extend it with additional reviews,
  * if any).
  */
-class ReviewQualityCollectorPlugin extends GenericPlugin {
+class RQCPlugin extends GenericPlugin {
 
 	/**
 	 * @copydoc Plugin::register()

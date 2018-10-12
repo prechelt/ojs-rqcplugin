@@ -87,12 +87,12 @@ Steps towards the latter:
   [my PKP forum thread](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/6)
 - In particular regarding 
   [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
-
+- settings dialog does not close after OK.
+- OJS review rounds must create successive submission ids for RQC.
 
 
 ## About RQC
 
-- OJS review rounds must create successive submission ids for RQC.
 - resubmit elsewhere counts as reject (or is its own decision?)
 - do not submit confidential comments as part of the review.
 - allow a file upload instead of review text???

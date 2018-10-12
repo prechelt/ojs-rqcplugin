@@ -25,7 +25,7 @@ class RQCSettingsForm extends Form {
 
 	/**
 	 * Constructor
-	 * @param $plugin ReviewQualityCollectorPlugin
+	 * @param $plugin RQCPlugin
 	 * @param $journalId int
 	 */
 	function __construct($plugin, $journalId) {
