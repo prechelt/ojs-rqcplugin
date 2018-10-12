@@ -26,7 +26,7 @@ class SpyHandler extends Handler {
 		$requestArgs = $request->getQueryArray();
 		$journal = $router->getContext($request);
 		$submissionId = $requestArgs['submissionId'];
-		$rqcPlugin =& PluginRegistry::getPlugin('generic', 'reviewqualitycollector');
+		$rqcPlugin =& PluginRegistry::getPlugin('generic', RQC_PLUGIN_NAME);
 
 		$journalDao = DAORegistry::getDAO('JournalDAO');
 		$articleDao = DAORegistry::getDAO('ArticleDAO');
@@ -64,7 +64,7 @@ class SpyHandler extends Handler {
         $assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewroundN-1);
 		$data['reviewassignments'] = $assignments;
 		$data['user'] = $userDao->getById(3);
-		$data['reviewersubmission'] = $reviewerSubmissionDao->get);
+		// $data['reviewersubmission'] = $reviewerSubmissionDao->get();
 		$data['article'] = $this->getters_of($submission);
 		$data['journal'] = $this->getters_of($journal);
 		$data['request'] = array_keys(get_object_vars($request));
@@ -172,14 +172,14 @@ class SpyHandler extends Handler {
 			$rqcreview['agreed'] = $this->rqcify_datetime($reviewobject->getDateConfirmed());
 			$rqcreview['expected'] = $this->rqcify_datetime($reviewobject->getDateDue());
 			$rqcreview['submitted'] = $this->rqcify_datetime($reviewobject->getDateCompleted());
-			$rqcreview['text'] = $reviewobject->();
+			//$rqcreview['text'] = $reviewobject->();
 			$rqcreview['is_html'] = false;  // TODO: make ternary!
 			$reviewerobject = $userDao->getById($reviewobject->getReviewerId());
 			$rqcreviewer = array();
 			$rqcreviewer['email'] = $reviewerobject->getEmail();
 			$rqcreviewer['firstname'] = $reviewerobject->getFirstName();
 			$rqcreviewer['lastname'] = $reviewerobject->getLastName();
-			$rqcreviewer['orcid_id'] = $reviewerobject->orcid();
+			//$rqcreviewer['orcid_id'] = $reviewerobject->orcid();
 			$rqcreview['reviewer'] = $rqcreviewer;
 			$result[] = $rqcreview;
 		}
@@ -191,75 +191,6 @@ class SpyHandler extends Handler {
 	 */
 	function get_decision() {
 		return array("TODO: get_author_set");
-	}
-
-
-	/**
-	 * Show list of journal sections identify types.
-	 */
-	function identifyTypes($args = array(), $request) {
-		$this->setupTemplate($request);
-
-		$router = $request->getRouter();
-		$journal = $router->getContext($request);
-
-		$browsePlugin =& PluginRegistry::getPlugin('generic', BROWSE_PLUGIN_NAME);
-		$enableBrowseByIdentifyTypes = $browsePlugin->getSetting($journal->getId(), 'enableBrowseByIdentifyTypes');
-		if ($enableBrowseByIdentifyTypes) {
-			if (isset($args[0]) && $args[0] == 'view') {
-				$identifyType = $request->getUserVar('identifyType');
-				$sectionDao = DAORegistry::getDAO('SectionDAO');
-				$sectionsIterator = $sectionDao->getByJournalId($journal->getId());
-				$sections = array();
-				while (($section = $sectionsIterator->next())) {
-					if ($section->getLocalizedIdentifyType() == $identifyType) {
-						$sections[] = $section;
-					}
-				}
-				$publishedArticleDao = DAORegistry::getDAO('PublishedArticleDAO');
-				$publishedArticleIds = array();
-				foreach ($sections as $section) {
-					$publishedArticleIdsBySection = $publishedArticleDao->getPublishedArticleIdsBySection($section->getId());
-					$publishedArticleIds = array_merge($publishedArticleIds, $publishedArticleIdsBySection);
-				}
-
-				$rangeInfo = $this->getRangeInfo($request, 'search');
-				$totalResults = count($publishedArticleIds);
-				$publishedArticleIds = array_slice($publishedArticleIds, $rangeInfo->getCount() * ($rangeInfo->getPage()-1), $rangeInfo->getCount());
-				$articleSearch = new ArticleSearch();
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'results' => new VirtualArrayIterator($articleSearch->formatResults($publishedArticleIds), $totalResults, $rangeInfo->getPage(), $rangeInfo->getCount()),
-					'title' => $identifyType,
-					'enableBrowseByIdentifyTypes' => $enableBrowseByIdentifyTypes,
-				));
-				$templateMgr->display($browsePlugin->getTemplatePath() . 'searchDetails.tpl');
-			} else {
-				$excludedIdentifyTypes = $browsePlugin->getSetting($journal->getId(), 'excludedIdentifyTypes');
-				$sectionDao = DAORegistry::getDAO('SectionDAO');
-				$sectionsIterator = $sectionDao->getByJournalId($journal->getId());
-				$sectionidentifyTypes = array();
-				while (($section = $sectionsIterator->next())) {
-					if ($section->getLocalizedIdentifyType() && !in_array($section->getId(), $excludedIdentifyTypes) && !in_array($section->getLocalizedIdentifyType(), $sectionidentifyTypes)) {
-						$sectionidentifyTypes[] = $section->getLocalizedIdentifyType();
-					}
-				}
-				sort($sectionidentifyTypes);
-
-				$rangeInfo = $this->getRangeInfo($request, 'search');
-				$totalResults = count($sectionidentifyTypes);
-				$sectionidentifyTypes = array_slice($sectionidentifyTypes, $rangeInfo->getCount() * ($rangeInfo->getPage()-1), $rangeInfo->getCount());
-				$results = new VirtualArrayIterator($sectionidentifyTypes, $totalResults, $rangeInfo->getPage(), $rangeInfo->getCount());
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign('results', $results);
-				$templateMgr->assign('enableBrowseByIdentifyTypes', $enableBrowseByIdentifyTypes);
-				$templateMgr->display($browsePlugin->getTemplatePath() . 'searchIndex.tpl');
-			}
-		} else {
-			$request->redirect(null, 'index');
-		}
 	}
 
 	/**

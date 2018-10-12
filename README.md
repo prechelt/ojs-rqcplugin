@@ -83,6 +83,9 @@ Steps towards the latter:
 
 ### About the RQC plugin
 
+- Setting `activate_developer_functions = On` in `config.inc.php`
+  enables `example_request` functionality in `RQCPlugin::manage`
+  and `::getActions`. Not yet implemented.
 - See
   [my PKP forum thread](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/6)
 - In particular regarding 

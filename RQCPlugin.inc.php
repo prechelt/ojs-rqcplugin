@@ -14,8 +14,12 @@
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');
-import('lib.pkp.classes.plugins.GenericPlugin');
 
+
+function rqctrace($msg) {
+	trigger_error($msg, E_USER_WARNING);
+}
+rqctrace("RQCPlugin.inc.php loaded!", E_USER_WARNING);
 
 /**
  * Class RQCPlugin.
@@ -31,8 +35,10 @@ class RQCPlugin extends GenericPlugin {
 	 * @copydoc Plugin::register()
 	 */
 	function register($category, $path, $mainContextId = null) {
+		rqctrace("RQCPlugin::register called");
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success && $this->getEnabled()) {
+			rqctrace("RQC HookRegistry::register called");
 			HookRegistry::register('EditorAction::recordDecision', array($this, 'callbackDecisionWasMade'));
 			if (Config::getVar('debug', 'activate_developer_functions', false)) {
 				HookRegistry::register('LoadHandler', array($this, 'setupSpyHandler'));
@@ -124,22 +130,7 @@ class RQCPlugin extends GenericPlugin {
 				}
 				return new JSONMessage(true, $form->fetch($request));
 			case 'example_request':
-				$context = $request->getContext();
-				AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON,  LOCALE_COMPONENT_PKP_MANAGER);
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->register_function('plugin_url', array($this, 'smartyPluginUrl'));
-				$this->import('RQCSettingsForm');
-				$form = new RQCSettingsForm($this, $context->getId());
-				if ($request->getUserVar('save')) {
-					$form->readInputData();
-					if ($form->validate()) {
-						$form->execute();
-						return new JSONMessage(true);
-					}
-				} else {
-					$form->initData();
-				}
-				return new JSONMessage(true, $form->fetch($request));
+				// TODO
 		}
 		return parent::manage($args, $request);
 	}
@@ -172,8 +163,10 @@ class RQCPlugin extends GenericPlugin {
 	 * (See setupBrowseHandler in plugins/generic/browse for tech information.)
 	 */
 	function setupSpyHandler($hookName, $params) {
+		rqctrace("setupSpyHandler!");
 		$page =& $params[0];
 		if ($page == 'rqcspy') {
+			define('RQC_PLUGIN_NAME', $this->getName());
 			define('HANDLER_CLASS', 'SpyHandler');
 			$handlerFile =& $params[2];
 			$handlerFile = $this->getHandlerPath() . 'SpyHandler.inc.php';
