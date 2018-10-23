@@ -15,9 +15,11 @@
 
 import('lib.pkp.classes.plugins.GenericPlugin');
 
+define ('DEBUG', false);
 
 function rqctrace($msg) {
-	trigger_error($msg, E_USER_WARNING);
+	if (DEBUG)
+		trigger_error($msg, E_USER_WARNING);
 }
 rqctrace("RQCPlugin.inc.php loaded!", E_USER_WARNING);
 

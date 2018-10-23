@@ -18,57 +18,62 @@ import('classes.workflow.EditorDecisionActionsManager');  // decision action con
 
 class SpyHandler extends Handler {
 
+	function __construct() {
+		parent::__construct();
+		//----- store DAOs:
+		$this->journalDao = DAORegistry::getDAO('JournalDAO');
+		$this->articleDao = DAORegistry::getDAO('ArticleDAO');
+		$this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$this->reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+		$this->reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
+		$this->stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
+		$this->userDao = DAORegistry::getDAO('UserDAO');
+		$this->userGroupDao = DAORegistry::getDAO('UserGroupDAO');
+	}
+
 	/**
 	 * Show RQC request corresponding to a given submissionId=n arg.
 	 */
 	function look($args, $request) {
+		//----- prepare processing:
 		$router = $request->getRouter();
 		$requestArgs = $request->getQueryArray();
 		$journal = $router->getContext($request);
 		$submissionId = $requestArgs['submissionId'];
-		$rqcPlugin =& PluginRegistry::getPlugin('generic', RQC_PLUGIN_NAME);
+		//$rqcPlugin =& PluginRegistry::getPlugin('generic', RQC_PLUGIN_NAME);
+        $submission = $this->articleDao->getById($submissionId);
+        $sectionname = $submission->getSectionAbbrev();
+        if (!$sectionname)
+        	$sectionname = $submission->getSectionTitle();
+		$stage =
 
-		$journalDao = DAORegistry::getDAO('JournalDAO');
-		$articleDao = DAORegistry::getDAO('ArticleDAO');
-		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
-		$reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
-		$userDao = DAORegistry::getDAO('UserDAO');
-        $submission = $articleDao->getById($submissionId);
-
+        //----- prepare response:
 		// header("Content-Type: application/json; charset=utf-8");
 		header("Content-Type: text/plain; charset=utf-8");
-		$data = array('submissionId' => $submissionId);
+		$data = array();
+		$data['submissionId'] = $submissionId;
 		$data['api_version'] = '1.0alpha';
+
+		//----- submission data:
 		$data['title'] = $this->get_title($submission->getTitle(null));
-		$reviewroundN = $reviewRoundDao->getCurrentRoundBySubmissionId($submissionId);
+		$lastReviewRound = $this->reviewRoundDao->getLastReviewRoundBySubmissionId($submissionId);
+		$reviewroundN = $lastReviewRound->getRound();
 		$data['visible_uid'] = $this->get_uid($journal, $submission, $reviewroundN);
 		$alldata = $submission->getAllData();
 		$data['submitted'] = $this->rqcify_datetime($alldata['dateSubmitted']);
-		// we assume that round $reviewroundN-1 always exists:
+		// assume that round $reviewroundN-1 exists (but it may not):
 		$data['predecessor_submission_id'] = $this->get_uid($journal, $submission,
 				$reviewroundN-1, true);
 		$data['predecessor_visible_uid'] = $this->get_uid($journal, $submission,
 			$reviewroundN-1, false);
+
+		//----- authors, editor assignments, reviews, decision:
 		$data['author_set'] = $this->get_author_set($submission->getAuthors());
-		$data['assignment_set'] = $this->get_assignment_set();
-		$assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewroundN-1);
-		$data['review_set'] = $this->get_review_set($assignments, $userDao);
+		$data['editorassignment_set'] = $this->get_editorassignment_set($submissionId);
+		$assignments = $this->reviewAssignmentDao->getBySubmissionId($submissionId, $reviewroundN-1);
+		$data['review_set'] = $this->get_review_set($assignments, $lastReviewRound);
 		$data['decision'] = $this->get_decision();
 
-        $data['====='] = "====================";
-		$data['submissionId'] = $submissionId;
-		$data['status'] = $submission->getStatus();
-		$reviewrounddata = $reviewRoundDao->getLastReviewRoundBySubmissionId($submissionId);
-		$data['lastrounddata'] = $reviewrounddata;
-        $assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewroundN-1);
-		$data['reviewassignments'] = $assignments;
-		$data['user'] = $userDao->getById(3);
-		// $data['reviewersubmission'] = $reviewerSubmissionDao->get();
-		$data['article'] = $this->getters_of($submission);
-		$data['journal'] = $this->getters_of($journal);
-		$data['request'] = array_keys(get_object_vars($request));
-		$data['router'] = array_keys(get_object_vars($router));
         print(json_encode($data, JSON_PRETTY_PRINT));
 	}
 
@@ -132,6 +137,9 @@ class SpyHandler extends Handler {
 	 * Transform timestamp format to RQC convention.
 	 */
 	function rqcify_datetime($ojs_datetime) {
+		if (!$ojs_datetime) {
+			return NULL;
+		}
 		$result = str_replace(" ", "T", $ojs_datetime);
 		return $result . "Z";
 	}
@@ -156,32 +164,78 @@ class SpyHandler extends Handler {
 	/**
 	 * Return linear array of RQC editorship descriptor objects.
 	 */
-	function get_assignment_set() {
-		return array("TODO: get_assignment_set");
+	function get_editorassignment_set($submissionId) {
+		$result = array();
+		$dao = $this->stageAssignmentDao;
+		$iter = $dao->getBySubmissionAndStageId($submissionId,
+			                                    WORKFLOW_STAGE_ID_EXTERNAL_REVIEW);
+		$level1N = 0;
+		foreach ($iter->toArray() as $stageassign) {
+			$assignment = array();
+			$user = $this->userDao->getById($stageassign->getUserId());
+			$userGroup = $this->userGroupDao->getById($stageassign->getUserGroupId());
+			$role = $userGroup->getRoleId();
+			$levelMap = array(ROLE_ID_MANAGER => 3,
+				              ROLE_ID_SUB_EDITOR => 1);
+			$level = $levelMap[$role];
+			if (!$level)
+				continue;  // irrelevant role, skip stage assignment entry
+			elseif ($level == 1)
+				$level1N++;
+			$assignment['level'] = $level;
+			$assignment['firstname'] = $user->getFirstName();
+			$assignment['lastname'] = $user->getLastName();
+			$assignment['email'] = $user->getEmail();
+			$assignment['orcid_id'] = $user->getOrcid();
+			$result[] = $assignment;  // append
+		}
+		if (!$level1N && count($result)) {
+			// there must be at least one level-1 editor:
+			$result[0]['level'] = 1;
+		}
+		return $result;
 	}
 
 	/**
 	 * Return linear array of RQC review descriptor objects.
 	 */
-	function get_review_set($reviewobjects, $userDao) {
+	function get_review_set($assignments, $reviewRound) {
 		$result = array();
-		foreach ($reviewobjects as $idx => $reviewobject) {
+		foreach ($assignments as $reviewId => $assignment) {
+			if ($assignment->getRound() != $reviewRound->getRound() ||
+			    $assignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
+					continue;  // irrelevant record, skip it.
 			$rqcreview = array();
-			$rqcreview['visible_id'] = $idx;
-			$rqcreview['invited'] = $this->rqcify_datetime($reviewobject->getDateNotified());
-			$rqcreview['agreed'] = $this->rqcify_datetime($reviewobject->getDateConfirmed());
-			$rqcreview['expected'] = $this->rqcify_datetime($reviewobject->getDateDue());
-			$rqcreview['submitted'] = $this->rqcify_datetime($reviewobject->getDateCompleted());
-			//$rqcreview['text'] = $reviewobject->();
-			$rqcreview['is_html'] = false;  // TODO: make ternary!
-			$reviewerobject = $userDao->getById($reviewobject->getReviewerId());
+			$reviewerSubmission = $this->reviewerSubmissionDao->getReviewerSubmission($reviewId);
+ 			//--- review metadata:
+			$rqcreview['visible_id'] = $reviewId;
+			$rqcreview['invited'] = $this->rqcify_datetime($assignment->getDateNotified());
+			$rqcreview['agreed'] = $this->rqcify_datetime($assignment->getDateConfirmed());
+			$rqcreview['expected'] = $this->rqcify_datetime($assignment->getDateDue());
+			$rqcreview['submitted'] = $this->rqcify_datetime($assignment->getDateCompleted());
+			//--- review text:
+			//$rqcreview['__reviewerSubmission__'] = $reviewerSubmission;
+			$comment = $reviewerSubmission->getMostRecentPeerReviewComment();
+			$text = "";
+			if ($comment) {
+				if ($comment->getCommentType() != COMMENT_TYPE_PEER_REVIEW)
+					continue;  // irrelevant record, skip it
+				$title = $comment->getCommentTitle();
+				$body = $comment->getComments();
+				$text = $title ? "<h2>$title</h2>\r\n$body" : $body;
+			}
+			$rqcreview['text'] = $text;
+			$rqcreview['is_html'] = true;  // TODO: make ternary!
+			$rqcreview['suggested_decision'] = "TODO suggested_decision";
+			//--- reviewer:
+			$reviewerobject = $this->userDao->getById($assignment->getReviewerId());
 			$rqcreviewer = array();
 			$rqcreviewer['email'] = $reviewerobject->getEmail();
 			$rqcreviewer['firstname'] = $reviewerobject->getFirstName();
 			$rqcreviewer['lastname'] = $reviewerobject->getLastName();
-			//$rqcreviewer['orcid_id'] = $reviewerobject->orcid();
+			$rqcreviewer['orcid_id'] = $reviewerobject->getOrcid();
 			$rqcreview['reviewer'] = $rqcreviewer;
-			$result[] = $rqcreview;
+			$result[] = $rqcreview;  // append
 		}
 		return $result;
 	}
@@ -190,14 +244,14 @@ class SpyHandler extends Handler {
 	 * Return RQC-style decision string.
 	 */
 	function get_decision() {
-		return array("TODO: get_author_set");
+		return array("TODO: get_decision");
 	}
 
 	/**
 	 * Ensure that we have a journal and the plugin is enabled.
 	 */
 	function authorize($request, &$args, $roleAssignments) {
-		return true;
+		return true;  // TODO?
 	}
 
 	/**

@@ -1,20 +1,20 @@
 # Review Quality Collector (RQC) plugin for OJS
 created 2017-08-30, Lutz Prechelt
 
-Version 2018-10-10 
+Version 2018-10-16 
 Status: unfinished, not yet usable
 
 ## What it is
 
 Review Quality Collector (RQC) is an initiative for improving the quality of 
 scientific peer review. 
-Its core is a mechanism that supplies a reviewer with a receipt for their work for 
-each journal year.
+Its core is a mechanism that supplies a reviewer with a receipt for 
+their work for each journal year.
 The receipt is based on grading each review according to a journal-specific
 review quality definition.
 
-This plugin is an OJS adapter for the RQC API, by which manuscript
-handling systems (such as OJS) report the reviewing data of individual
+This plugin is an OJS adapter for the RQC API, by which OJS
+reports the reviewing data of individual article
 submissions to RQC so that RQC can arrange the grading and add the
 reviews to the respective reviewers' receipts.
 
@@ -40,8 +40,9 @@ https://reviewqualitycollector.org/t/api
   event and send the decision and reviewing data for that submission
   to RQC then.
   
+-------------------------------------
 
-## TO DO
+## Development notes: TO DO
 
 - add the journal ID/key validation via an RQC call
 - add all hooks and actual activity
@@ -59,9 +60,60 @@ Steps towards the latter:
 - elaborate on "ask your publisher" in locale.xml
 
 
-## Development notes
+## Development notes: OJS data model (the relevant parts)
 
-### About OJS 3
+RQC speaks of Journals, Submissions (i.e. articles), Authors, 
+Reviewers, Reviews, Editors, EditorAssignments (which Editor has which
+role for which Submission). 
+Authors, Editors, and Reviewers are all Persons.
+
+This is how these concepts are represented in OJS (class names,
+other typical identifiers for such objects).
+Most classes have a corresponding DAO (data access object, as the ORM). 
+Accessing objects often involves
+retrieving them (by using the DAO) via the primary key, called the `id`:
+- Journal: `Journal`; 
+  the journal is often called the `context`.
+- Submission: `Article`.
+- Person: `User` (a minor extension of `PKPUser`).
+- Author: `Author` (but the term is also oddly used for the 'author' of 
+  a Review: the Reviewer)
+- Editor: `User`? 
+  Decision constants see `EditorDecisionActionsManager`. 
+  Role ID constants see `Role`. 
+  `StageAssignment` appears to map a user ID to 
+  a stage (constants see `PKPApplication`, e.g. `WORKFLOW_STAGE_ID_EXTERNAL_REVIEW`)
+  in a given role(?) (`UserGroup`(?), constants see ``).
+  
+- Reviewer: `User` (but usually called `reviewer`).
+  - A `ReviewAssignment` connects a Reviewer to a Submission and also contains
+    various timestamps, `declined`, `round`, `reviewRoundId`, `reviewMethod`. 
+  - A `ReviewRound` represents the version number of a manuscript: 
+    OJS could theoretically use the same `Article` for the, say,
+    three versions of a manuscript until
+    eventual acceptance or rejection and represents the versions explicitly.
+    In contrast, RQC always uses three separate Submission 
+    objects connected more implicitly via predecessor links.  
+    How to get it: `ReviewRoundDAO::getLastReviewRoundBySubmissionId`
+    (`ReviewRoundDAO::getCurrentRoundBySubmissionId` gets the round number).
+  - Once the proper `ReviewRound` is known, get the `ReviewAssignments` by
+    `ReviewAssignmentDAO::getByReviewRoundId` (one could also use 
+    `ReviewAssignmentDAO::getBySubmissionId`).
+    This returns an array. Its indices are the review IDs!.
+- Review: `ReviewerSubmission`, but please hold on:
+  - This class extends `Article`, presumably because reviewers can upload annotated 
+    versions of the submission. 
+  - Get one by `ReviewerSubmissionDAO::getReviewerSubmission($reviewId)`. ``
+  - Attributes: timestamps, `declined`, `reviewMethod`, `reviewerId`, 
+    `reviewId` (in fact reviewAssignmentId), `recommendation`, `decisions`
+  - Also an array of `SubmissionComments` which represent
+    review text. Retrieve by `getMostRecentPeerReviewComment`
+  - `SubmissionComment` attributes: `authorEmail`, `authorId`, 
+    `comments`, `commentTitle`, `commentType` (should be 1: `COMMENT_TYPE_PEER_REVIEW`),
+    timestamps, `roleId`, `submissionId`, `viewable`.
+
+
+## Development notes: OJS3
 
 - installation: https://pkp.sfu.ca/wiki/index.php?title=Github_Documentation_for_PKP_Contributors
 - Many hooks are provided in `pkp-lib` like this 
@@ -69,6 +121,8 @@ Steps towards the latter:
   (this particular one is from `classes/form/Form.inc.php`)
 - DAO class names are in classes/core/Application.inc.php::getDAOmap())
 - Forum: [create plugin and custom URL](https://forum.pkp.sfu.ca/t/ojs-3-0-3-0-1-browse-plugin-doesnt-show/26145/9?u=prechelt)
+- Control flow, dispatch, URLs:
+  https://pkp.sfu.ca/wiki/index.php?title=Router_Architecture
 - see notes in 2018.3.txt of 2018-10-02
 - Editor assignment: 
   "Can only recommend decision, authorized editor must record it."
@@ -81,7 +135,7 @@ Steps towards the latter:
 - LoadHandler described in OSJ2.1 TechRef p. 46
 
 
-### About the RQC plugin
+### Development notes: RQC plugin
 
 - Setting `activate_developer_functions = On` in `config.inc.php`
   enables `example_request` functionality in `RQCPlugin::manage`
@@ -92,9 +146,11 @@ Steps towards the latter:
   [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
 - settings dialog does not close after OK.
 - OJS review rounds must create successive submission ids for RQC.
+- SpyHandler gets 8 notices a la 
+  "Undefined index: first_name in /home/vagrant/ojs/lib/pkp/classes/submission/PKPAuthorDAO.inc.php on line 127"
 
 
-## About RQC
+## Development notes: RQC
 
 - resubmit elsewhere counts as reject (or is its own decision?)
 - do not submit confidential comments as part of the review.
