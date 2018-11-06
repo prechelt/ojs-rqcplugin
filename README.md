@@ -25,7 +25,7 @@ https://reviewqualitycollector.org/t/api
 ## How it works
 
 - extends the journal master data forms by two additional fields: 
-  `rqcJournalID` and `rqcJournalKey`.
+  `rqcJournalId` and `rqcJournalKey`.
 - If both are filled, they are checked against RQC 
   whether they are a valid pair.
 - If they are accepted, they are stored as additional JournalSettings.
@@ -105,7 +105,14 @@ retrieving them (by using the DAO) via the primary key, called the `id`:
     versions of the submission. 
   - Get one by `ReviewerSubmissionDAO::getReviewerSubmission($reviewId)`. ``
   - Attributes: timestamps, `declined`, `reviewMethod`, `reviewerId`, 
-    `reviewId` (in fact reviewAssignmentId), `recommendation`, `decisions`
+    `reviewId` (in fact reviewAssignmentId), `recommendation`, `decisions`.
+  - Recommendation constants see 
+  define('SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT', 1);
+  define('SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS', 2);
+  define('SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE', 3);
+  define('SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE', 4);
+  define('SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE', 5);
+  define('SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS', 6);
   - Also an array of `SubmissionComments` which represent
     review text. Retrieve by `getMostRecentPeerReviewComment`
   - `SubmissionComment` attributes: `authorEmail`, `authorId`, 
@@ -132,6 +139,7 @@ retrieving them (by using the DAO) via the primary key, called the `id`:
   RQC (settings fail) 
   Web Feed (2 radiobuttons, one with an integer textbox) 
   Usage statistics (Sections, checkboxes, text fields, pulldown)
+- Beware of the various _persistent_ caches, e.g. for plugin settings
 - LoadHandler described in OSJ2.1 TechRef p. 46
 
 

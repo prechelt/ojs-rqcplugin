@@ -85,6 +85,7 @@ class RQCPlugin extends GenericPlugin {
 			):array(),
 			parent::getActions($request, $verb)
 		);
+		// TODO:
 		if (Config::getVar('debug', 'activate_developer_functions', false)) {
 			$result[] =	new LinkAction(
 				'example_request',

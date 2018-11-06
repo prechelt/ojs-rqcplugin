@@ -21,6 +21,9 @@ class SpyHandler extends Handler {
 	function __construct() {
 		parent::__construct();
 		//----- store DAOs:
+		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
+		//foreach ($this->plugin as $plugin)
+		//	echo "###", $plugin->getName(), "<<<";
 		$this->journalDao = DAORegistry::getDAO('JournalDAO');
 		$this->articleDao = DAORegistry::getDAO('ArticleDAO');
 		$this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
@@ -38,6 +41,7 @@ class SpyHandler extends Handler {
 		//----- prepare processing:
 		$router = $request->getRouter();
 		$requestArgs = $request->getQueryArray();
+		$context = $request->getContext();
 		$journal = $router->getContext($request);
 		$submissionId = $requestArgs['submissionId'];
 		//$rqcPlugin =& PluginRegistry::getPlugin('generic', RQC_PLUGIN_NAME);
@@ -74,7 +78,12 @@ class SpyHandler extends Handler {
 		$data['review_set'] = $this->get_review_set($assignments, $lastReviewRound);
 		$data['decision'] = $this->get_decision();
 
-        print(json_encode($data, JSON_PRETTY_PRINT));
+		//----- TODO:
+		$data['=========='] = "####################";
+		$data['rqc_journal_id'] = $this->plugin->getSetting($context->getId(), 'rqcJournalId');
+		$data['rqc_journal_key'] = $this->plugin->getSetting($context->getId(), 'rqcJournalKey');
+
+		print(json_encode($data, JSON_PRETTY_PRINT));
 	}
 
 	/**
@@ -226,7 +235,17 @@ class SpyHandler extends Handler {
 			}
 			$rqcreview['text'] = $text;
 			$rqcreview['is_html'] = true;  // TODO: make ternary!
-			$rqcreview['suggested_decision'] = "TODO suggested_decision";
+			$recommendationMap = array(
+				0 => "",
+				SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT => "accept",
+				SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS => "minorrevision",
+				SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE => "majorrevision",
+				SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE => "reject",
+				SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE => "reject",
+				SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS => "",
+			);
+			$recommendation = $assignment->getRecommendation();
+			$rqcreview['suggested_decision'] = $recommendationMap[$recommendation];
 			//--- reviewer:
 			$reviewerobject = $this->userDao->getById($assignment->getReviewerId());
 			$rqcreviewer = array();
