@@ -23,6 +23,9 @@ function rqctrace($msg) {
 }
 rqctrace("RQCPlugin.inc.php loaded!", E_USER_WARNING);
 
+define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
+
+
 /**
  * Class RQCPlugin.
  * Provides a settings dialog (for RQC journal ID and Key),
@@ -41,9 +44,15 @@ class RQCPlugin extends GenericPlugin {
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success && $this->getEnabled()) {
 			rqctrace("RQC HookRegistry::register called");
-			HookRegistry::register('EditorAction::recordDecision', array($this, 'callbackDecisionWasMade'));
+			HookRegistry::register('EditorAction::modifyDecisionOptions',
+				array($this, 'cb_modifyDecisionOptions'));
+			HookRegistry::register('EditorAction::recordDecision',
+				array($this, 'cb_recordDecision'));
+			HookRegistry::register('LoadComponentHandler',
+				array($this, 'cb_editorActionRqcGrade'));
 			if (Config::getVar('debug', 'activate_developer_functions', false)) {
-				HookRegistry::register('LoadHandler', array($this, 'setupSpyHandler'));
+				HookRegistry::register('LoadHandler',
+					array($this, 'setupSpyHandler'));
 			}
 		}
 		return $success;
@@ -152,10 +161,46 @@ class RQCPlugin extends GenericPlugin {
 		return $this->getPluginPath() . '/pages/';
 	}
 
+	//========== Callbacks ==========
+
 	/**
-	 *
+	 * Callback for LoadComponentHandler.
 	 */
-	function callbackDecisionWasMade($hookName, $args) {
+	function cb_editorActionRqcGrade($hookName, $args) {
+		$component =& $args[0];
+		$op =& $args[1];
+		if ($component == 'modals.editorDecision.EditorDecisionHandler' &&
+				$op == 'rqcGrade') {
+			$component = 'plugins.generic.reviewqualitycollector.components.editorDecision.RqcEditorDecisionHandler';
+			return true;  // no more handling needed
+		}
+		return false;  // proceed with normal processing
+	}
+
+
+	/**
+	 * Callback for EditorAction::modifyDecisionOptions.
+	 */
+	function cb_modifyDecisionOptions($hookName, $args) {
+		$context = $args[0];
+		$stageId = $args[1];
+		$makeDecision =& $args[2];
+		$decisionOpts =& $args[3];
+		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
+			//----- add button for RQC grading:
+			$decisionOpts[SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = array(
+				'operation' => 'rqcGrade',
+				'name' => 'rqcGradeName',
+				'title' => 'plugins.generic.reviewqualitycollector.editoraction.grade.button',
+			);
+		}
+		return false;  // proceed with other callbacks, if any
+	}
+
+	/**
+	 * Callback for EditorAction::recordDecision.
+	 */
+	function cb_recordDecision($hookName, $args) {
 		$submission =& $args[0];
 		$editorDecision =& $args[1];
 		// TODO: act on decision
@@ -165,7 +210,7 @@ class RQCPlugin extends GenericPlugin {
 	 * Installs Handler class for our look-at-an-RQC-request page.
 	 * (See setupBrowseHandler in plugins/generic/browse for tech information.)
 	 */
-	function setupSpyHandler($hookName, $params) {
+	function cb_setupSpyHandler($hookName, $params) {
 		rqctrace("setupSpyHandler!");
 		$page =& $params[0];
 		if ($page == 'rqcspy') {
