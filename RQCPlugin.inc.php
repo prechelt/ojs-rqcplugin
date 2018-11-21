@@ -52,7 +52,7 @@ class RQCPlugin extends GenericPlugin {
 				array($this, 'cb_editorActionRqcGrade'));
 			if (Config::getVar('debug', 'activate_developer_functions', false)) {
 				HookRegistry::register('LoadHandler',
-					array($this, 'setupSpyHandler'));
+					array($this, 'cb_setupSpyHandler'));
 			}
 		}
 		return $success;
