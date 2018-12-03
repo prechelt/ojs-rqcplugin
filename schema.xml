@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE schema SYSTEM "../../../dtd/xmlSchema.dtd">
+
+<!--
+  * plugins/generic/reviewqualitycollector/schema.xml
+  *
+  * Copyright (c) 2013-2018 Simon Fraser University
+  * Copyright (c) 2003-2018 John Willinsky
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+  *
+  * RQC plugin table for storing failed RQC calls to be retried ("delayed call").
+  -->
+
+<schema version="0.2">
+    <!--
+     *
+     * TABLE rqc_delayed_calls
+     *
+     -->
+    <table name="rqc_delayed_calls">
+        <field name="call_id" type="I8">
+            <KEY />
+            <AUTOINCREMENT/>
+        </field>
+        <field name="journal_id" type="I">
+            <NOTNULL/>
+        </field>
+        <field name="retries" type="I">
+            <NOTNULL/>
+            <DEFAULT VALUE="0"/>
+        </field>
+        <field name="orig_try_ts" type="I8">
+            <NOTNULL/>
+        </field>
+        <field name="last_try_ts" type="I8">
+            <NOTNULL/>
+        </field>
+        <field name="call_content" type="X2">
+            <NOTNULL/>
+        </field>
+        <descr>RQC data of failed calls to be retried</descr>
+    </table>
+</schema>
