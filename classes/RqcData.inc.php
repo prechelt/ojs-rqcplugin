@@ -72,7 +72,7 @@ class RqcData {
 	/**
 	 * Return linear array of RQC-ish author objects.
 	 */
-	protected function get_author_set($authorsobjects) {
+	protected static function get_author_set($authorsobjects) {
 		$result = array();
 		foreach ($authorsobjects as $authorobject) {
 			$rqcauthor = array();
@@ -132,7 +132,7 @@ class RqcData {
 	 * Return emailaddress of user.
 	 * (And hope this same address is registered with RQC as well.)
 	 */
-	protected function get_interactive_user($user) {
+	protected static function get_interactive_user($user) {
 		return $user->getEmail();
 	}
 
@@ -184,8 +184,8 @@ class RqcData {
 	 * Get first english title if one exists or all titles otherwise.
 	 * @param array $all_titles  mapping from locale name to title string
 	 */
-	protected function get_title($all_titles) {
-		return $this->englishest($all_titles, true);
+	protected static function get_title($all_titles) {
+		return RqcData::englishest($all_titles, true);
 	}
 
 	/**
@@ -193,7 +193,7 @@ class RqcData {
 	 * First round is 1;
 	 * if round is 0 (for a non-existing predecessor), return null.
 	 */
-     protected function get_uid($journal, $submission, $round, $for_url=false) {
+     protected static function get_uid($journal, $submission, $round, $for_url=false) {
 		if ($round == 0) {
 			return null;
 		}
@@ -214,7 +214,7 @@ class RqcData {
 	 * the entry of the alphabetically first locale otherwise.
 	 * @param array $all_entries  mapping from locale name to string
 	 */
-	protected function englishest($all_entries, $else_all=false) {
+	protected static function englishest($all_entries, $else_all=false) {
 		$all_nonenglish_locales = array();
 		foreach ($all_entries as $locale => $entry) {
 			if (substr($locale, 0, 2) === "en") {
@@ -239,7 +239,7 @@ class RqcData {
 	/**
 	 * Helper: Translate OJS recommendations into RQC decisions.
 	 */
-	protected function rqc_decision($role, $ojs_decision) {
+	protected static function rqc_decision($role, $ojs_decision) {
 		$reviewerMap = array(
 			// see lib.pkp.classes.submission.reviewAssignment.ReviewAssignment
 			// the values are 1,2,3,4,5,6
@@ -278,13 +278,30 @@ class RqcData {
 	/**
 	 * Helper: Transform timestamp format to RQC convention.
 	 */
-	protected function rqcify_datetime($ojs_datetime) {
+	protected static function rqcify_datetime($ojs_datetime) {
 		if (!$ojs_datetime) {
 			return NULL;
 		}
 		$result = str_replace(" ", "T", $ojs_datetime);
 		return $result . "Z";
 	}
+}
 
 
+class RqcOjsData {
+	/**
+	 * Helper: Discriminate decisions from recommendations.
+	 */
+	public static function is_decision($ojs_decision)
+	{
+		switch ($ojs_decision) {
+			case SUBMISSION_EDITOR_DECISION_ACCEPT:
+			case SUBMISSION_EDITOR_DECISION_DECLINE:
+			case SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE:
+			case SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS:
+			case SUBMISSION_EDITOR_DECISION_RESUBMIT:
+				return true;
+		}
+		return false;  // everything else isn't
+	}
 }

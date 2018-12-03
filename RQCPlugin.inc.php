@@ -201,9 +201,19 @@ class RQCPlugin extends GenericPlugin {
 	 * Callback for EditorAction::recordDecision.
 	 */
 	function cb_recordDecision($hookName, $args) {
+		import('plugins.generic.reviewqualitycollector.classes.RqcData');
+		$GO_ON = true;  // false continues processing, true stops it (needed during development).
 		$submission =& $args[0];
-		$editorDecision =& $args[1];
-		// TODO: act on decision
+		$decision =& $args[1];
+		$result =& $args[2];
+		$is_recommendation =& $args[3];
+		rqctrace("cb_recordDecision called", E_USER_WARNING);
+		if ($is_recommendation || !RqcOjsData::is_decision($decision)) {
+			return $GO_ON;
+		}
+		// act on decision:
+		rqctrace("cb_recordDecision calls RQC", E_USER_WARNING);
+		return $GO_ON;
 	}
 
 	/**
@@ -223,4 +233,4 @@ class RQCPlugin extends GenericPlugin {
 	}
 
 }
-?>
+

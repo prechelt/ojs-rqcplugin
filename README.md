@@ -26,10 +26,10 @@ https://reviewqualitycollector.org/t/api
 
 - extends the journal master data forms by two additional fields: 
   `rqcJournalId` and `rqcJournalKey`.
-- If both are filled, they are checked against RQC 
+- When both are filled, they are checked against RQC 
   whether they are a valid pair.
 - If they are accepted, they are stored as additional JournalSettings.
-- If these settings exist, the plugin will add a menu entry
+- If these settings exist, the plugin will add a button "RQC-grade reviews"
   by which editors can submit the reviewing data for a given
   submission to RQC in order to trigger the grading.
   This step is optional for the editors.
@@ -39,6 +39,72 @@ https://reviewqualitycollector.org/t/api
 - The plugin will also intercept the acceptance-decision-making
   event and send the decision and reviewing data for that submission
   to RQC then.
+- Should the RQC service be unavailable when data is submitted
+  automatically at decision time, the request will be stored
+  and will be repeated once a day for several days until it goes through.
+  
+
+## How to use it: Installation
+
+Target audience: OJS system administrators.
+
+- The RQC plugin requires PHP 7. 
+  It will not work with PHP 5.
+  (Note you should not use PHP 5 _anywhere_ since 2018-12-31, because
+  [PHP 5 no longer receives security updates](https://secure.php.net/supported-versions.php).)
+- In `config.inc.php`, set `scheduled_tasks = On`.
+- Make sure there is an entry in your OJS server's crontab
+  (see "Scheduled Tasks" in the OJS `docs/README`) and that it includes
+  RQC's `scheduldTasks.xml` besides the default one from `registry`.
+  This could for instance look like this
+  ```crontab
+  0 * * * *	(cd /path/to/ojs; php tools/runScheduledTasks.php registry/scheduledTasks.xml plugins/generic/reviewqualitycollector/scheduledTasks.xml)
+  ```
+- Perhaps update the RQC plugin from within OJS.
+  This only applies if you know how to create the proper .tar.gz file,
+  your server allows in-place plugin updates (or you drop the data
+  into the proper place by hand)
+  and, most importantly,  
+  [the newest version of this README}(https://github.com/pkp/ojs/tree/master/plugins/generic/reviewqualitycollector/README.md)
+  indicates there have been relevant improvements since your version. 
+- In OJS, go to Settings->Website->Plugins and activate the
+  plugin "Review Quality Collector (RQC)" in category Generic Plugins.
+
+
+## How to use it: Journal setup
+
+Target audience: OJS journal managers, RQC RQGuardians.
+
+- Read about RQC at https://reviewqualitycollector.org.
+- In RQC, register an account for yourself.
+- Find your publisher in the RQC publisher directory
+  and ask your publisherpersons to create an RQC section for
+  your journal. 
+  (If needed, ask your publisher to register at RQC first.)
+- Discuss review quality criteria with your co-editors.
+  Formulate an RQC review quality definition file.
+- As RQGuardian in RQC, set up your journal: 
+  review quality definition,
+  grading parameters (which people must/should/can/cannot grade a review).
+- In OJS, open the RQC plugin settings and enter your
+  public RQC journal ID and your secret RQC journal key.
+  To do this, you need to be journal manager for your journal in OJS.
+ 
+
+## How to use it: Daily use
+
+- The best time to grade reviews in RQC is when you prepare
+  the editorial decision in OJS.
+- Therefore, each editor who is supposed to provide a grading
+  should make it a habit to use the "RQC-grade reviews" button
+  before entering their decision in OJS.
+  This will redirect them into RQC for the grading and then
+  back to OJS for entering the decision.
+- If nobody does that (e.g. because editors are not supposed to
+  perform review grading at your journal), OJS will submit the
+  reviewing data to RQC when the editorial decision is entered into OJS.
+  RQC will then remind graders via email.
+
   
 -------------------------------------
 
@@ -156,6 +222,8 @@ retrieving them (by using the DAO) via the primary key, called the `id`:
 - OJS review rounds must create successive submission ids for RQC.
 - SpyHandler gets 8 notices a la 
   "Undefined index: first_name in /home/vagrant/ojs/lib/pkp/classes/submission/PKPAuthorDAO.inc.php on line 127"
+- Cronjob via PKPAcronPlugin?
+- Delayed-call storage via Plugin::updateSchema and my own DAO?
 
 
 ## Development notes: RQC
