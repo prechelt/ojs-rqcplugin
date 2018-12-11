@@ -23,6 +23,8 @@ function rqctrace($msg) {
 }
 rqctrace("RQCPlugin.inc.php loaded!", E_USER_WARNING);
 
+define('RQC_SERVER', 'https://reviewqualitycollector.org');
+define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
 define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
 
 

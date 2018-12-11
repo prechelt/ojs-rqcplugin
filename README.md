@@ -110,19 +110,13 @@ Target audience: OJS journal managers, RQC RQGuardians.
 
 ## Development notes: TO DO
 
+- freshly set up OJS current (different DB schema)
+- write automated tests
 - add the journal ID/key validation via an RQC call
 - add all hooks and actual activity
-
-Steps towards the latter:
-- assign editor2 (ER2 Prechelt)
-- assign reviewers editor2 (ER2 Prechelt, open) and reviewer1 (R1 Prechelt, double-blind)
-- submit reviews (editor2 minor, reviewer1 accept)
-- create debug-only RQC plugin page (to show request content)
-- write logic to find the submission process object
-- create JSON response
-- find out and add the various fields
-- create a second round of submission and reviews, test with that
-- write automated tests 
+- Switch to LetsEncrypt and put its root certificate into the plugin,
+  because the Telekom certificate ends 2019-07-09
+  (and RQC's ends 2019-03-27!)
 - elaborate on "ask your publisher" in locale.xml
 
 
@@ -208,6 +202,12 @@ retrieving them (by using the DAO) via the primary key, called the `id`:
 - Beware of the various _persistent_ caches, e.g. for plugin settings
 - LoadHandler described in OSJ2.1 TechRef p. 46
 
+
+### Development notes: phpunit and PKPTestCase/DatabaseTestCase
+
+- Complete DB reset is available by returning `PKP_TEST_ENTIRE_DB`
+  from `getAffectedTables`.
+- Selenium test example see `StaticPagesFunctionalTest`. 
 
 ### Development notes: RQC plugin
 
