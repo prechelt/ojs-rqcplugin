@@ -21,7 +21,6 @@ function rqctrace($msg) {
 	if (DEBUG)
 		trigger_error($msg, E_USER_WARNING);
 }
-rqctrace("RQCPlugin.inc.php loaded!", E_USER_WARNING);
 
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
 define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
@@ -32,9 +31,9 @@ define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
  * Class RQCPlugin.
  * Provides a settings dialog (for RQC journal ID and Key),
  * adds a menu entry to send review data to RQC (to start the grading process manually),
- * and notifies RQC upon the submission acceptance decision (to start the
- * grading process automatically or extend it with additional reviews,
- * if any).
+ * notifies RQC upon the submission acceptance decision (to start the
+ * grading process automatically or extend it with additional reviews, if any),
+ * if sending reviewing data fails, repeats it via cron and a queue.
  */
 class RQCPlugin extends GenericPlugin {
 
@@ -42,10 +41,8 @@ class RQCPlugin extends GenericPlugin {
 	 * @copydoc Plugin::register()
 	 */
 	function register($category, $path, $mainContextId = null) {
-		rqctrace("RQCPlugin::register called");
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success && $this->getEnabled()) {
-			rqctrace("RQC HookRegistry::register called");
 			HookRegistry::register('EditorAction::modifyDecisionOptions',
 				(object)array($this, 'cb_modifyDecisionOptions'));
 			HookRegistry::register('EditorAction::recordDecision',

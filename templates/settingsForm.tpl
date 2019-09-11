@@ -25,11 +25,11 @@
 		<br>
 		{fbvFormSection id="rqcSettingsFormSectionId"}
 			<div id="rqcJournalIdDescription">{translate key="plugins.generic.reviewqualitycollector.settingsform.rqcJournalIDDescription"}</div>
-			{fbvElement type="text" name="rqcJournalId" value=$rqcJournalId label="plugins.generic.reviewqualitycollector.settingsform.rqcJournalID" required="true"}
+			{fbvElement type="text" id="rqcJournalId" name="rqcJournalId" value=$rqcJournalId label="plugins.generic.reviewqualitycollector.settingsform.rqcJournalID" required="true"}
 		{/fbvFormSection}
     	{fbvFormSection id="rqcSettingsFormSectionKey"}
 			<div id="rqcJournalKeyDescription">{translate key="plugins.generic.reviewqualitycollector.settingsform.rqcJournalKeyDescription"}</div>
-  			{fbvElement type="text" name="rqcJournalKey" value=$rqcJournalKey label="plugins.generic.reviewqualitycollector.settingsform.rqcJournalKey" required="true"}
+  			{fbvElement type="text" id="rqcJournalKey" name="rqcJournalKey" value=$rqcJournalKey label="plugins.generic.reviewqualitycollector.settingsform.rqcJournalKey" required="true"}
         {/fbvFormSection}
 	{/fbvFormArea}
 

@@ -31,9 +31,7 @@ class RQCSettingsForm extends Form {
 	function __construct($plugin, $contextId) {
 		$this->_contextId = $contextId;
 		$this->_plugin = $plugin;
-
-		parent::__construct($plugin->getTemplatePath() . '/settingsForm.tpl');
-
+		parent::__construct($plugin->getTemplateResource('settingsForm.tpl'));
 		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalId', 'required',
 								'plugins.generic.reviewqualitycollector.settingsform.rqcJournalIDInvalid',
 								'/^[0-9]+$/'));
