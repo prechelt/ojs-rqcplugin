@@ -18,7 +18,7 @@ import('lib.pkp.classes.form.Form');
 class RQCSettingsForm extends Form {
 
 	/** @var int */
-	var $_journalId;
+	var $_contextId;
 
 	/** @var object */
 	var $_plugin;
@@ -26,13 +26,13 @@ class RQCSettingsForm extends Form {
 	/**
 	 * Constructor
 	 * @param $plugin RQCPlugin
-	 * @param $journalId int
+	 * @param $contextId int  the OJS context (the OJS journal)
 	 */
-	function __construct($plugin, $journalId) {
-		$this->_journalId = $journalId;
+	function __construct($plugin, $contextId) {
+		$this->_contextId = $contextId;
 		$this->_plugin = $plugin;
 
-		parent::__construct($plugin->getTemplatePath() . 'settingsForm.tpl');
+		parent::__construct($plugin->getTemplatePath() . '/settingsForm.tpl');
 
 		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalId', 'required',
 								'plugins.generic.reviewqualitycollector.settingsform.rqcJournalIDInvalid',
@@ -49,8 +49,8 @@ class RQCSettingsForm extends Form {
 	 */
 	function initData() {
 		$this->_data = array(
-			'rqcJournalId' => $this->_plugin->getSetting($this->_journalId, 'rqcJournalId'),
-			'rqcJournalKey' => $this->_plugin->getSetting($this->_journalKey, 'rqcJournalKey'),
+			'rqcJournalId' => $this->_plugin->getSetting($this->_contextId, 'rqcJournalId'),
+			'rqcJournalKey' => $this->_plugin->getSetting($this->_contextId, 'rqcJournalKey'),
 		);
 	}
 
@@ -65,7 +65,7 @@ class RQCSettingsForm extends Form {
 	 * Fetch the form.
 	 * @copydoc Form::fetch()
 	 */
-	function fetch($request) {
+	function fetch($request, $template = NULL, $display = false) {
 		$templateMgr = TemplateManager::getManager($request);
 		$templateMgr->assign('pluginName', $this->_plugin->getName());
 		return parent::fetch($request);
@@ -75,8 +75,8 @@ class RQCSettingsForm extends Form {
 	 * Save settings.
 	 */
 	function execute() {
-		$this->_plugin->updateSetting($this->_journalId, 'rqcJournalId', trim($this->getData('rqcJournalId')), 'string');
-		$this->_plugin->updateSetting($this->_journalKey, 'rqcJournalKey', trim($this->getData('rqcJournalKey')), 'string');
+		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalId', trim($this->getData('rqcJournalId')), 'string');
+		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalKey', trim($this->getData('rqcJournalKey')), 'string');
 	}
 }
 
