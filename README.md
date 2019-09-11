@@ -29,7 +29,7 @@ https://reviewqualitycollector.org/t/api
 - When both are filled, they are checked against RQC 
   whether they are a valid pair.
 - If they are accepted, they are stored as additional JournalSettings.
-- If these settings exist, the plugin will add a button "RQC-grade reviews"
+- If these settings exist, the plugin will add a button "RQC-grade the reviews"
   by which editors can submit the reviewing data for a given
   submission to RQC in order to trigger the grading.
   This step is optional for the editors.
@@ -110,7 +110,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
 
 ## Development notes: TO DO
 
-- freshly set up OJS current (different DB schema)
 - write automated tests
 - add the journal ID/key validation via an RQC call
 - add all hooks and actual activity
@@ -201,6 +200,19 @@ retrieving them (by using the DAO) via the primary key, called the `id`:
   Usage statistics (Sections, checkboxes, text fields, pulldown)
 - Beware of the various _persistent_ caches, e.g. for plugin settings
 - LoadHandler described in OSJ2.1 TechRef p. 46
+- Maybe-helpful items from the code: 
+  _callbackHandleCustomNavigationMenuItems 
+
+After setting up OJS anew:
+- config.inc.php: 
+  show_stacktrace = On 
+  display_errors = On
+  activate_developer_functions = On
+- create journal rqctest:
+  create users editor1, author1, reviewer1, reviewer2; 
+  Settings->Website->Plugins turn on RQC plugin
+- Turn RQC plugin on
+- http://localhost:8000/index.php/rqctest/rqcdevhelper/
 
 
 ### Development notes: phpunit and PKPTestCase/DatabaseTestCase
@@ -220,7 +232,7 @@ retrieving them (by using the DAO) via the primary key, called the `id`:
   [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
 - settings dialog does not close after OK.
 - OJS review rounds must create successive submission ids for RQC.
-- SpyHandler gets 8 notices a la 
+- SpyHandler (now DevHelperHandler) gets 8 notices a la 
   "Undefined index: first_name in /home/vagrant/ojs/lib/pkp/classes/submission/PKPAuthorDAO.inc.php on line 127"
 - Cronjob via PKPAcronPlugin?
 - Delayed-call storage via Plugin::updateSchema and my own DAO?
