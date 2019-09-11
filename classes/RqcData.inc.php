@@ -15,6 +15,11 @@
 
 import('classes.workflow.EditorDecisionActionsManager');  // decision action constants
 
+/**
+ * Class RqcData.
+ * Builds the data object to be sent to the RQC server from the various pieces of the OJS data model:
+ * submission, authors, editors, reviewers and reviews, active user, decision, etc.
+ */
 class RqcData {
 
 	function __construct() {

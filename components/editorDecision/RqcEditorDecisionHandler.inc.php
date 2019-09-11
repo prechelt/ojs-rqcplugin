@@ -36,6 +36,6 @@ class RqcEditorDecisionHandler extends PKPHandler
 		$journal = $router->getContext($request);
 		$submissionId = $requestArgs['submissionId'];
 		//----- modal dialog:
-		return new JSONMessage(true, "<h1>Hello, Lutz!</h1>");
+		return new JSONMessage(true, "<h1>Hello, Lutz!</h1>");  // TODO
 	}
 }

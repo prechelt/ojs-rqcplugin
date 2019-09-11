@@ -15,6 +15,7 @@
 
 import('lib.pkp.classes.db.DAO');
 
+// TODO: use SchemaDAO  https://docs.pkp.sfu.ca/dev/documentation/en/architecture-database
 class DelayedRQCCallsDAO extends DAO {
 
 	/**

@@ -47,14 +47,14 @@ class RQCPlugin extends GenericPlugin {
 		if ($success && $this->getEnabled()) {
 			rqctrace("RQC HookRegistry::register called");
 			HookRegistry::register('EditorAction::modifyDecisionOptions',
-				array($this, 'cb_modifyDecisionOptions'));
+				(object)array($this, 'cb_modifyDecisionOptions'));
 			HookRegistry::register('EditorAction::recordDecision',
-				array($this, 'cb_recordDecision'));
+				(object)array($this, 'cb_recordDecision'));
 			HookRegistry::register('LoadComponentHandler',
-				array($this, 'cb_editorActionRqcGrade'));
+				(object)array($this, 'cb_editorActionRqcGrade'));
 			if (Config::getVar('debug', 'activate_developer_functions', false)) {
 				HookRegistry::register('LoadHandler',
-					array($this, 'cb_setupSpyHandler'));
+					(object)array($this, 'cb_setupDevHelperHandler'));
 			}
 		}
 		return $success;
@@ -75,9 +75,12 @@ class RQCPlugin extends GenericPlugin {
 	}
 
 	/**
-	 * @copydoc Plugin::getActions()
+	 * Get a list of link actions for plugin management.
+	 * @param request PKPRequest
+	 * @param $actionArgs array The list of action args to be included in request URLs.
+	 * @return array List of LinkActions
 	 */
-	function getActions($request, $verb) {
+	function getActions($request, $actionArgs) {
 		$router = $request->getRouter();
 		import('lib.pkp.classes.linkAction.request.AjaxModal');
 		import('lib.pkp.classes.linkAction.request.OpenWindowAction');
@@ -94,7 +97,7 @@ class RQCPlugin extends GenericPlugin {
 					null
 				),
 			):array(),
-			parent::getActions($request, $verb)
+			parent::getActions($request, $actionArgs)
 		);
 		// TODO:
 		if (Config::getVar('debug', 'activate_developer_functions', false)) {
@@ -137,23 +140,18 @@ class RQCPlugin extends GenericPlugin {
 					$form->readInputData();
 					if ($form->validate()) {
 						$form->execute();
-						return new JSONMessage(true, $form->fetch($request));
+						$result = new JSONMessage(true, $form->fetch($request));
+						return $result;
 					}
 				} else {
 					$form->initData();
 				}
-				return new JSONMessage(true, $form->fetch($request));
+				$result = new JSONMessage(true, $form->fetch($request));
+				return $result;
 			case 'example_request':
 				// TODO
 		}
 		return parent::manage($args, $request);
-	}
-
-	/**
-	 * @copydoc PKPPlugin::getTemplatePath
-	 */
-	function getTemplatePath($inCore = false) {
-		return parent::getTemplatePath($inCore) . 'templates/';
 	}
 
 	/**
@@ -219,20 +217,19 @@ class RQCPlugin extends GenericPlugin {
 	}
 
 	/**
-	 * Installs Handler class for our look-at-an-RQC-request page.
+	 * Installs Handlers for our look-at-an-RQC-request page at /rqcdevhelper/spy
+	 * and our make-review-case (MRC) request page at /rqcdevhelper/mrc.
 	 * (See setupBrowseHandler in plugins/generic/browse for tech information.)
 	 */
-	function cb_setupSpyHandler($hookName, $params) {
-		rqctrace("setupSpyHandler!");
+	function cb_setupDevHelperHandler($hookName, $params) {
+		rqctrace("setupDevHelperHandler!");
 		$page =& $params[0];
-		if ($page == 'rqcspy') {
+		if ($page == 'rqcdevhelper') {
 			define('RQC_PLUGIN_NAME', $this->getName());
-			define('HANDLER_CLASS', 'SpyHandler');
+			define('HANDLER_CLASS', 'DevHelperHandler');
 			$handlerFile =& $params[2];
-			$handlerFile = $this->getHandlerPath() . 'SpyHandler.inc.php';
+			$handlerFile = $this->getHandlerPath() . 'DevHelperHandler.inc.php';
 		}
-
 	}
-
 }
 
