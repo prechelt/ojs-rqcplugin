@@ -75,6 +75,7 @@ class RQCSettingsForm extends Form {
 	function execute() {
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalId', trim($this->getData('rqcJournalId')), 'string');
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalKey', trim($this->getData('rqcJournalKey')), 'string');
+		return parent::execute();
 	}
 }
 

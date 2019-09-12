@@ -24,6 +24,7 @@ function rqctrace($msg) {
 
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
 define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
+define('RQC_LOCALE', 'en_US');
 define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
 
 
@@ -44,14 +45,14 @@ class RQCPlugin extends GenericPlugin {
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success && $this->getEnabled()) {
 			HookRegistry::register('EditorAction::modifyDecisionOptions',
-				(object)array($this, 'cb_modifyDecisionOptions'));
+				array($this, 'cb_modifyDecisionOptions'));
 			HookRegistry::register('EditorAction::recordDecision',
-				(object)array($this, 'cb_recordDecision'));
+				array($this, 'cb_recordDecision'));
 			HookRegistry::register('LoadComponentHandler',
-				(object)array($this, 'cb_editorActionRqcGrade'));
-			if (Config::getVar('debug', 'activate_developer_functions', false)) {
+				array($this, 'cb_editorActionRqcGrade'));
+			if (RQCPlugin::has_developer_functions()) {
 				HookRegistry::register('LoadHandler',
-					(object)array($this, 'cb_setupDevHelperHandler'));
+					array($this, 'cb_setupDevHelperHandler'));
 			}
 		}
 		return $success;
@@ -78,47 +79,57 @@ class RQCPlugin extends GenericPlugin {
 	 * @return array List of LinkActions
 	 */
 	function getActions($request, $actionArgs) {
+		//----- get existing actions, stop if not enabled:
+		$actions = parent::getActions($request, $actionArgs);
+		if (!$this->getEnabled()) {
+			return $actions;
+		}
+		//----- add settings dialog:
 		$router = $request->getRouter();
 		import('lib.pkp.classes.linkAction.request.AjaxModal');
-		import('lib.pkp.classes.linkAction.request.OpenWindowAction');
-		$result = array_merge(
-			$this->getEnabled()?array(
-				new LinkAction(
-					'settings',
-					new AjaxModal(
-						$router->url($request, null, null, 'manage', null,
-							array('verb' => 'settings', 'plugin' => $this->getName(), 'category' => 'generic')),
-						$this->getDisplayName()
-					),
-					__('manager.plugins.settings'),
-					null
-				),
-			):array(),
-			parent::getActions($request, $actionArgs)
+		$additions = array();
+		$additions[] = new LinkAction(
+			'settings',
+			new AjaxModal(
+				$router->url($request, null, null, 'manage', null,
+					array('verb' => 'settings', 'plugin' => $this->getName(), 'category' => 'generic')),
+				$this->getDisplayName()
+			),
+			__('manager.plugins.settings'),
+			null
 		);
-		// TODO:
-		if (Config::getVar('debug', 'activate_developer_functions', false)) {
-			$result[] =	new LinkAction(
-				'example_request',
-				new AjaxModal(
-					$router->url($request, null, null, 'manage', null,
-						array('verb' => 'example_request', 'plugin' => $this->getName(), 'category' => 'generic')),
-					$this->getDisplayName()
-				),
-				'(example_request)',
-				null
-			);
-			$result[] =	new LinkAction(
-				'example_request2',
-				new OpenWindowAction(
-					$router->url($request, ROUTE_PAGE, 'MySuperHandler', 'myop', 'mypath', array('my','array'))
-				),
-				'(example_request2)',
-				null
-			);
-
+		//----- perhaps return:
+		if (!RQCPlugin::has_developer_functions()) {
+			$actions = array_merge($additions, $actions);
+			return $actions;
 		}
-		return $result;
+		//----- TODO add developers-only stuff:
+		$additions[] = new LinkAction(
+			'example_request',
+			new AjaxModal(
+				$router->url($request, null, null, 'manage', null,
+					array('verb' => 'example_request', 'plugin' => $this->getName(), 'category' => 'generic')),
+				$this->getDisplayName()
+			),
+			'(example_request)',
+			null
+		);
+		import('lib.pkp.classes.linkAction.request.OpenWindowAction');
+		$additions[] = new LinkAction(
+			'example_request2',
+			new OpenWindowAction(
+				$router->url($request, ROUTE_PAGE, 'MySuperHandler', 'myop', 'mypath', array('my','array'))
+			),
+			'(example_request2)',
+			null
+		);
+		//----- return:
+		$actions = array_merge($additions, $actions);
+		return $actions;
+	}
+
+	static function has_developer_functions() {
+		return Config::getVar('debug', 'activate_developer_functions', false);
 	}
 
 	/**
@@ -130,7 +141,6 @@ class RQCPlugin extends GenericPlugin {
 				$context = $request->getContext();
 				AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON,  LOCALE_COMPONENT_PKP_MANAGER);
 				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->register_function('plugin_url', array($this, 'smartyPluginUrl'));
 				$this->import('RQCSettingsForm');
 				$form = new RQCSettingsForm($this, $context->getId());
 				if ($request->getUserVar('save')) {
@@ -219,7 +229,6 @@ class RQCPlugin extends GenericPlugin {
 	 * (See setupBrowseHandler in plugins/generic/browse for tech information.)
 	 */
 	function cb_setupDevHelperHandler($hookName, $params) {
-		rqctrace("setupDevHelperHandler!");
 		$page =& $params[0];
 		if ($page == 'rqcdevhelper') {
 			define('RQC_PLUGIN_NAME', $this->getName());

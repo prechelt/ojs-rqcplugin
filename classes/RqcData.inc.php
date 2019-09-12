@@ -82,8 +82,8 @@ class RqcData {
 		foreach ($authorsobjects as $authorobject) {
 			$rqcauthor = array();
 			$rqcauthor['email'] = $authorobject->getEmail();
-			$rqcauthor['firstname'] = $authorobject->getFirstName();
-			$rqcauthor['lastname'] = $authorobject->getLastName();
+			$rqcauthor['firstname'] = $authorobject->getGivenName(RQC_LOCALE);
+			$rqcauthor['lastname'] = $authorobject->getFamilyName(RQC_LOCALE);
 			$rqcauthor['is_corresponding'] = true;  // TODO
 			$rqcauthor['order_number'] = (int)($authorobject->getSequence());
 			$result[] = $rqcauthor;
@@ -120,8 +120,8 @@ class RqcData {
 			elseif ($level == 1)
 				$level1N++;
 			$assignment['level'] = $level;
-			$assignment['firstname'] = $user->getFirstName();
-			$assignment['lastname'] = $user->getLastName();
+			$assignment['firstname'] = $user->getGivenName(RQC_LOCALE);
+			$assignment['lastname'] = $user->getFamilyName(RQC_LOCALE);
 			$assignment['email'] = $user->getEmail();
 			$assignment['orcid_id'] = $user->getOrcid();
 			$result[] = $assignment;  // append
@@ -176,8 +176,8 @@ class RqcData {
 			$reviewerobject = $this->userDao->getById($assignment->getReviewerId());
 			$rqcreviewer = array();
 			$rqcreviewer['email'] = $reviewerobject->getEmail();
-			$rqcreviewer['firstname'] = $reviewerobject->getFirstName();
-			$rqcreviewer['lastname'] = $reviewerobject->getLastName();
+			$rqcreviewer['firstname'] = $reviewerobject->getGivenName(RQC_LOCALE);
+			$rqcreviewer['lastname'] = $reviewerobject->getFamilyName(RQC_LOCALE);
 			$rqcreviewer['orcid_id'] = $reviewerobject->getOrcid();
 			$rqcreview['reviewer'] = $rqcreviewer;
 			$result[] = $rqcreview;  // append

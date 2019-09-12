@@ -206,8 +206,9 @@ retrieving them (by using the DAO) via the primary key, called the `id`:
 After setting up OJS anew:
 - config.inc.php: 
   show_stacktrace = On 
-  display_errors = On
+  display_errors = Off
   activate_developer_functions = On
+  (display_errors breaks Ajax functions when it kicks in)
 - create journal rqctest:
   create users editor1, author1, reviewer1, reviewer2; 
   Settings->Website->Plugins turn on RQC plugin
