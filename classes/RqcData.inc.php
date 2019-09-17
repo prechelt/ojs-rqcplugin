@@ -67,8 +67,7 @@ class RqcData {
 		//----- authors, editor assignments, reviews, decision:
 		$data['author_set'] = $this->get_author_set($submission->getAuthors());
 		$data['editorassignment_set'] = $this->get_editorassignment_set($submissionId);
-		$assignments = $this->reviewAssignmentDao->getBySubmissionId($submissionId, $reviewroundN-1);
-		$data['review_set'] = $this->get_review_set($assignments, $lastReviewRound);
+		$data['review_set'] = $this->get_review_set($submissionId, $lastReviewRound);
 		$data['decision'] = $this->get_decision();
 
 		return $data;
@@ -95,6 +94,7 @@ class RqcData {
 	 * Return RQC-style decision string.
 	 */
 	protected function get_decision() {
+		// See EditDecisionDAO->getEditorDecisions
 		return array("TODO: get_decision");
 	}
 
@@ -144,10 +144,12 @@ class RqcData {
 	/**
 	 * Return linear array of RQC review descriptor objects.
 	 */
-	protected function get_review_set($assignments, $reviewRound) {
+	protected function get_review_set($submissionId, $reviewRound) {
 		$result = array();
+		$reviewRoundN = $reviewRound->getRound();
+		$assignments = $this->reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRoundN-1);
 		foreach ($assignments as $reviewId => $assignment) {
-			if ($assignment->getRound() != $reviewRound->getRound() ||
+			if ($assignment->getRound() != $reviewRoundN ||
 				$assignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
 				continue;  // irrelevant record, skip it.
 			$rqcreview = array();

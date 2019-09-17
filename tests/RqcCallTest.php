@@ -30,13 +30,12 @@ class RqcCallTest extends DatabaseTestCase {
 	protected function setUp() {
 		parent::setUp();
 		$this->rqccall = new RqcCall();
-		//PluginRegistry::loadCategory('generic', true, 0);
 		//$this->rqcplugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
 	}
 
 	public function testDoPost() {
 		$response = $this->rqccall->do_post(1, "http://www.fu-berlin.de"); //, "nix");
-		self::assertEquals("output", $response);
+		//self::assertEquals("output", $response);  // nonsense and incomplete
 	}
 }
 ?>

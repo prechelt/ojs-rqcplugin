@@ -110,13 +110,13 @@ Target audience: OJS journal managers, RQC RQGuardians.
 
 ## Development notes: TO DO
 
-- write automated tests
 - add the journal ID/key validation via an RQC call
 - add all hooks and actual activity
 - Switch to LetsEncrypt and put its root certificate into the plugin,
   because the Telekom certificate ends 2019-07-09
   (and RQC's ends 2019-03-27!)
 - elaborate on "ask your publisher" in locale.xml
+- write automated tests
 
 
 ## Development notes: OJS data model (the relevant parts)
@@ -128,22 +128,28 @@ Authors, Editors, and Reviewers are all Persons.
 
 This is how these concepts are represented in OJS (class names,
 other typical identifiers for such objects).
+OJS speaks of four "stages": submission, review, copyediting, production.
+RQC is concerned with the review stage only.
+A revised article in OJS is not a new submission but rather a new
+"review round" of the same submission (with new files).
 Most classes have a corresponding DAO (data access object, as the ORM). 
-Accessing objects often involves
-retrieving them (by using the DAO) via the primary key, called the `id`:
+Accessing objects often involves retrieving them (by using the DAO)
+via the primary key, called the `id`:
 - Journal: `Journal`; 
   the journal is often called the `context`.
-- Submission: `Article`.
-- Person: `User` (a minor extension of `PKPUser`).
-- Author: `Author` (but the term is also oddly used for the 'author' of 
-  a Review: the Reviewer)
-- Editor: `User`? 
+- Submission: `Article` 
+  (there is a `Submission` class as well: the PKP library's superclass).
+- Person: `User` (extends `Identity`).
+- Author: `Author` (but the term is oddly also used for the 'author' of 
+  a Review: the Reviewer). 
+  Inheritance: `Author<--PKPAuthor<--Identity<--DataObject`. 
+- Editor: `User`(?) 
   Decision constants see `EditorDecisionActionsManager`. 
-  Role ID constants see `Role`. 
-  `StageAssignment` appears to map a user ID to 
+  Role ID constants see `Role`.
+  The handling editor is called Section Editor in OJS. 
+  `StageAssignment` appears to map a user ID to
   a stage (constants see `PKPApplication`, e.g. `WORKFLOW_STAGE_ID_EXTERNAL_REVIEW`)
-  in a given role(?) (`UserGroup`(?), constants see ``).
-  
+  in a given role(?) (`UserGroup`(?), constants see ` `???).
 - Reviewer: `User` (but usually called `reviewer`).
   - A `ReviewAssignment` connects a Reviewer to a Submission and also contains
     various timestamps, `declined`, `round`, `reviewRoundId`, `reviewMethod`. 
@@ -166,17 +172,19 @@ retrieving them (by using the DAO) via the primary key, called the `id`:
   - Attributes: timestamps, `declined`, `reviewMethod`, `reviewerId`, 
     `reviewId` (in fact reviewAssignmentId), `recommendation`, `decisions`.
   - Recommendation constants see 
-  define('SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT', 1);
-  define('SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS', 2);
-  define('SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE', 3);
-  define('SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE', 4);
-  define('SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE', 5);
-  define('SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS', 6);
+    define('SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT', 1); 
+    define('SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS', 2); 
+    define('SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE', 3); 
+    define('SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE', 4); 
+    define('SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE', 5); 
+    define('SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS', 6);
   - Also an array of `SubmissionComments` which represent
     review text. Retrieve by `getMostRecentPeerReviewComment`
   - `SubmissionComment` attributes: `authorEmail`, `authorId`, 
     `comments`, `commentTitle`, `commentType` (should be 1: `COMMENT_TYPE_PEER_REVIEW`),
     timestamps, `roleId`, `submissionId`, `viewable`.
+
+
 
 
 ## Development notes: OJS3

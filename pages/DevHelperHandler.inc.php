@@ -22,6 +22,7 @@ class DevHelperHandler extends Handler {
 		//--- store DAOs:
 		$this->journalDao = DAORegistry::getDAO('JournalDAO');
 		$this->articleDao = DAORegistry::getDAO('ArticleDAO');
+		$this->authorDao = DAORegistry::getDAO('AuthorDAO');
 		$this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$this->reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
 		$this->reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
@@ -76,24 +77,33 @@ class DevHelperHandler extends Handler {
 	  * Make review case (MRC) in the current journal.
 	  */
 	function mrc($args, $request) {
-		 //----- prepare processing:
+		header("Content-Type: text/html; charset=utf-8");
+		echo "START\n";
+		//----- prepare processing:
 		$router = $request->getRouter();
 		$requestArgs = $request->getQueryArray();
-		$context = $request->getContext();
+		$contextId = $request->getContext()->getId();
 		$user = $request->getUser();
-		$journal = $router->getContext($request);
-		$submissionId = $requestArgs['submissionId'];
-		//----- get RQC data:
-		$rqcDataObj = new RqcData();
-		$data = $rqcDataObj->rqcdata_array($user, $journal, $submissionId);
-		//----- add interesting bits:
-		$data['=========='] = "####################";
-		//$data['journal'] = $journal;
-		$data['rqc_journal_id'] = $this->plugin->getSetting($context->getId(), 'rqcJournalId');
-		$data['rqc_journal_key'] = $this->plugin->getSetting($context->getId(), 'rqcJournalKey');
+		$now = time();
+		//----- make submission:
+		$article = new Article();
+		$article->setJournalId($contextId);
+		$article->setTitle("Test submission " . date('Y-m-d H:i:s'), RQC_LOCALE);
+		$article->sub
+		printf("%s\n", $article->getTitle(RQC_LOCALE));
+		$this->articleDao->insertObject($article);
+		//----- make author:
+		$author = new Author();
+		$author->setGivenName("Anabel", RQC_LOCALE);
+		$author->setFamilyName("Author1", RQC_LOCALE);
+		$author->setEmail("author1@prechelt.dialup.fu-berlin.de");
+		$author->setSubmissionId($article->getId());
+		$this->authorDao->insertObject($author);
+		printf("context: %d\n", $contextId);
 		//----- produce output:
-		header("Content-Type: application/json; charset=utf-8");
+		//header("Content-Type: application/json; charset=utf-8");
 		//header("Content-Type: text/plain; charset=utf-8");
-		print(json_encode($data, JSON_PRETTY_PRINT));
+		//print(json_encode($data, JSON_PRETTY_PRINT));
+		echo "END.\n";
 	}
 }
