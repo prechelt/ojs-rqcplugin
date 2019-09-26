@@ -4,8 +4,8 @@
  * @file plugins/generic/reviewqualitycollector/tests/RqcCallTest.php
  *
  * Copyright (c) 2014-2018 Simon Fraser University
- * Copyright (c) 2000-2018 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * Copyright (c) 2018-2019 Lutz Prechelt
+ * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcCallTest
  * @ingroup plugins_generic_reviewqualitycollector
