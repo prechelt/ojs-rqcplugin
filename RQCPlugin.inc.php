@@ -147,7 +147,7 @@ class RQCPlugin extends GenericPlugin {
 					$form->readInputData();
 					if ($form->validate()) {
 						$form->execute();
-						$result = new JSONMessage(true, $form->fetch($request));
+						$result = new JSONMessage(true);
 						return $result;
 					}
 				} else {
