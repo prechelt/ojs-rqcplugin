@@ -14,6 +14,7 @@
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');
+import('lib.pkp.classes.site.VersionCheck');
 
 define ('DEBUG', false);
 
@@ -21,7 +22,7 @@ function rqctrace($msg) {
 	if (DEBUG)
 		trigger_error($msg, E_USER_WARNING);
 }
-
+define('RQC_PLUGIN_VERSION', '3.1.2');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
 define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
 define('RQC_LOCALE', 'en_US');

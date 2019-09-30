@@ -49,6 +49,9 @@ class RqcData {
 		//----- fundamentals:
 		$data['submissionId'] = $submissionId;
 		$data['api_version'] = '1.0alpha';
+		$data['mhs'] = "OJS " . VersionCheck::getCurrentCodeVersion()->getVersionString() .
+			// master/HEAD will show upcoming release for the above
+			", RQC plugin " . RQC_PLUGIN_VERSION;
 		$data['interactive_user'] = $this->get_interactive_user($user);
 
 		//----- submission data:
@@ -138,7 +141,7 @@ class RqcData {
 	 * (And hope this same address is registered with RQC as well.)
 	 */
 	protected static function get_interactive_user($user) {
-		return $user->getEmail();
+		return $user ? $user->getEmail() : "";
 	}
 
 	/**
