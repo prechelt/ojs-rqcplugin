@@ -75,6 +75,7 @@ class DevHelperHandler extends Handler {
 
 	/**
 	  * Make review case (MRC) in the current journal.
+	  * INCOMPLETE AND OUTDATED. TODO: remove.
 	  */
 	function mrc($args, $request) {
 		header("Content-Type: text/html; charset=utf-8");
@@ -89,10 +90,10 @@ class DevHelperHandler extends Handler {
 		$article = new Article();
 		$article->setJournalId($contextId);
 		$article->setTitle("Test submission " . date('Y-m-d H:i:s'), RQC_LOCALE);
-		$article->sub
+		//$article->sub
 		printf("%s\n", $article->getTitle(RQC_LOCALE));
 		$this->articleDao->insertObject($article);
-		//----- make author:
+		//----- make authors:
 		$author = new Author();
 		$author->setGivenName("Anabel", RQC_LOCALE);
 		$author->setFamilyName("Author1", RQC_LOCALE);
@@ -100,6 +101,16 @@ class DevHelperHandler extends Handler {
 		$author->setSubmissionId($article->getId());
 		$this->authorDao->insertObject($author);
 		printf("context: %d\n", $contextId);
+		//----- make review round:
+		//-----	make editor assignments:
+		//----- make reviewer assignments:
+		//----- make reviews:
+		//----- make decision
+		//-----
+		//-----
+		//-----
+		//-----
+		//-----
 		//----- produce output:
 		//header("Content-Type: application/json; charset=utf-8");
 		//header("Content-Type: text/plain; charset=utf-8");
