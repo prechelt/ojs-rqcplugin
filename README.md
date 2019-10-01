@@ -216,11 +216,14 @@ After setting up OJS anew:
   show_stacktrace = On 
   display_errors = Off
   activate_developer_functions = On
+  rqc_server = http://192.168.3.1:8000
   (display_errors breaks Ajax functions when it kicks in)
 - create journal rqctest:
-  create users editor1, author1, reviewer1, reviewer2; 
+  create users editor1, author1, reviewer1, reviewer2;
+  create a submission, 2 review assignments, 2 reviews; 
   Settings->Website->Plugins turn on RQC plugin
-- Turn RQC plugin on
+- tests/backup.sh backup
+  so you can quickly restore the review case during testing
 - http://localhost:8000/index.php/rqctest/rqcdevhelper/
 
 

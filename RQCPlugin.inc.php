@@ -133,6 +133,10 @@ class RQCPlugin extends GenericPlugin {
 		return Config::getVar('debug', 'activate_developer_functions', false);
 	}
 
+	static function rqc_server() {
+		return Config::getVar('debug', 'rqc_server', RQC_SERVER);
+	}
+
 	/**
 	 * @copydoc Plugin::manage()
 	 */

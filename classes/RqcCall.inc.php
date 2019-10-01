@@ -37,8 +37,22 @@ class RqcCall {
 	public function send($user, $journal, $submissionId) {
 		$data = $this->rqcdata->rqcdata_array($user, $journal, $submissionId);
 		$json = json_encode($data, JSON_PRETTY_PRINT);
-		$url = sprintf("%s/api", RQC_SERVER);  // TODO: incomplete!!!
-		// call $url with POST and $json in the body
+		$url = sprintf("%s/j/mhsapi/1/1?token=1", $this->plugin->rqc_server());
+		//----- call $url with POST and $json in the body:
+		$ch = curl_init($url);
+		curl_setopt_array($ch, array(
+			CURLOPT_POST => TRUE,
+			CURLOPT_RETURNTRANSFER => TRUE,
+			CURLOPT_HTTPHEADER => array(
+				'Content-Type: application/json',
+				'Authorization: Bearer 1234567890abcdef',
+			),
+			CURLOPT_POSTFIELDS => $json,
+		));
+		$output = curl_exec($ch);
+		$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+		return $output;
 		// treat: expected status codes, network failure
 		// create delayed call in case of failure
 	}
