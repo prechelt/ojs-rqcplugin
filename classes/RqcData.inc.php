@@ -49,9 +49,10 @@ class RqcData {
 		//----- fundamentals:
 		$data['submissionId'] = $submissionId;
 		$data['api_version'] = '1.0alpha';
-		$data['mhs'] = "OJS " . VersionCheck::getCurrentCodeVersion()->getVersionString() .
-			// master/HEAD will show upcoming release for the above
-			", RQC plugin " . RQC_PLUGIN_VERSION;
+		$data['mhs'] = "OJS";
+		// master/HEAD will show the upcoming release for the following:
+		$data['mhs_version'] = VersionCheck::getCurrentCodeVersion()->getVersionString();
+		$data['mhs_adapter_version'] = RQC_PLUGIN_VERSION;
 		$data['interactive_user'] = $this->get_interactive_user($user);
 
 		//----- submission data:
@@ -123,10 +124,12 @@ class RqcData {
 			elseif ($level == 1)
 				$level1N++;
 			$assignment['level'] = $level;
-			$assignment['firstname'] = $user->getGivenName(RQC_LOCALE);
-			$assignment['lastname'] = $user->getFamilyName(RQC_LOCALE);
-			$assignment['email'] = $user->getEmail();
-			$assignment['orcid_id'] = $user->getOrcid();
+			$editor = array();
+			$editor['firstname'] = $user->getGivenName(RQC_LOCALE);
+			$editor['lastname'] = $user->getFamilyName(RQC_LOCALE);
+			$editor['email'] = $user->getEmail();
+			$editor['orcid_id'] = $user->getOrcid();
+			$assignment['editor'] = $editor;
 			$result[] = $assignment;  // append
 		}
 		if (!$level1N && count($result)) {

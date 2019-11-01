@@ -35,9 +35,11 @@ class RqcCall {
 	 * @param $submissionId
 	 */
 	public function send($user, $journal, $submissionId) {
+		$rqcJournalId = $this->plugin->getSetting($journal->getId(), 'rqcJournalId');
+		$rqcJournalKey = $this->plugin->getSetting($journal->getId(), 'rqcJournalKey');
 		$data = $this->rqcdata->rqcdata_array($user, $journal, $submissionId);
 		$json = json_encode($data, JSON_PRETTY_PRINT);
-		$url = sprintf("%s/j/mhsapi/1/1?token=1", $this->plugin->rqc_server());
+		$url = sprintf("%s/j/mhsapi/%s/1", $this->plugin->rqc_server(), $rqcJournalId);
 		//----- call $url with POST and $json in the body:
 		$ch = curl_init($url);
 		curl_setopt_array($ch, array(
@@ -45,7 +47,7 @@ class RqcCall {
 			CURLOPT_RETURNTRANSFER => TRUE,
 			CURLOPT_HTTPHEADER => array(
 				'Content-Type: application/json',
-				'Authorization: Bearer 1234567890abcdef',
+				'Authorization: Bearer ' . $rqcJournalKey,
 			),
 			CURLOPT_POSTFIELDS => $json,
 		));
