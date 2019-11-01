@@ -226,6 +226,29 @@ After setting up OJS anew:
   so you can quickly restore the review case during testing
 - http://localhost:8000/index.php/rqctest/rqcdevhelper/
 
+Patches to OJS codebase that may be needed:
+
+      --- a/classes/template/PKPTemplateManager.inc.php
+      +++ b/classes/template/PKPTemplateManager.inc.php
+      @@ -869,7 +869,7 @@ class PKPTemplateManager extends Smarty {
+              static function &getManager($request = null) {
+                      if (!isset($request)) {
+                              $request = Registry::get('request');
+      -                       if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated call without request object.');
+      +                       // if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated call without request object.');
+                      }
+                      assert(is_a($request, 'PKPRequest'));
+
+- Aux branch modifydecisionoptionshook (2 commits off rqcdev2: 6a275c7808 1a91b158af)
+
+Branches:
+- modifydecisionoptionshook (2 commits off rqcdev2: 6a275c7808 1a91b158af): 
+  PR merged 2019-09 https://github.com/pkp/ojs/pull/2439 as 3c7a100610 in pkp-lib
+- rqcdev2 has 4900 additional commits of very old history before the RQC commits
+- rqcdev312l
+- pkp-lib/robusthooks: make HookRegistry ignore non-callable callbacks:
+  PR rejected https://github.com/pkp/pkp-lib/pull/5050
+
 
 ### Development notes: phpunit and PKPTestCase/DatabaseTestCase
 
