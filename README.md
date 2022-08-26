@@ -138,36 +138,35 @@ Target audience: OJS journal managers, RQC RQGuardians.
   - sudo apt-get install `cat z/apt-packages.txt`
   - add `/home/prechelt/.local/bin` to `$PATH`.
   - pip3 install -r z/requirements.txt
-    We do not need a venv for ojs development.h
-  -
+    We do not need a venv for ojs development.
 - set up OJS for development:
   - see OJS developer installation for reference:
     https://docs.pkp.sfu.ca/dev/documentation/en/getting-started
   - perform the steps described under _Install_ manually.
-    Perhaps retrieve the previous `config.inc.php`.
-- update OJS to the latest changes:
-  -
-
-- `config.inc.php`:
-  show_stacktrace = On
-  display_errors = Off
-  activate_developer_functions = On
-  rqc_server = http://192.168.3.1:8000
-  (display_errors breaks Ajax functions when it kicks in)
-- create journal rqctest:
-  create users editor1, author1, reviewer1, reviewer2;
-  create a submission, 2 review assignments, 2 reviews;
-  Settings->Website->Plugins turn on RQC plugin
+  - set remotes as described under _Remotes_
+  - Retrieve the previous `config.inc.php` and/or adjust `config.inc.php` to the following settings:
+    - [general]: installed = Off; base_url, scheduled_tasks
+    - [debug]: show_stacktrace = On; display_errors = Off  (display_errors breaks Ajax functions when it kicks in)
+    - [database]: host, port, name, username, password, persistent
+    - [email]: smtp_server, smtp_port, smtp_auth, smtp_username, smtp_password
+    - [reviewqualitycollector]: activate_developer_functions = On; rqc_server = http://localhost:<port>
+      (the plugin will use rqc_server if set and a fixed default otherwise)
+  - For DB setup (schema, admin user), you must use the web config dialog
+    at `http://localhost:port`.
+    For this to work, postgres must answer to its standard port 5432,
+    because as of 2022-08 the setup dialog has no port field.
+    Stop the DB container and set it back to the desired port right after
+    the config dialog has finished successfully. Restart `php -S`.
+- create initial data
+  - create journal rqctest with path rqctest:
+  - create users editor1, author1, reviewer1, reviewer2;
+  - create a submission, 2 review assignments, 2 reviews;
+  - Settings->Website->Plugins turn on RQC plugin
 - tests/backup.sh backup
   so you can quickly restore the review case during testing
-- http://localhost:8000/index.php/rqctest/rqcdevhelper/
+- http://localhost:<port>/index.php/rqctest/rqcdevhelper/
 - Perhaps apply patches to OJS codebase from `ojspatches`.
-
-For running OJS with RQC in development mode:
-- The OJS VM has a host-only network on 192.168.3.1/24.
-  The VM is 192.168.3.6, the host is 192.168.3.1.
-- For OJS to talk to RQC, start the Django dev server by
-  `python manage.py runserver 0.0.0.0:8000`
+- For OJS to talk to RQC, start the Django dev server
 
 
 >>>>>>> a648eb3f23 (RQC: README.md: started setup-from-scratch description)
