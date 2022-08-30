@@ -1,8 +1,8 @@
 # Review Quality Collector (RQC) plugin for OJS
 created 2017-08-30, Lutz Prechelt
 
-Version 2018-10-16 
-Status: unfinished, not yet usable
+Version 2022-08-29
+Status: **unfinished, not yet usable**
 
 ## What it is
 
@@ -12,6 +12,10 @@ Its core is a mechanism that supplies a reviewer with a receipt for
 their work for each journal year.
 The receipt is based on grading each review according to a journal-specific
 review quality definition.
+
+This repository is a fork of https://github.com/pkp/ojs
+with branches `rqc33` (off `stable-3_3_0`) and `rqc34` (off `main`)
+that add a directory `plugins/generic/reviewqualitycollector`.
 
 This plugin is an OJS adapter for the RQC API, by which OJS
 reports the reviewing data of individual article
@@ -48,16 +52,9 @@ https://reviewqualitycollector.org/t/api
 
 Target audience: OJS system administrators.
 
-<<<<<<< HEAD
-- The RQC plugin requires PHP 7. 
-  It will not work with PHP 5.
-  (Note you should not use PHP 5 _anywhere_ since 2018-12-31, because
-  [PHP 5 no longer receives security updates](https://secure.php.net/supported-versions.php).)
-=======
 - The RQC plugin requires PHP 7.
   It will not work with PHP 5, which
   [no longer receives security updates](https://secure.php.net/supported-versions.php).
->>>>>>> a648eb3f23 (RQC: README.md: started setup-from-scratch description)
 - In `config.inc.php`, set `scheduled_tasks = On`.
 - Make sure there is an entry in your OJS server's crontab
   (see "Scheduled Tasks" in the OJS `docs/README`) and that it includes
@@ -84,14 +81,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
 - Read about RQC at https://reviewqualitycollector.org.
 - In RQC, register an account for yourself.
 - Find your publisher in the RQC publisher directory
-<<<<<<< HEAD
-  and ask your publisherpersons to create an RQC section for
-  your journal. 
-  (If needed, ask your publisher to register at RQC first.)
-- Discuss review quality criteria with your co-editors.
-  Formulate an RQC review quality definition file.
-- As RQGuardian in RQC, set up your journal: 
-=======
   and ask your publisherpersons to create an RQC journal for
   your journal.
   (If needed, ask your publisher to register at RQC first.
@@ -99,7 +88,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
 - Discuss review quality criteria with your co-editors.
   Formulate an RQC review quality definition.
 - As RQGuardian in RQC, set up your journal:
->>>>>>> a648eb3f23 (RQC: README.md: started setup-from-scratch description)
   review quality definition,
   grading parameters (which people must/should/can/cannot grade a review).
 - In OJS, open the RQC plugin settings and enter your
@@ -121,11 +109,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
   reviewing data to RQC when the editorial decision is entered into OJS.
   RQC will then remind graders via email.
 
-<<<<<<< HEAD
-  
--------------------------------------
-=======
-
 ------------------------------------------------------------------------
 
 (everything from here on is difficult-to-understand, internal
@@ -139,6 +122,18 @@ Target audience: OJS journal managers, RQC RQGuardians.
   - add `/home/prechelt/.local/bin` to `$PATH`.
   - pip3 install -r z/requirements.txt
     We do not need a venv for ojs development.
+- As of 2022-08-30, we do not develop on the `main` branch (which will become OJS 3.4.0),
+  but on the `stable-3_3_0` branch, because `main` has so many structural
+  changes that my head is spinning.
+  I'll accumulate my required patches to OJS and PKP locally
+  and see what to do with them once RQC is more-or-less release-ready.
+  https://docs.pkp.sfu.ca/dev/contributors/#before-you-begin
+  I may want them in 3.3 and 3.4, because the release timeline so far was
+  - 3.0: 2016-08-31
+  - 3.1: 2017-10-23
+  - 3.2: 2020-02-28
+  - 3.3: 2020-11-28
+  - 3.4: under development
 - set up OJS for development:
   - see OJS developer installation for reference:
     https://docs.pkp.sfu.ca/dev/documentation/en/getting-started
@@ -169,8 +164,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
 - For OJS to talk to RQC, start the Django dev server
 
 
->>>>>>> a648eb3f23 (RQC: README.md: started setup-from-scratch description)
-
 ## Development notes: TO DO
 
 - add the journal ID/key validation via an RQC call
@@ -182,8 +175,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
 - write automated tests
 
 
-<<<<<<< HEAD
-=======
 ### Development notes: RQC plugin
 
 - Setting `activate_developer_functions = On` in `config.inc.php`
@@ -234,7 +225,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
   _callbackHandleCustomNavigationMenuItems
 
 
->>>>>>> a648eb3f23 (RQC: README.md: started setup-from-scratch description)
 ## Development notes: OJS data model (the relevant parts)
 
 RQC speaks of Journals, Submissions (i.e. articles), Authors,
