@@ -24,7 +24,7 @@ function rqctrace($msg)
         trigger_error($msg, E_USER_WARNING);
     }
 }
-define('RQC_PLUGIN_VERSION', '3.1.2');  // the OJS version for which this code should work
+define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
 define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
 define('RQC_LOCALE', 'en_US');
@@ -87,6 +87,15 @@ class RQCPlugin extends GenericPlugin
     {
         return __('plugins.generic.reviewqualitycollector.description');
     }
+
+	/**
+	 * Enable the settings form in the site-wide plugins list
+	 *
+	 * @return boolean
+	 */
+	public function isSitePlugin() {
+		return false;  // our settings are strictly journal-specific
+	}
 
     /**
      * Get a list of link actions for plugin management.
@@ -177,8 +186,6 @@ class RQCPlugin extends GenericPlugin
         switch ($request->getUserVar('verb')) {
             case 'settings':
                 $context = $request->getContext();
-                AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON, LOCALE_COMPONENT_PKP_MANAGER);
-                $templateMgr = TemplateManager::getManager($request);
                 $this->import('RQCSettingsForm');
                 $form = new RQCSettingsForm($this, $context->getId());
                 if ($request->getUserVar('save')) {
@@ -190,12 +197,12 @@ class RQCPlugin extends GenericPlugin
                     }
                 } else {
                     $form->initData();
-                }
-                $result = new JSONMessage(true, $form->fetch($request));
-                return $result;
-            case 'example_request':
+	                $result = new JSONMessage(true, $form->fetch($request));
+    	            return $result;
+				}
+			case 'example_request':
             // TODO
-            }
+		}
         return parent::manage($args, $request);
     }
 

@@ -13,8 +13,8 @@
 <version>
 	<application>reviewqualitycollector</application>
 	<type>plugins.generic</type>
-	<release>0.2.0prealpha</release>
-	<date>2019-09-11</date>
+	<release>0.2.1prealpha-for-OJS3.3.0</release>
+	<date>2022-09-02</date>
 	<lazy-load>1</lazy-load>
 	<class>RQCPlugin</class>
 </version>
