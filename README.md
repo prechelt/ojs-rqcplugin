@@ -1,14 +1,14 @@
 # Review Quality Collector (RQC) plugin for OJS
 created 2017-08-30, Lutz Prechelt
 
-Version 2022-08-29
-Status: **unfinished, not yet usable**
+Version 2022-09-15
+Status: **plugin is unfinished, not yet usable**
 
 ## What it is
 
-Review Quality Collector (RQC) is an initiative for improving the quality of 
-scientific peer review. 
-Its core is a mechanism that supplies a reviewer with a receipt for 
+Review Quality Collector (RQC) is an initiative for improving the quality of
+scientific peer review.
+Its core is a mechanism that supplies a reviewer with a receipt for
 their work for each journal year.
 The receipt is based on grading each review according to a journal-specific
 review quality definition.
@@ -67,9 +67,9 @@ Target audience: OJS system administrators.
   This only applies if you know how to create the proper .tar.gz file,
   your server allows in-place plugin updates (or you drop the data
   into the proper place by hand)
-  and, most importantly,  
+  and, most importantly,
   [the newest version of this README}(https://github.com/pkp/ojs/tree/master/plugins/generic/reviewqualitycollector/README.md)
-  indicates there have been relevant improvements since your version. 
+  indicates there have been relevant improvements since your version.
 - In OJS, go to Settings->Website->Plugins and activate the
   plugin "Review Quality Collector (RQC)" in category Generic Plugins.
 
@@ -117,18 +117,20 @@ Target audience: OJS journal managers, RQC RQGuardians.
 ## Development notes: Development setup
 
 - configure the machine itself:
-  - starting point: This repo has been cloned into /ws/gh/ojs on WSL Debian.
+  - starting point: This repo has been cloned into `/ws/gh/ojs` on WSL Debian.
   - sudo apt-get install `cat z/apt-packages.txt`
   - add `/home/prechelt/.local/bin` to `$PATH`.
-  - pip3 install -r z/requirements.txt
-    We do not need a venv for ojs development.
-- As of 2022-08-30, we do not develop on the `main` branch (which will become OJS 3.4.0),
-  but on the `stable-3_3_0` branch, because `main` has so many structural
-  changes that my head is spinning.
+  - `pip3 install -r z/requirements.txt`
+    We do not need a venv for ojs development if `fabric` is installed globally.
+- As of 2022-08-30, we do not develop off the `main` branch
+  (which will become OJS 3.4.0, our branch there is `rqc34`),
+  but off the `stable-3_3_0` branch (branch `rqc33`),
+  because `main` has so many structural changes that my head is spinning.
+  See `init_rqc33`/`init_rqc34` in `.bashrc`.
   I'll accumulate my required patches to OJS and PKP locally
   and see what to do with them once RQC is more-or-less release-ready.
   https://docs.pkp.sfu.ca/dev/contributors/#before-you-begin
-  I may want them in 3.3 and 3.4, because the release timeline so far was
+  I may want them in 3.3 _and_ 3.4, because as of 2022-09 the release timeline so far was
   - 3.0: 2016-08-31
   - 3.1: 2017-10-23
   - 3.2: 2020-02-28
@@ -150,7 +152,7 @@ Target audience: OJS journal managers, RQC RQGuardians.
     at `http://localhost:port`.
     For this to work, postgres must answer to its standard port 5432,
     because as of 2022-08 the setup dialog has no port field.
-    Stop the DB container and set it back to the desired port right after
+    Stop the DB container (see `fab --list`) and set it back to the desired port right after
     the config dialog has finished successfully. Restart `php -S`.
 - create initial data
   - create journal rqctest with path rqctest:
@@ -166,17 +168,29 @@ Target audience: OJS journal managers, RQC RQGuardians.
 
 ## Development notes: TO DO
 
-- add the journal ID/key validation via an RQC call
+- store opt-in response in review submission
+  https://docs.pkp.sfu.ca/dev/plugin-guide/en/examples-custom-field
+- settings: add the journal ID/key validation via an RQC call
 - add all hooks and actual activity
 - Switch to LetsEncrypt and put its root certificate into the plugin,
   because the Telekom certificate ends 2019-07-09
   (and RQC's ends 2019-03-27!)
-- elaborate on "ask your publisher" in locale.xml
+- elaborate on "ask your publisher" in locale.po
 - write automated tests
+- package the plugin, submit it for publication in OJS plugin gallery
 
 
-### Development notes: RQC plugin
+## Development notes: RQC plugin
 
+- Review Forms can be configured freely.
+  We will use only the 'extended text box' parts that are marked as
+  'will be sent to authors'
+- Our opt-in field must be added in review step3, which currently shows:
+  Review files, Review form (several fields), Reviewer files, Review discussions,
+  Recommendation.
+  The best place would be at the very bottom, after the recommendation.
+  To put my field there, I simply put a
+  `templates/reviewer/review/reviewerRecommendations.tpl` in the plugin
 - Setting `activate_developer_functions = On` in `config.inc.php`
   enables `example_request` functionality in `RQCPlugin::manage`
   and `::getActions`. Not yet implemented.
@@ -184,7 +198,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
   [my PKP forum thread](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/6)
 - In particular regarding
   [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
-- settings dialog does not close after OK.
 - OJS review rounds must create successive submission ids for RQC.
 - SpyHandler (now DevHelperHandler) gets 8 notices a la
   "Undefined index: first_name in /home/vagrant/ojs/lib/pkp/classes/submission/PKPAuthorDAO.inc.php on line 127"
@@ -203,6 +216,16 @@ Target audience: OJS journal managers, RQC RQGuardians.
 
 ## Development notes: General OJS knowledge
 
+- Overall PKP/OJS developer documentation
+  - Beware: It assumes OJS 3.4! Not all of this is available to the RQC plugin yet (e.g. APP\facades\Repo).
+  - Architecture: https://docs.pkp.sfu.ca/dev/documentation/en/architecture
+
+- Templates:
+  - Smarty: https://smarty-php.github.io/smarty/designers/language-builtin-functions.html
+  - fbv: FormBuilderVocabulary
+  - Accessing data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/html-smarty
+  - Injecting data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/advanced-custom-data.html
+  - ...
 - Many hooks are provided in `pkp-lib` like this
   `HookRegistry::call(strtolower_codesafe(get_class($this) . '::validate')`
   (this particular one is from `classes/form/Form.inc.php`)
@@ -214,11 +237,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
 - Editor assignment:
   "Can only recommend decision, authorized editor must record it."
 - Settings->Website->Plugins->Plugin Gallery
-- Plugins with Settings:
-  Google Analytics (Settings fail)
-  RQC (settings fail)
-  Web Feed (2 radiobuttons, one with an integer textbox)
-  Usage statistics (Sections, checkboxes, text fields, pulldown)
 - Beware of the various _persistent_ caches, e.g. for plugin settings
 - LoadHandler described in OSJ2.1 TechRef p. 46
 - Maybe-helpful items from the code:
@@ -296,7 +314,7 @@ via the primary key, called the `id`:
 ## Development notes: OJS3
 
 - installation: https://pkp.sfu.ca/wiki/index.php?title=Github_Documentation_for_PKP_Contributors
-- Many hooks are provided in `pkp-lib` like this 
+- Many hooks are provided in `pkp-lib` like this
   `HookRegistry::call(strtolower_codesafe(get_class($this) . '::validate')`
   (this particular one is from `classes/form/Form.inc.php`)
 - DAO class names are in classes/core/Application.inc.php::getDAOmap())
@@ -304,29 +322,29 @@ via the primary key, called the `id`:
 - Control flow, dispatch, URLs:
   https://pkp.sfu.ca/wiki/index.php?title=Router_Architecture
 - see notes in 2018.3.txt of 2018-10-02
-- Editor assignment: 
+- Editor assignment:
   "Can only recommend decision, authorized editor must record it."
 - Settings->Website->Plugins->Plugin Gallery
-- Plugins with Settings: 
-  Google Analytics (Settings fail) 
-  RQC (settings fail) 
-  Web Feed (2 radiobuttons, one with an integer textbox) 
+- Plugins with Settings:
+  Google Analytics (Settings fail)
+  RQC (settings fail)
+  Web Feed (2 radiobuttons, one with an integer textbox)
   Usage statistics (Sections, checkboxes, text fields, pulldown)
 - Beware of the various _persistent_ caches, e.g. for plugin settings
 - LoadHandler described in OSJ2.1 TechRef p. 46
-- Maybe-helpful items from the code: 
-  _callbackHandleCustomNavigationMenuItems 
+- Maybe-helpful items from the code:
+  _callbackHandleCustomNavigationMenuItems
 
 After setting up OJS anew:
-- config.inc.php: 
-  show_stacktrace = On 
+- config.inc.php:
+  show_stacktrace = On
   display_errors = Off
   activate_developer_functions = On
   rqc_server = http://192.168.3.1:8000
   (display_errors breaks Ajax functions when it kicks in)
 - create journal rqctest:
   create users editor1, author1, reviewer1, reviewer2;
-  create a submission, 2 review assignments, 2 reviews; 
+  create a submission, 2 review assignments, 2 reviews;
   Settings->Website->Plugins turn on RQC plugin
 - tests/backup.sh backup
   so you can quickly restore the review case during testing
@@ -348,7 +366,7 @@ Patches to OJS codebase that may be needed:
 - Aux branch modifydecisionoptionshook (2 commits off rqcdev2: 6a275c7808 1a91b158af)
 
 Branches:
-- modifydecisionoptionshook (2 commits off rqcdev2: 6a275c7808 1a91b158af): 
+- modifydecisionoptionshook (2 commits off rqcdev2: 6a275c7808 1a91b158af):
   PR merged 2019-09 https://github.com/pkp/ojs/pull/2439 as 3c7a100610 in pkp-lib
 - rqcdev2 has 4900 additional commits of very old history before the RQC commits
 - rqcdev312l
@@ -369,11 +387,11 @@ Branches:
   and `::getActions`. Not yet implemented.
 - See
   [my PKP forum thread](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/6)
-- In particular regarding 
+- In particular regarding
   [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
 - settings dialog does not close after OK.
 - OJS review rounds must create successive submission ids for RQC.
-- SpyHandler (now DevHelperHandler) gets 8 notices a la 
+- SpyHandler (now DevHelperHandler) gets 8 notices a la
   "Undefined index: first_name in /home/vagrant/ojs/lib/pkp/classes/submission/PKPAuthorDAO.inc.php on line 127"
 - Cronjob via PKPAcronPlugin?
 - Delayed-call storage via Plugin::updateSchema and my own DAO?
