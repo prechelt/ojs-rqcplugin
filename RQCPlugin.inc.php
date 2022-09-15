@@ -16,6 +16,8 @@
 import('lib.pkp.classes.plugins.GenericPlugin');
 import('lib.pkp.classes.site.VersionCheck');
 
+import('plugins.generic.reviewqualitycollector.classes.OptingService');
+
 define('DEBUG', false);
 
 function rqctrace($msg)
@@ -27,7 +29,7 @@ function rqctrace($msg)
 define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
 define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
-define('RQC_LOCALE', 'en_US');
+define('RQC_LOCALE', 'en_US');  // Plugin will enforce this locale internally
 define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
 
 
@@ -41,7 +43,18 @@ define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
  */
 class RQCPlugin extends GenericPlugin
 {
-    /**
+	public function __construct()
+	{
+		parent::__construct();
+		$this->stderr = fopen('php://stderr', 'w');  # print to php -S console stream
+	}
+
+	public function _print($msg) {
+		# print to php -S console stream (to be used during development only; remove calls in final code)
+		fwrite($this->stderr, $msg);
+	}
+
+	/**
      * @copydoc Plugin::register()
      *
      * @param null|mixed $mainContextId
@@ -50,22 +63,30 @@ class RQCPlugin extends GenericPlugin
     {
         $success = parent::register($category, $path, $mainContextId);
         if ($success && $this->getEnabled()) {
-            HookRegistry::register(
-                'EditorAction::modifyDecisionOptions',
-                [$this, 'cb_modifyDecisionOptions']
-            );
+			HookRegistry::register(
+				'TemplateResource::getFilename',
+				array($this, '_overridePluginTemplates')
+			);
+			HookRegistry::register(
+				'TemplateManager::fetch',
+				array($this, 'cb_addReviewerOptingFieldData')
+			);
+			HookRegistry::register(
+				'EditorAction::modifyDecisionOptions',
+				array($this, 'cb_modifyDecisionOptions')
+			);
             HookRegistry::register(
                 'EditorAction::recordDecision',
-                [$this, 'cb_recordDecision']
+				array($this, 'cb_recordDecision')
             );
             HookRegistry::register(
                 'LoadComponentHandler',
-                [$this, 'cb_editorActionRqcGrade']
+				array($this, 'cb_editorActionRqcGrade')
             );
             if (RQCPlugin::has_developer_functions()) {
                 HookRegistry::register(
                     'LoadHandler',
-                    [$this, 'cb_setupDevHelperHandler']
+					array($this, 'cb_setupDevHelperHandler')
                 );
             }
         }
@@ -216,23 +237,46 @@ class RQCPlugin extends GenericPlugin
 
     //========== Callbacks ==========
 
-    /**
-     * Callback for LoadComponentHandler.
-     */
-    public function cb_editorActionRqcGrade($hookName, $args)
-    {
-        $component = & $args[0];
-        $op = & $args[1];
-        if ($component == 'modals.editorDecision.EditorDecisionHandler' &&
-                $op == 'rqcGrade') {
-            $component = 'plugins.generic.reviewqualitycollector.components.editorDecision.RqcEditorDecisionHandler';
-            return true;  // no more handling needed
-        }
-        return false;  // proceed with normal processing
-    }
+	/**
+	 * Callback for TemplateManager::display.
+	 */
+	public function cb_addReviewerOptingFieldData($hookName, $args)
+	{
+		$templateMgr =& $args[0];  /* @var $templateMgr TemplateManager */
+		$template =& $args[1];
+		$request = PKPApplication::get()->getRequest();
+		// $this->_print("cb_addOptingFieldData: $template\n");
+		if ($template == 'reviewer/review/step3.tpl') {
+			// $this->_print("cb_addOptingFieldData is ACTIVE! #####\n");
+			$templateMgr->assign(
+				['rqcReviewerOptingChoices' => [
+					// '' => __('common.chooseOne'),
+					'' => 'common.chooseOne',
+					RQC_OPTING_STATUS_IN => 'plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_yes',
+					RQC_OPTING_STATUS_OUT => 'plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_no',
+			]]);
+		}
+		return false;  // proceed with normal processing
+	}
 
 
-    /**
+	/**
+	 * Callback for LoadComponentHandler.
+	 */
+	public function cb_editorActionRqcGrade($hookName, $args)
+	{
+		$component = & $args[0];
+		$op = & $args[1];
+		if ($component == 'modals.editorDecision.EditorDecisionHandler' &&
+			$op == 'rqcGrade') {
+			$component = 'plugins.generic.reviewqualitycollector.components.editorDecision.RqcEditorDecisionHandler';
+			return true;  // no more handling needed
+		}
+		return false;  // proceed with normal processing
+	}
+
+
+	/**
      * Callback for EditorAction::modifyDecisionOptions.
      */
     public function cb_modifyDecisionOptions($hookName, $args)

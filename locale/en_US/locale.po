@@ -26,6 +26,18 @@ msgstr "RQC-Grade the Reviews"
 msgid "plugins.generic.reviewqualitycollector.editoraction.grade.title"
 msgstr "Grade the reviews in RQC"
 
+msgid "plugins.generic.reviewqualitycollector.reviewer_opt_in.header"
+msgstr "Take part in Review Quality Collector?"
+
+msgid "plugins.generic.reviewqualitycollector.reviewer_opt_in.text"
+msgstr "<p><a href=\"https://reviewqualitycollector.org/\" target=\"_blank\">Review Quality Collector (RQC)</a> is an initiative for improving the quality of scientific peer review. Its core is a mechanism that supplies a reviewer with a receipt for their work for each journal year. The receipt certifies the quality of the rewiewing work based on a journal-specific review quality definition. This turns reviewing into a source of reputation and so improves reviewer motivation and hence review quality.</p><p>If I agree, the journal will forward my review data (my identity, the review text, various metadata) to RQC and I will receive a reviewing receipt from RQC in exchange.<br>If I do not agree, neither my identity nor the review text will be passed on to RQC.</p><p>See <a href=\"https://reviewqualitycollector.org/t/faq\" target=\"_blank\">reviewqualitycollector.org/t/faq</a> for details.</p><p>The agreement covers all my reviews for the present journal in the present calendar year; a separate one is needed for any other journal and any other year."
+
+msgid "plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_yes"
+msgstr "Yes, take part in RQC"
+
+msgid "plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_no"
+msgstr "No, opt out from RQC"
+
 msgid "plugins.generic.reviewqualitycollector.settings.description"
 msgstr "<p>Review Quality Collector (RQC) is an initiative for improving the quality of scientific peer review. Its core is a mechanism that supplies a reviewer with a receipt for their work for each journal year. The receipt certifies the quality of the rewiewing work based on a journal-specific review quality definition. This turns reviewing into a source of reputation and so improves reviewer motivation and hence review quality.<br> See <a href=\"https://reviewqualitycollector.org/\">reviewqualitycollector.org</a> for details.</p>"
 
