@@ -14,14 +14,14 @@
  */
 
 import('classes.handler.Handler');
-import('plugins.generic.reviewqualitycollector.classes.RqcCall');
+//import('plugins.generic.reviewqualitycollector.classes.RqcCall');
 
 class DevHelperHandler extends Handler {
 	function __construct() {
+		parent::__construct();
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
 		//--- store DAOs:
 		$this->journalDao = DAORegistry::getDAO('JournalDAO');
-		$this->articleDao = DAORegistry::getDAO('ArticleDAO');
 		$this->authorDao = DAORegistry::getDAO('AuthorDAO');
 		$this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$this->reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
@@ -56,10 +56,28 @@ class DevHelperHandler extends Handler {
 		print(json_encode($data, JSON_PRETTY_PRINT));
 	}
 
-	function hello($args, $request)
-	{
+	public function ra_reset($args, $request) {
 		header("Content-Type: text/plain; charset=utf-8");
-		echo "Hello, world!";
+		$submissionId =& $args[0];
+		$userId = $request->getUser()->getId();
+		$ra = $this->reviewAssignmentDao->getLastReviewRoundReviewAssignmentByReviewer($submissionId, $userId);
+		$raId = $ra->getId();
+		$ra->setRecommendation(null);
+		$ra->setDateCompleted(null);
+		$this->reviewAssignmentDao->updateObject($ra);
+		return("ra_reset $raId (submission $submissionId, reviewer $userId)\n");
+	}
+
+	public function hello($args, $request) {
+		header("Content-Type: text/plain; charset=utf-8");
+		$rq = array(
+			// "context" => $request->getContext(),
+			"contextId" => $request->getContext()->getId(),
+			"user" => $request->getUser(),
+			"userVars" => $request->getUserVars(),
+			       );
+		return "Hello, this is the request\n" . json_encode($rq, JSON_PRETTY_PRINT)
+			. "\nand the args:\n" . json_encode($args, JSON_PRETTY_PRINT) . "\n";
 	}
 
 	/**

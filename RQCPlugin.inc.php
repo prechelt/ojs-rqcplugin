@@ -16,7 +16,7 @@
 import('lib.pkp.classes.plugins.GenericPlugin');
 import('lib.pkp.classes.site.VersionCheck');
 
-import('plugins.generic.reviewqualitycollector.classes.OptingService');
+import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
 
 define('DEBUG', false);
 
@@ -43,8 +43,7 @@ define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
  */
 class RQCPlugin extends GenericPlugin
 {
-	public function __construct()
-	{
+	public function __construct() {
 		parent::__construct();
 		$this->stderr = fopen('php://stderr', 'w');  # print to php -S console stream
 	}
@@ -59,18 +58,16 @@ class RQCPlugin extends GenericPlugin
      *
      * @param null|mixed $mainContextId
      */
-    public function register($category, $path, $mainContextId = null)
-    {
+    public function register($category, $path, $mainContextId = null) {
         $success = parent::register($category, $path, $mainContextId);
         if ($success && $this->getEnabled()) {
 			HookRegistry::register(
 				'TemplateResource::getFilename',
 				array($this, '_overridePluginTemplates')
 			);
-			HookRegistry::register(
-				'TemplateManager::fetch',
-				array($this, 'cb_addReviewerOptingFieldData')
-			);
+			$this->reviewerOpting = new ReviewerOpting();
+			$this->reviewerOpting->register();
+
 			HookRegistry::register(
 				'EditorAction::modifyDecisionOptions',
 				array($this, 'cb_modifyDecisionOptions')
@@ -96,16 +93,14 @@ class RQCPlugin extends GenericPlugin
     /**
      * @copydoc Plugin::getDisplayName()
      */
-    public function getDisplayName()
-    {
+    public function getDisplayName() {
         return __('plugins.generic.reviewqualitycollector.displayName');
     }
 
     /**
      * @copydoc Plugin::getDescription()
      */
-    public function getDescription()
-    {
+    public function getDescription() {
         return __('plugins.generic.reviewqualitycollector.description');
     }
 
@@ -126,8 +121,7 @@ class RQCPlugin extends GenericPlugin
      *
      * @return array List of LinkActions
      */
-    public function getActions($request, $actionArgs)
-    {
+    public function getActions($request, $actionArgs) {
         //----- get existing actions, stop if not enabled:
         $actions = parent::getActions($request, $actionArgs);
         if (!$this->getEnabled()) {
@@ -189,21 +183,18 @@ class RQCPlugin extends GenericPlugin
         return $actions;
     }
 
-    public static function has_developer_functions()
-    {
+    public static function has_developer_functions() {
         return Config::getVar('reviewqualitycollector', 'activate_developer_functions', false);
     }
 
-    public static function rqc_server()
-    {
+    public static function rqc_server() {
         return Config::getVar('reviewqualitycollector', 'rqc_server', RQC_SERVER);
     }
 
     /**
      * @copydoc Plugin::manage()
      */
-    public function manage($args, $request)
-    {
+    public function manage($args, $request) {
         switch ($request->getUserVar('verb')) {
             case 'settings':
                 $context = $request->getContext();
@@ -230,41 +221,16 @@ class RQCPlugin extends GenericPlugin
     /**
      * Get the handler path for this plugin.
      */
-    public function getHandlerPath()
-    {
+    public function getHandlerPath() {
         return $this->getPluginPath() . '/pages/';
     }
 
     //========== Callbacks ==========
 
 	/**
-	 * Callback for TemplateManager::display.
-	 */
-	public function cb_addReviewerOptingFieldData($hookName, $args)
-	{
-		$templateMgr =& $args[0];  /* @var $templateMgr TemplateManager */
-		$template =& $args[1];
-		$request = PKPApplication::get()->getRequest();
-		// $this->_print("cb_addOptingFieldData: $template\n");
-		if ($template == 'reviewer/review/step3.tpl') {
-			// $this->_print("cb_addOptingFieldData is ACTIVE! #####\n");
-			$templateMgr->assign(
-				['rqcReviewerOptingChoices' => [
-					// '' => __('common.chooseOne'),
-					'' => 'common.chooseOne',
-					RQC_OPTING_STATUS_IN => 'plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_yes',
-					RQC_OPTING_STATUS_OUT => 'plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_no',
-			]]);
-		}
-		return false;  // proceed with normal processing
-	}
-
-
-	/**
 	 * Callback for LoadComponentHandler.
 	 */
-	public function cb_editorActionRqcGrade($hookName, $args)
-	{
+	public function cb_editorActionRqcGrade($hookName, $args) {
 		$component = & $args[0];
 		$op = & $args[1];
 		if ($component == 'modals.editorDecision.EditorDecisionHandler' &&
@@ -279,8 +245,7 @@ class RQCPlugin extends GenericPlugin
 	/**
      * Callback for EditorAction::modifyDecisionOptions.
      */
-    public function cb_modifyDecisionOptions($hookName, $args)
-    {
+    public function cb_modifyDecisionOptions($hookName, $args) {
         $context = $args[0];
         $stageId = $args[1];
         $makeDecision = & $args[2];
@@ -299,8 +264,7 @@ class RQCPlugin extends GenericPlugin
     /**
      * Callback for EditorAction::recordDecision.
      */
-    public function cb_recordDecision($hookName, $args)
-    {
+    public function cb_recordDecision($hookName, $args) {
         import('plugins.generic.reviewqualitycollector.classes.RqcData');
         $GO_ON = true;  // false continues processing, true stops it (needed during development).
         $submission = & $args[0];
@@ -317,18 +281,17 @@ class RQCPlugin extends GenericPlugin
     }
 
     /**
-     * Installs Handlers for our look-at-an-RQC-request page at /rqcdevhelper/spy
-     * and our make-review-case (MRC) request page at /rqcdevhelper/mrc.
-     * (See setupBrowseHandler in plugins/generic/browse for tech information.)
+     * Installs Handlers for various ad-hoc utilities, used during development only.
      */
-    public function cb_setupDevHelperHandler($hookName, $params)
-    {
-        $page = & $params[0];
+    public function cb_setupDevHelperHandler($hookName, $params) {
+		$page =& $params[0];
+		$op =& $params[1];
+		$this->_print("### cb_setupDevHelperHandler: page='$page' op='$op'\n");
         if ($page == 'rqcdevhelper') {
-            define('RQC_PLUGIN_NAME', $this->getName());
+			$this->import('pages/DevHelperHandler');
             define('HANDLER_CLASS', 'DevHelperHandler');
-            $handlerFile = & $params[2];
-            $handlerFile = $this->getHandlerPath() . 'DevHelperHandler.inc.php';
+			return true;
         }
+		return false;
     }
 }

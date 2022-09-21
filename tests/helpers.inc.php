@@ -12,7 +12,7 @@
 import('lib.pkp.classes.user.User');
 import('classes.submission.Submission');
 
-import('plugins.generic.reviewqualitycollector.classes.OptingService');
+import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
 import('plugins.generic.reviewqualitycollector.RQCPlugin');
 
 function make_reviewable_submission($context, $authors, $reviewers): Submission {

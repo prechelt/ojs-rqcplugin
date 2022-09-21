@@ -20,12 +20,14 @@
 	{fbvElement type="select" id="recommendation" from=$reviewerRecommendationOptions selected=$reviewAssignment->getRecommendation() size=$fbvStyles.size.MEDIUM required=$required|default:true disabled=$readOnly}
 {/fbvFormSection}
 
-{fbvFormSection label="plugins.generic.reviewqualitycollector.reviewer_opt_in.header"
-                description=$description|default:"plugins.generic.reviewqualitycollector.reviewer_opt_in.text"}
-	{fbvElement type="select" id="rqc_opt_in"
-	            from=$rqcReviewerOptingChoices
-	            selected=null
-	            size=$fbvStyles.size.MEDIUM
-	            required=true
-	            disabled=$readOnly}
-{/fbvFormSection}
+{if $rqcOptingRequired}
+	{fbvFormSection label="plugins.generic.reviewqualitycollector.reviewer_opt_in.header"
+					description=$description|default:"plugins.generic.reviewqualitycollector.reviewer_opt_in.text"}
+		{fbvElement type="select" id="rqcOptIn"
+					from=$rqcReviewerOptingChoices
+					selected=null
+					size=$fbvStyles.size.MEDIUM
+					required=true
+					disabled=$readOnly}
+	{/fbvFormSection}
+{/if}

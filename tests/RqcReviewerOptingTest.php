@@ -19,10 +19,10 @@ import('lib.pkp.tests.DatabaseTestCase');
 import('lib.pkp.classes.db.DAORegistry');
 //import('lib.pkp.classes.core.PKPRouter');
 
-import('plugins.generic.reviewqualitycollector.classes.OptingService');
+import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
 import('plugins.generic.reviewqualitycollector.tests.helpers');
 
-class RqcReviewerOptingServiceTest extends DatabaseTestCase {
+class RqcReviewerReviewerOptingTest extends DatabaseTestCase {
 
 	protected function getAffectedTables() {
 		return array('users', 'user_settings');
@@ -34,28 +34,40 @@ class RqcReviewerOptingServiceTest extends DatabaseTestCase {
 		$this->assertTrue($this->reviewer11->getId() > 0);  // ensure that make_user() writes to DB
 	}
 
-	public function testOptingService() {
+	public function testReviewerOpting() {
 		$context = 1;  // fictive, does not really exist
 		$user = $this->reviewer11;
+		$opting = new ReviewerOpting();
 		$this->expectOutputString('');  // report any debugging output we print during development
 		//----- check undefined initial case:
-		$status = OptingService::getStatus($context, $user);
+		$status = $opting->getStatus($context, $user, !RQC_PRELIM_OPTING);
+		$this->assertEquals(RQC_OPTING_STATUS_UNDEFINED, $status);
+		$status = $opting->getStatus($context, $user, RQC_PRELIM_OPTING);
+		$this->assertEquals(RQC_OPTING_STATUS_UNDEFINED, $status);
+		//----- check storing IN preliminarily:
+		$opting->setStatus($context, $user, RQC_OPTING_STATUS_IN, RQC_PRELIM_OPTING);
+		$status = $opting->getStatus($context, $user, RQC_PRELIM_OPTING);
+		$this->assertEquals(RQC_OPTING_STATUS_IN, $status);
+		$status = $opting->getStatus($context, $user);
+		$this->assertEquals(RQC_OPTING_STATUS_UNDEFINED, $status);
+		//----- check storing OUT preliminarily:
+		$opting->setStatus($context, $user, RQC_OPTING_STATUS_OUT, RQC_PRELIM_OPTING);
+		$status = $opting->getStatus($context, $user, RQC_PRELIM_OPTING);
+		$this->assertEquals(RQC_OPTING_STATUS_OUT, $status);
+		$status = $opting->getStatus($context, $user);
 		$this->assertEquals(RQC_OPTING_STATUS_UNDEFINED, $status);
 		//----- check storing IN:
-		OptingService::setStatus($context, $user, RQC_OPTING_STATUS_IN);
-		$status = OptingService::getStatus($context, $user);
+		$opting->setStatus($context, $user, RQC_OPTING_STATUS_IN);
+		$status = $opting->getStatus($context, $user, RQC_PRELIM_OPTING);
+		$this->assertEquals(RQC_OPTING_STATUS_IN, $status);
+		$status = $opting->getStatus($context, $user);
 		$this->assertEquals(RQC_OPTING_STATUS_IN, $status);
 		//----- check storing OUT:
-		OptingService::setStatus($context, $user, RQC_OPTING_STATUS_OUT);
-		$status = OptingService::getStatus($context, $user);
+		$opting->setStatus($context, $user, RQC_OPTING_STATUS_OUT);
+		$status = $opting->getStatus($context, $user, RQC_PRELIM_OPTING);
 		$this->assertEquals(RQC_OPTING_STATUS_OUT, $status);
-	}
-
-	protected function tearDown(): void
-	{
-		parent::tearDown();  // restore previous DB contents
-		$status = OptingService::getStatus(1, $this->reviewer11);
-		$this->assertEquals(RQC_OPTING_STATUS_UNDEFINED, $status);  // make sure DB restoring works
+		$status = $opting->getStatus($context, $user);
+		$this->assertEquals(RQC_OPTING_STATUS_OUT, $status);
 	}
 }
 
@@ -63,6 +75,7 @@ class RqcReviewerOptingServiceTest extends DatabaseTestCase {
 class RqcReviewerOptingFormTest extends DatabaseTestCase {
 
 	protected function getAffectedTables() {
+		// complete DB reset is available by returning PKP_TEST_ENTIRE_DB
 		return array(
 			'authors',
 			'publications', 'publication_settings',
