@@ -23,6 +23,14 @@ define('RQC_PRELIM_OPTING',  true);  // for readability
 
 /**
  * Store or query the opt-in/opt-out status of a user.
+ * setStatus/getStatus/optingRequired manage the status in two user settings fields.
+ * reviewerRecommendations.tpl adds an opting selection field into ReviewerReviewStep3Form.
+ * cb_addReviewerOptingField injects the selection values.
+ * cb_initOptingData (for GET) injects the current value and a flag for showing/not showing the field.
+ * cb_readOptIn (for POST) moves the opting value from request to form.
+ * cb_step3execute (for POST) stores opting value into DB.
+ * The latter three hook into ReviewerReviewStep3Form.
+ * TODO: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09.
  */
 class ReviewerOpting
 {
@@ -48,7 +56,7 @@ class ReviewerOpting
 		);
 		HookRegistry::register(
 			'reviewerreviewstep3form::initdata',
-			array($this, 'cb_initOptingRequired')
+			array($this, 'cb_initOptingData')
 		);
 		HookRegistry::register(
 			'reviewerreviewstep3form::readuservars',
@@ -82,7 +90,7 @@ class ReviewerOpting
 	/**
 	 * Callback for reviewerreviewstep3form::initData.
 	 */
-	public function cb_initOptingRequired($hookName, $args): bool {
+	public function cb_initOptingData($hookName, $args): bool {
 		$step3Form =& $args[0];
 		$request = Application::get()->getRequest();
 		$user = $request->getUser();
