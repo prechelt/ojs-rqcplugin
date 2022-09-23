@@ -1,18 +1,6 @@
 <?php
 
-/**
- * @file plugins/generic/reviewqualitycollector/classes/RqcCall.inc.php
- *
- * Copyright (c) 2014-2017 Simon Fraser University
- * Copyright (c) 2018-2019 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class RqcData
- * @ingroup plugins_generic_reviewqualitycollector
- *
- * @brief Compute the JSON-like contents of a call to the RQC API.
- */
-
+import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
 import('plugins.generic.reviewqualitycollector.RQCPlugin');
 import('plugins.generic.reviewqualitycollector.classes.RqcData');
 
@@ -21,10 +9,11 @@ import('plugins.generic.reviewqualitycollector.classes.RqcData');
  * Class RqcCall.
  * The core of the RQC plugin: Retrieve the reviewing data of one submission and send it to the RQC server.
  */
-class RqcCall {
+class RqcCall extends RqcDevHelper {
 	public function __construct() {
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
 		$this->rqcdata = new RqcData();
+		parent::__construct();
 	}
 
 	/**

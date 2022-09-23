@@ -14,7 +14,7 @@
  */
 
 import('classes.handler.Handler');
-//import('plugins.generic.reviewqualitycollector.classes.RqcCall');
+import('plugins.generic.reviewqualitycollector.classes.RqcCall');
 
 class DevHelperHandler extends Handler {
 	function __construct() {
@@ -34,7 +34,7 @@ class DevHelperHandler extends Handler {
 	/**
 	 * Show RQC request corresponding to a given submissionId=n arg.
 	 */
-	function spy($args, $request) {
+	function rqccall($args, $request) {
 		//----- prepare processing:
 		$router = $request->getRouter();
 		$requestArgs = $request->getQueryArray();
@@ -92,18 +92,18 @@ class DevHelperHandler extends Handler {
 	}
 
 	/**
-	 * Make review case (MRC) in the current journal.
-	 * INCOMPLETE AND OUTDATED. TODO: remove.
+	 * Show contents of would-be RQCCall for submission given as arg.
 	 */
 	function callrqc($args, $request) {
 		//----- obtain data:
+		$submissionId = $args[0];
 		$router = $request->getRouter();
 		$requestArgs = $request->getQueryArray();
 		$context = $request->getContext();
 		$user = $request->getUser();
 		//----- make call:
 		$this->rqccall = new RqcCall();
-		$output = $this->rqccall->send($user, $context, "1");
+		$output = "Hallo!\n";  // $this->rqccall->send($user, $context, "1");
 		//----- send response:
 		header("Content-Type: application/json; charset=utf-8");
 		print $output;

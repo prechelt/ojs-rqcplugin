@@ -18,14 +18,6 @@ import('lib.pkp.classes.site.VersionCheck');
 
 import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
 
-define('DEBUG', false);
-
-function rqctrace($msg)
-{
-    if (DEBUG) {
-        trigger_error($msg, E_USER_WARNING);
-    }
-}
 define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
 define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
@@ -271,12 +263,12 @@ class RQCPlugin extends GenericPlugin
         $decision = & $args[1];
         $result = & $args[2];
         $is_recommendation = & $args[3];
-        rqctrace('cb_recordDecision called', E_USER_WARNING);
+        $this->_print('### cb_recordDecision called');
         if ($is_recommendation || !RqcOjsData::is_decision($decision)) {
             return $GO_ON;
         }
         // act on decision:
-        rqctrace('cb_recordDecision calls RQC', E_USER_WARNING);
+		$this->_print('### cb_recordDecision calls RQC');
         return $GO_ON;
     }
 

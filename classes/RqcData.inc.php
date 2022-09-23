@@ -13,6 +13,7 @@
  * @brief Compute the JSON-like contents of a call to the RQC API.
  */
 
+import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
 import('classes.workflow.EditorDecisionActionsManager');  // decision action constants
 
 /**
@@ -20,32 +21,35 @@ import('classes.workflow.EditorDecisionActionsManager');  // decision action con
  * Builds the data object to be sent to the RQC server from the various pieces of the OJS data model:
  * submission, authors, editors, reviewers and reviews, active user, decision, etc.
  */
-class RqcData {
+class RqcData extends RqcDevHelper {
+
+	const CONFIDENTIAL_FIELD_REGEXP = '/[Cc]onfidential/';  // review form fields with such names are excluded
 
 	function __construct() {
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
 		//--- store DAOs:
 		$this->journalDao = DAORegistry::getDAO('JournalDAO');
-		$this->articleDao = DAORegistry::getDAO('ArticleDAO');
+		$this->submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		$this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$this->reviewFormDao = DAORegistry::getDAO('ReviewFormDAO');
+		$this->reviewFormElementDao = DAORegistry::getDAO('ReviewFormElementDAO');
+		$this->reviewFormResponseDao = DAORegistry::getDAO('ReviewFormResponseDAO');
 		$this->reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
 		$this->reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
 		$this->stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
 		$this->userDao = DAORegistry::getDAO('UserDAO');
 		$this->userGroupDao = DAORegistry::getDAO('UserGroupDAO');
+		parent::__construct();
 	}
 
 	/**
-	 * Show RQC request corresponding to a given submissionId=n arg.
+	 * Build PHP array with the data for an RQC call to be made.
 	 */
 	function rqcdata_array($user, $journal, $submissionId) {
 		//----- prepare processing:
-		$submission = $this->articleDao->getById($submissionId);
-		$sectionname = $submission->getSectionAbbrev();
-		if (!$sectionname)
-			$sectionname = $submission->getSectionTitle();
+		$submission = $this->submissionDao->getById($submissionId);
 		$data = array();
-
+		$this->_print("### rqcdata_array");
 		//----- fundamentals:
 		$data['submissionId'] = $submissionId;
 		$data['api_version'] = '1.0alpha';
@@ -149,39 +153,43 @@ class RqcData {
 
 	/**
 	 * Return linear array of RQC review descriptor objects.
+	 * Would formerly use ReviewerSubmission::getMostRecentPeerReviewComment for the review text.
+	 * As of 3.3, there are two cases:
+	 * case 1) with configured ReviewForm (using ReviewFormElement, ReviewFormResponses),
+	 * case 2) default review data structure (using SubmissionComment).
+	 * See PKPReviewerReviewStep3Form::saveReviewForm() for details.
 	 */
 	protected function get_review_set($submissionId, $reviewRound) {
 		$result = array();
 		$reviewRoundN = $reviewRound->getRound();
 		$assignments = $this->reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRoundN-1);
-		foreach ($assignments as $reviewId => $assignment) {
-			if ($assignment->getRound() != $reviewRoundN ||
-				$assignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
+		foreach ($assignments as $reviewId => $reviewAssignment) {
+			if ($reviewAssignment->getRound() != $reviewRoundN ||
+				$reviewAssignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
 				continue;  // irrelevant record, skip it.
 			$rqcreview = array();
 			$reviewerSubmission = $this->reviewerSubmissionDao->getReviewerSubmission($reviewId);
 			//--- review metadata:
 			$rqcreview['visible_id'] = $reviewId;
-			$rqcreview['invited'] = $this->rqcify_datetime($assignment->getDateNotified());
-			$rqcreview['agreed'] = $this->rqcify_datetime($assignment->getDateConfirmed());
-			$rqcreview['expected'] = $this->rqcify_datetime($assignment->getDateDue());
-			$rqcreview['submitted'] = $this->rqcify_datetime($assignment->getDateCompleted());
+			$rqcreview['invited'] = $this->rqcify_datetime($reviewAssignment->getDateNotified());
+			$rqcreview['agreed'] = $this->rqcify_datetime($reviewAssignment->getDateConfirmed());
+			$rqcreview['expected'] = $this->rqcify_datetime($reviewAssignment->getDateDue());
+			$rqcreview['submitted'] = $this->rqcify_datetime($reviewAssignment->getDateCompleted());
 			//--- review text:
-			$comment = $reviewerSubmission->getMostRecentPeerReviewComment();
-			$text = "";
-			if ($comment) {
-				if ($comment->getCommentType() != COMMENT_TYPE_PEER_REVIEW)
-					continue;  // irrelevant record, skip it
-				$title = $comment->getCommentTitle();
-				$body = $comment->getComments();
-				$text = $title ? "<h2>$title</h2>\r\n$body" : $body;
+			$reviewFormId = $reviewAssignment->getReviewFormId();
+			if ($reviewFormId) {  // case 1
+				$reviewtext = $this->getReviewTextFromForm($reviewerSubmission, $reviewFormId);
+				$rqcreview['is_html'] = false;  // TODO 2: is there really no way to get HTML here?
 			}
-			$rqcreview['text'] = $text;
-			$rqcreview['is_html'] = true;  // TODO: make ternary!
-			$recommendation = $assignment->getRecommendation();
+			else {  // case 2
+				$reviewtext = $this->getReviewTextDefault($reviewAssignment);
+				$rqcreview['is_html'] = true;
+			}
+			$rqcreview['text'] = $reviewtext;
+			$recommendation = $reviewAssignment->getRecommendation();
 			$rqcreview['suggested_decision'] = $this->rqc_decision("reviewer", $recommendation);
 			//--- reviewer:
-			$reviewerobject = $this->userDao->getById($assignment->getReviewerId());
+			$reviewerobject = $this->userDao->getById($reviewAssignment->getReviewerId());
 			$rqcreviewer = array();
 			$rqcreviewer['email'] = $reviewerobject->getEmail();
 			$rqcreviewer['firstname'] = $reviewerobject->getGivenName(RQC_LOCALE);
@@ -189,6 +197,61 @@ class RqcData {
 			$rqcreviewer['orcid_id'] = $reviewerobject->getOrcid();
 			$rqcreview['reviewer'] = $rqcreviewer;
 			$result[] = $rqcreview;  // append
+		}
+		return $result;
+	}
+
+
+	/**
+	 * Obtain what is to be considered the text of the view for case 1.
+	 * Goes through the review form elements,
+	 * works on the REVIEW_FORM_ELEMENT_TYPE_TEXTAREA fields only,
+	 * producing a stretch of output text for each, using
+	 * 1. the element's name as a heading and
+	 * 2. the corresponding ReviewFormResponse's value as body.
+	 */
+	protected function getReviewTextFromForm(ReviewerSubmission $reviewerSubmission, int $reviewFormId): string {
+		$this->_print("##### getReviewTextFromForm\n");
+		$reviewId = $reviewerSubmission->getReviewId();
+		// $reviewForm = $this->reviewFormDao->getById($reviewFormId);
+		$reviewFormElements = $this->reviewFormElementDao->getByReviewFormId($reviewFormId);
+		$result = "";
+		while ($reviewFormElement = $reviewFormElements->next()) {
+			$this->_print("### reviewFormElement.elementType=" . $reviewFormElement->getElementType() .
+				"  included='". $reviewFormElement->getIncluded() . "'\n");
+			if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_TEXTAREA &&
+					$reviewFormElement->getIncluded()) {
+				$reviewFormElementId = $reviewFormElement->getId();
+				$elementTitle = $reviewFormElement->getQuestion('en_US');  // may have HTML tags!
+				$elementTitle = str_replace('<p>', '', $elementTitle);
+				$elementTitle = str_replace('</p>', '', $elementTitle);
+				$responseElement = $this->reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElementId);
+				$responseText = $this->cleanPlaintextTextarea($responseElement->getValue());
+				if (!preg_match(self::CONFIDENTIAL_FIELD_REGEXP, $elementTitle)) {
+					$result .= "\n### $elementTitle\n\n$responseText\n\n";
+				}
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Obtain what is to be considered the text of the view for case 2.
+	 */
+	protected static function getReviewTextDefault(ReviewAssignment $reviewAssignment): string {
+		$submissionCommentDao = DAORegistry::getDAO('SubmissionCommentDAO');
+		/* @var $submissionCommentDao SubmissionCommentDAO */
+		$viewableOnly = true;  // will automatically skip confidential comment
+		$submissionComments = $submissionCommentDao->getReviewerCommentsByReviewerId(
+			$reviewAssignment->getSubmissionId(),
+			$reviewAssignment->getReviewerId(), $reviewAssignment->getId(), $viewableOnly);
+		$result = "";
+		while($submissionComment = $submissionComments->next()) {
+			if ($submissionComment->getCommentType() != COMMENT_TYPE_PEER_REVIEW)
+				continue;  // irrelevant record, skip it
+			$title = $submissionComment->getCommentTitle();  // will be empty
+			$body = $submissionComment->getComments();
+			$result .= $title ? "\n<div>$title</div>\n\n$body\n\n" : "\n$body\n";
 		}
 		return $result;
 	}
@@ -218,34 +281,6 @@ class RqcData {
 			}
 			return sprintf("%s-%s.R%d",
 				$journalname, $submission_id, $round);
-		}
-	}
-
-	/**
-	 * Helper: Get first english entry if one exists or else:
-	 * all entries in one string if $else_all or
-	 * the entry of the alphabetically first locale otherwise.
-	 * @param array $all_entries  mapping from locale name to string
-	 */
-	protected static function englishest($all_entries, $else_all=false) {
-		$all_nonenglish_locales = array();
-		foreach ($all_entries as $locale => $entry) {
-			if (substr($locale, 0, 2) === "en") {
-				return $entry;  // ...and we're done!
-			}
-			$all_nonenglish_locales[] = $locale;
-		}
-		// no en locale found. Return first-of or all others, sorted by locale:
-		sort($all_nonenglish_locales);
-		$all_nonenglish_entries = array();
-		foreach ($all_nonenglish_locales as $locale) {
-			$all_nonenglish_entries[] = $all_entries[$locale];
-		}
-		if ($else_all) {
-			return implode(" / ", $all_nonenglish_entries);
-		}
-		else {
-			return $all_nonenglish_entries[0];
 		}
 	}
 
@@ -284,8 +319,44 @@ class RqcData {
 		elseif ($role == "editor")
 			return $editorMap[$ojs_decision];
 		else
-			assert(False, "rqc_decision: wrong role " + $role);
+			assert(False, "rqc_decision: wrong role " . $role);
 			return "";
+	}
+
+	/**
+	 * Helper: Remove possible unwanted properties from text coming from textarea fields.
+	 */
+	protected static function cleanPlaintextTextarea($text): string {
+		$text = str_replace('\r', '', $text);  // may contain CR LF, we want only LF
+		return $text;
+	}
+
+	/**
+	 * Helper: Get first english entry if one exists or else:
+	 * all entries in one string if $else_all or
+	 * the entry of the alphabetically first locale otherwise.
+	 * @param array $all_entries  mapping from locale name to string
+	 */
+	protected static function englishest($all_entries, $else_all=false) {
+		$all_nonenglish_locales = array();
+		foreach ($all_entries as $locale => $entry) {
+			if (substr($locale, 0, 2) === "en") {
+				return $entry;  // ...and we're done!
+			}
+			$all_nonenglish_locales[] = $locale;
+		}
+		// no en locale found. Return first-of or all others, sorted by locale:
+		sort($all_nonenglish_locales);
+		$all_nonenglish_entries = array();
+		foreach ($all_nonenglish_locales as $locale) {
+			$all_nonenglish_entries[] = $all_entries[$locale];
+		}
+		if ($else_all) {
+			return implode(" / ", $all_nonenglish_entries);
+		}
+		else {
+			return $all_nonenglish_entries[0];
+		}
 	}
 
 	/**
