@@ -223,11 +223,32 @@ from `getAffectedTables`.
   The best place would be at the very bottom, after the recommendation.
   To put my field there, I simply put a
   `templates/reviewer/review/reviewerRecommendations.tpl` in the plugin
+- Add hook to PKPReviewerReviewStep3Form::saveForLater() so that I can do
+  ReviewerOpting::setStatus(..., RQC_PRELIM_OPTING), which currently is never used.
 - Setting `activate_developer_functions = On` in `config.inc.php`
   enables `example_request` functionality in `RQCPlugin::manage`
   and `::getActions`. Not yet implemented.
 - See [my PKP forum thread](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/6)
 - In particular regarding [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
+- Pieces that take part in review submission[superclasslevel]:
+    - ReviewerHandler[0] -> PKPReviewerHandler[1]
+        - submission()[1]: called for the overall form with tabs
+        - step()[1]: display one tab's contents  (has no hooks)
+            - getReviewForm()[0] -> ReviewerReviewStep3Form[0]
+        - saveStep()[1]: store data preliminarily  (has no hooks)
+            - getReviewForm()[0] -> ReviewerReviewStep3Form[0]
+    - Templates (overwriting levels: Plugin[0] -> OJS[1] -> PKP[2]; includes: [I1], [I2], [IName]): all in reviewer.review
+        - step3[1][IreviewerRecommendations[0]][Istep3[2]]
+        - reviewerRecommendations[0]: select:recommendation, select:rqc_opt_in
+    - ReviewerReviewStep3Form[0] -> PKPReviewerReviewStep3Form[1] -> ReviewerReviewForm[2] -> Form[3]
+        - Template assignment (to `$this->_template`)
+          via `parent::__construct(sprintf('reviewer/review/step%d.tpl', $step));`
+          in ReviewerReviewForm::__construct()
+        - Form[3] has many hooks, all accessible by downcased subclassname, e.g.:
+          ::Constructor, ::display (in fetch()), ::initData, ::validate, ::execute, ::readUserVars,
+- How does data get to a template?
+  Handler calls `$templateMgr->assign(array('attrname' => value))`,
+  template uses `$attrname`.
 - OJS review rounds must create successive submission ids for RQC.
 - SpyHandler (now DevHelperHandler) gets 8 notices a la
   "Undefined index: first_name in /home/vagrant/ojs/lib/pkp/classes/submission/PKPAuthorDAO.inc.php on line 127"
@@ -247,3 +268,6 @@ from `getAffectedTables`.
 - elaborate on "ask your publisher" in locale.po
 - write automated tests
 - package the plugin, submit it for publication in OJS plugin gallery
+- Refactorings:
+    - change names with underscores into convention: `rqc_opt_in` -> `rqcOptIn` etc.
+    - ...
