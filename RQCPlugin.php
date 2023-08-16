@@ -1,9 +1,8 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/RQCPlugin.inc.php
+ * @file plugins/generic/reviewqualitycollector/RQCPlugin.php
  *
- * Copyright (c) 2014-2017 Simon Fraser University
  * Copyright (c) 2018-2019 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
@@ -13,15 +12,23 @@
  * @brief Review Quality Collector (RQC) plugin class
  */
 
-import('lib.pkp.classes.plugins.GenericPlugin');
-import('lib.pkp.classes.site.VersionCheck');
+namespace APP\plugins\generic\reviewqualitycollector;
 
-import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
+use APP\core\Application;
+use PKP\config\Config;
+use PKP\core\JSONMessage;
+use PKP\core\PKPRequest;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\AjaxModal;
+use PKP\linkAction\request\OpenWindowAction;
+use PKP\plugins\GenericPlugin;
+use PKP\plugins\Hook;
+
 
 define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
 define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
-define('RQC_LOCALE', 'en_US');  // Plugin will enforce this locale internally
+define('RQC_LOCALE', 'en');  // Plugin will enforce this locale internally
 define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
 
 
@@ -53,27 +60,27 @@ class RQCPlugin extends GenericPlugin
     public function register($category, $path, $mainContextId = null) {
         $success = parent::register($category, $path, $mainContextId);
         if ($success && $this->getEnabled()) {
-			HookRegistry::register(
+			Hook::add(
 				'TemplateResource::getFilename',
 				array($this, '_overridePluginTemplates')
 			);
 			$this->reviewerOpting = new ReviewerOpting();
 			$this->reviewerOpting->register();
 
-			HookRegistry::register(
+			Hook::add(
 				'EditorAction::modifyDecisionOptions',
 				array($this, 'cb_modifyDecisionOptions')
 			);
-            HookRegistry::register(
+            Hook::add(
                 'EditorAction::recordDecision',
 				array($this, 'cb_recordDecision')
             );
-            HookRegistry::register(
+            Hook::add(
                 'LoadComponentHandler',
 				array($this, 'cb_editorActionRqcGrade')
             );
             if (RQCPlugin::has_developer_functions()) {
-                HookRegistry::register(
+                Hook::add(
                     'LoadHandler',
 					array($this, 'cb_setupDevHelperHandler')
                 );
@@ -108,7 +115,7 @@ class RQCPlugin extends GenericPlugin
     /**
      * Get a list of link actions for plugin management.
      *
-     * @param request PKPRequest
+     * @param $request PKPRequest
      * @param $actionArgs array The list of action args to be included in request URLs.
      *
      * @return array List of LinkActions
@@ -165,7 +172,7 @@ class RQCPlugin extends GenericPlugin
         $additions[] = new LinkAction(
             'example_request2',
             new OpenWindowAction(
-                $router->url($request, ROUTE_PAGE, 'MySuperHandler', 'myop', 'mypath', ['my','array'])
+                $router->url($request, Application::ROUTE_PAGE, 'MySuperHandler', 'myop', 'mypath', ['my','array'])
             ),
             '(example_request2)',
             null
@@ -190,7 +197,6 @@ class RQCPlugin extends GenericPlugin
         switch ($request->getUserVar('verb')) {
             case 'settings':
                 $context = $request->getContext();
-                $this->import('RQCSettingsForm');
                 $form = new RQCSettingsForm($this, $context->getId());
                 if ($request->getUserVar('save')) {
                     $form->readInputData();
