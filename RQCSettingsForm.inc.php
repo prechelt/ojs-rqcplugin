@@ -21,6 +21,7 @@ use PKP\form\validation\FormValidatorCSRF;
 use PKP\form\validation\FormValidatorPost;
 use PKP\form\validation\FormValidatorRegExp;
 
+
 class RQCSettingsForm extends Form {
 
 	/** @var int */
@@ -41,8 +42,8 @@ class RQCSettingsForm extends Form {
 		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalId', 'required',
 								'plugins.generic.reviewqualitycollector.settingsform.rqcJournalIDInvalid',
 								'/^[0-9]+$/'));
-		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalKey', 'required',
-								'plugins.generic.reviewqualitycollector.settingsform.rqcJournalKeyInvalid',
+		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalAPIKey', 'required',
+								'plugins.generic.reviewqualitycollector.settingsform.rqcJournalAPIKeyInvalid',
 								'/^[0-9A-Za-z]+$/'));
 		$this->addCheck(new FormValidatorPost($this));
 		$this->addCheck(new FormValidatorCSRF($this));
@@ -54,7 +55,7 @@ class RQCSettingsForm extends Form {
 	function initData() {
 		$this->_data = array(
 			'rqcJournalId' => $this->_plugin->getSetting($this->_contextId, 'rqcJournalId'),
-			'rqcJournalKey' => $this->_plugin->getSetting($this->_contextId, 'rqcJournalKey'),
+			'rqcJournalAPIKey' => $this->_plugin->getSetting($this->_contextId, 'rqcJournalAPIKey'),
 		);
 	}
 
@@ -62,7 +63,7 @@ class RQCSettingsForm extends Form {
 	 * Assign form data to user-submitted data.
 	 */
 	function readInputData() {
-		$this->readUserVars(array('rqcJournalId', 'rqcJournalKey'));
+		$this->readUserVars(array('rqcJournalId', 'rqcJournalAPIKey'));
 	}
 
 	/**
@@ -78,9 +79,9 @@ class RQCSettingsForm extends Form {
 	/**
 	 * Save settings.
 	 */
-	function execute(...$functionArgs) {
+	function execute() {
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalId', trim($this->getData('rqcJournalId')), 'string');
-		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalKey', trim($this->getData('rqcJournalKey')), 'string');
+		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalAPIKey', trim($this->getData('rqcJournalAPIKey')), 'string');
 		return parent::execute();
 	}
 }
