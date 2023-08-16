@@ -13,7 +13,10 @@
  * @brief Operations for retrieving and modifying DelayedRQCCall arrays/objects.
  */
 
-import('lib.pkp.classes.db.DAO');
+namespace APP\plugins\generic\reviewqualitycollector;
+
+use \PKP\db\DAO;
+use \PKP\db\DAOResultFactory;
 
 // TODO: use SchemaDAO  https://docs.pkp.sfu.ca/dev/documentation/en/architecture-database
 class DelayedRQCCallsDAO extends DAO {
@@ -23,16 +26,16 @@ class DelayedRQCCallsDAO extends DAO {
 	 * @param $journalId int  which calls to get, or 0 for all calls
 	 * @param $horizon int  unix timestamp. Get all calls not retried since this time.
 	 * 				Defaults to 23.8 hours ago.
-	 * @return Iterator of raw row arrays
+	 * @return DAOResultFactory
 	 */
 	function getCallsToRetry($journalId = 0, $horizon = null) {
-		if (isNull($horizon)) {
+		if (is_null($horizon)) {
 			$horizon = time() - 23*3600 - 48*60;  // 23.8 hours ago
 		}
 		$result = $this->retrieve(
 			'SELECT	*
 			FROM rqc_delayed_calls
-			WHERE (journal_id = ? OR ? = 0) AND 
+			WHERE (journal_id = ? OR ? = 0) AND
 			      (last_try_ts < ?)',
 			array(
 				$journalId, $journalId,

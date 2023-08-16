@@ -13,7 +13,13 @@
  * @brief Form for journal managers to modify RQC plugin settings
  */
 
-import('lib.pkp.classes.form.Form');
+namespace APP\plugins\generic\reviewqualitycollector;
+
+use APP\template\TemplateManager;
+use PKP\form\Form;
+use PKP\form\validation\FormValidatorCSRF;
+use PKP\form\validation\FormValidatorPost;
+use PKP\form\validation\FormValidatorRegExp;
 
 class RQCSettingsForm extends Form {
 
@@ -72,7 +78,7 @@ class RQCSettingsForm extends Form {
 	/**
 	 * Save settings.
 	 */
-	function execute() {
+	function execute(...$functionArgs) {
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalId', trim($this->getData('rqcJournalId')), 'string');
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalKey', trim($this->getData('rqcJournalKey')), 'string');
 		return parent::execute();

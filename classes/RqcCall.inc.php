@@ -1,9 +1,8 @@
 <?php
 
-import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
-import('plugins.generic.reviewqualitycollector.RQCPlugin');
-import('plugins.generic.reviewqualitycollector.classes.RqcData');
+namespace APP\plugins\generic\reviewqualitycollector;
 
+use PKP\plugins\PluginRegistry;
 
 /**
  * Class RqcCall.

@@ -12,7 +12,12 @@
  * @brief Store or query the opt-in/opt-out status of a user.
  */
 
-import('plugins.generic.reviewqualitycollector.RQCPlugin');
+namespace APP\plugins\generic\reviewqualitycollector;
+
+use APP\core\Application;
+use APP\template\TemplateManager;
+use PKP\plugins\Hook;
+use PKP\user\User;
 
 define('RQC_OPTING_STATUS_IN',  36);  // internal, external
 define('RQC_OPTING_STATUS_OUT', 35);  // internal, external
@@ -50,19 +55,19 @@ class ReviewerOpting
 	 * Register callbacks. This is to be called from the plugin's register().
 	 */
 	public function register() {
-		HookRegistry::register(
+		Hook::add(
 			'TemplateManager::fetch',
 			array($this, 'cb_addReviewerOptingField')
 		);
-		HookRegistry::register(
+		Hook::add(
 			'reviewerreviewstep3form::initdata',
 			array($this, 'cb_initOptingData')
 		);
-		HookRegistry::register(
+		Hook::add(
 			'reviewerreviewstep3form::readuservars',
 			array($this, 'cb_readOptIn')
 		);
-		HookRegistry::register(
+		Hook::add(
 			'reviewerreviewstep3form::execute',
 			array($this, 'cb_step3execute')
 		);

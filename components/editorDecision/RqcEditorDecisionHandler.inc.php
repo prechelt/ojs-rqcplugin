@@ -13,7 +13,11 @@
  * @brief Handle modal dialog before submitting and redirecting to RQC.
  */
 
-import('classes.handler.Handler');
+namespace APP\plugins\generic\reviewqualitycollector;
+
+use PKP\core\JSONMessage;
+use PKP\handler\PKPHandler;
+use PKP\plugins\PluginRegistry;
 
 class RqcEditorDecisionHandler extends PKPHandler
 {

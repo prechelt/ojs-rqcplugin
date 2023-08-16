@@ -9,8 +9,10 @@
  * @class RqcDevHelper
  * @ingroup plugins_generic_reviewqualitycollector
  *
- * @brief Base class provinding a _print() method for ad-hoc manual tracing during development
+ * @brief Base class providing a _print() method for ad-hoc manual tracing during development
  */
+
+namespace APP\plugins\generic\reviewqualitycollector;
 
 class RqcDevHelper {
 	public function __construct() {

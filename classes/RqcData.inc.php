@@ -13,8 +13,13 @@
  * @brief Compute the JSON-like contents of a call to the RQC API.
  */
 
-import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
-import('classes.workflow.EditorDecisionActionsManager');  // decision action constants
+namespace APP\plugins\generic\reviewqualitycollector;
+
+use PKP\db\DAORegistry;
+use PKP\plugins\PluginRegistry;
+use PKP\security\Role;
+use PKP\site\VersionCheck;
+
 
 /**
  * Class RqcData.
@@ -91,7 +96,7 @@ class RqcData extends RqcDevHelper {
 			$rqcauthor['email'] = $authorobject->getEmail();
 			$rqcauthor['firstname'] = $authorobject->getGivenName(RQC_LOCALE);
 			$rqcauthor['lastname'] = $authorobject->getFamilyName(RQC_LOCALE);
-			$rqcauthor['is_corresponding'] = true;  // TODO
+			$rqcauthor['is_corresponding'] = true;  // TODO 2
 			$rqcauthor['order_number'] = (int)($authorobject->getSequence());
 			$result[] = $rqcauthor;
 		}
@@ -120,8 +125,8 @@ class RqcData extends RqcDevHelper {
 			$user = $this->userDao->getById($stageassign->getUserId());
 			$userGroup = $this->userGroupDao->getById($stageassign->getUserGroupId());
 			$role = $userGroup->getRoleId();
-			$levelMap = array(ROLE_ID_MANAGER => 3,
-				ROLE_ID_SUB_EDITOR => 1);
+			$levelMap = array(Role::ROLE_ID_MANAGER => 3,
+                Role::ROLE_ID_SUB_EDITOR => 1);
 			$level = $levelMap[$role] ?? 0;
 			if (!$level)
 				continue;  // irrelevant role, skip stage assignment entry

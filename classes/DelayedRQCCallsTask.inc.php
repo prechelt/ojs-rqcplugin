@@ -14,7 +14,10 @@
  * @brief Class to retry failed RQC calls as a scheduled task.
  */
 
-import('lib.pkp.classes.scheduledTask.ScheduledTask');
+namespace APP\plugins\generic\reviewqualitycollector;
+
+use PKP\db\DAORegistry;
+use PKP\scheduledTask\ScheduledTask;
 
 define('RQCCALL_MAX_RETRIES', 10);
 
