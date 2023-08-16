@@ -1,0 +1,7 @@
+php8.1
+php8.1-pgsql
+php7.4-pgsql
+composer
+npm
+python3
+python3-pip
