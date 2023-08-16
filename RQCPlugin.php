@@ -34,11 +34,12 @@ define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
 
 /**
  * Class RQCPlugin.
- * Provides a settings dialog (for RQC journal ID and Key),
- * adds a menu entry to send review data to RQC (to start the grading process manually),
- * notifies RQC upon the submission acceptance decision (to start the
- * grading process automatically or extend it with additional reviews, if any),
- * if sending reviewing data fails, repeats it via cron and a queue.
+ * Provides a settings dialog (for RQC journal ID and Key);
+ *  asks reviewers to opt in or out (once per year per journal) when submitting a review;
+ *  adds an editor menu entry to send review data to RQC (to start the grading process manually);
+ *  notifies RQC upon the submission acceptance decision (to start the
+ *  grading process automatically or extend it with additional reviews, if any);
+ *  if sending reviewing data fails, repeats it via cron and a queue.
  */
 class RQCPlugin extends GenericPlugin
 {
@@ -62,23 +63,13 @@ class RQCPlugin extends GenericPlugin
         if ($success && $this->getEnabled()) {
 			Hook::add(
 				'TemplateResource::getFilename',
-				array($this, '_overridePluginTemplates')
+				array($this, '_overridePluginTemplates')  // needed by ReviewerOpting
 			);
 			$this->reviewerOpting = new ReviewerOpting();
 			$this->reviewerOpting->register();
+            $this->editorActions = new EditorActions();
+            $this->editorActions->register();
 
-			Hook::add(
-				'EditorAction::modifyDecisionOptions',
-				array($this, 'cb_modifyDecisionOptions')
-			);
-            Hook::add(
-                'EditorAction::recordDecision',
-				array($this, 'cb_recordDecision')
-            );
-            Hook::add(
-                'LoadComponentHandler',
-				array($this, 'cb_editorActionRqcGrade')
-            );
             if (RQCPlugin::has_developer_functions()) {
                 Hook::add(
                     'LoadHandler',
