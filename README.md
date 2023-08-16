@@ -28,10 +28,11 @@ https://reviewqualitycollector.org/t/api
 
 ## How it works
 
-- extends the journal master data forms by two additional fields:
-  `rqcJournalId` and `rqcJournalKey`.
+- Provides journal-specific settings
+  `rqcJournalId` and `rqcJournalAPIKey`
+  that identify the journals's representation on RQC.
 - When both are filled, they are checked against RQC
-  whether they are a valid pair.
+  whether they are a valid pair and rejected if not.
 - If they are accepted, they are stored as additional JournalSettings.
 - If these settings exist, the plugin will add a button "RQC-grade the reviews"
   by which editors can submit the reviewing data for a given
@@ -39,20 +40,21 @@ https://reviewqualitycollector.org/t/api
   This step is optional for the editors.
   Depending on how RQC is configured for that journal, the given
   editor may then be redirected to RQC to perform (or not)
-  a grading rightaway.
+  a grading right away.
 - The plugin will also intercept the acceptance-decision-making
   event and send the decision and reviewing data for that submission
   to RQC then.
 - Should the RQC service be unavailable when data is submitted
   automatically at decision time, the request will be stored
-  and will be repeated once a day for several days until it goes through.
+  and will be repeated once a day for several days until it goes through
+  (not yet implemented).
 
 
 ## How to use it: Installation
 
 Target audience: OJS system administrators.
 
-- The RQC plugin requires PHP 8.
+- The RQC plugin requires PHP 7 and OJS 3.3.
 - In `config.inc.php`, set `scheduled_tasks = On`.
 - Make sure there is an entry in your OJS server's crontab
   (see "Scheduled Tasks" in the OJS `docs/README`) and that it includes

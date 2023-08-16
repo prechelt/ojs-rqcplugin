@@ -13,8 +13,12 @@
  * @brief Handle requests to show what OJS-to-RQC requests will look like.
  */
 
-import('classes.handler.Handler');
-import('plugins.generic.reviewqualitycollector.classes.RqcCall');
+namespace APP\plugins\generic\reviewqualitycollector;
+
+
+use APP\handler\Handler;
+use PKP\db\DAORegistry;
+use PKP\plugins\PluginRegistry;
 
 class DevHelperHandler extends Handler {
 	function __construct() {
@@ -49,7 +53,7 @@ class DevHelperHandler extends Handler {
 		$data['=========='] = "####################";
 		//$data['journal'] = $journal;
 		$data['rqc_journal_id'] = $this->plugin->getSetting($context->getId(), 'rqcJournalId');
-		$data['rqc_journal_key'] = $this->plugin->getSetting($context->getId(), 'rqcJournalKey');
+        $data['rqc_journal_api_key'] = $this->plugin->getSetting($context->getId(), 'rqcJournalAPIKey');
         //----- produce output:
 		header("Content-Type: application/json; charset=utf-8");
 		//header("Content-Type: text/plain; charset=utf-8");

@@ -33,7 +33,8 @@ class RqcData extends RqcDevHelper {
 	function __construct() {
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
 		//--- store DAOs:
-		$this->journalDao = DAORegistry::getDAO('JournalDAO');
+        $this->editDecisionDao = DAORegistry::getDAO('EditDecisionDAO');
+        $this->journalDao = DAORegistry::getDAO('JournalDAO');
 		$this->submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		$this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$this->reviewFormDao = DAORegistry::getDAO('ReviewFormDAO');
@@ -54,9 +55,8 @@ class RqcData extends RqcDevHelper {
 		//----- prepare processing:
 		$submission = $this->submissionDao->getById($submissionId);
 		$data = array();
-		$this->_print("### rqcdata_array");
+		$this->_print("### rqcdata_array\n");
 		//----- fundamentals:
-		$data['submissionId'] = $submissionId;
 		$data['api_version'] = '1.0alpha';
 		$data['mhs'] = "OJS";
 		// master/HEAD will show the upcoming release for the following:
@@ -65,23 +65,25 @@ class RqcData extends RqcDevHelper {
 		$data['interactive_user'] = $this->get_interactive_user($user);
 
 		//----- submission data:
-		$data['title'] = $this->get_title($submission->getTitle(null));
 		$lastReviewRound = $this->reviewRoundDao->getLastReviewRoundBySubmissionId($submissionId);
 		$reviewroundN = $lastReviewRound->getRound();
-		$data['visible_uid'] = $this->get_uid($journal, $submission, $reviewroundN);
-		$alldata = $submission->getAllData();
+        $data['visible_uid'] = $this->get_uid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
+        // $submissionId is unsuitable as submission_id: it will recur in next review round.
+        // We could use $lastReviewRound->getId(), but use the artificial visible_uid (easier debugging!)
+        $data['submission_id'] = $data['visible_uid'];
+        $data['title'] = $this->get_title($submission->getTitle(null));
+        $alldata = $submission->getAllData();
 		$data['submitted'] = $this->rqcify_datetime($alldata['dateSubmitted']);
 		// assume that round $reviewroundN-1 exists (but it may not!!!):
-		$data['predecessor_submission_id'] = $this->get_uid($journal, $submission,
-			$reviewroundN-1, true);
 		$data['predecessor_visible_uid'] = $this->get_uid($journal, $submission,
 			$reviewroundN-1, false);
+        $data['predecessor_submission_id'] = $data['predecessor_visible_uid'];
 
 		//----- authors, editor assignments, reviews, decision:
-		$data['author_set'] = $this->get_author_set($submission->getAuthors());
-		$data['editorassignment_set'] = $this->get_editorassignment_set($submissionId);
-		$data['review_set'] = $this->get_review_set($submissionId, $lastReviewRound);
-		$data['decision'] = $this->get_decision();
+        $data['author_set'] = $this->get_author_set($submission->getAuthors());
+        $data['edassgmt_set'] = $this->get_editorassignment_set($submissionId);
+        $data['review_set'] = $this->get_review_set($submissionId, $lastReviewRound);
+        $data['decision'] = $this->get_decision($submission, $lastReviewRound);
 
 		return $data;
 	}
@@ -103,13 +105,26 @@ class RqcData extends RqcDevHelper {
 		return $result;
 	}
 
-	/**
-	 * Return RQC-style decision string.
-	 */
-	protected function get_decision() {
-		// See EditDecisionDAO->getEditorDecisions
-		return array("TODO: get_decision");
-	}
+    /**
+     * Return RQC-style decision string.
+     * The data is found in EditDecision objects. There can be multiple ones, from different editors.
+     * Some describe recommendations, others decisions.
+     * We use decisions only and return an 'unknown' if there are only recommendations.
+     * We simply use the first decision we see.
+     */
+    protected function get_decision($submission, $reviewRound) {
+        // See EditDecisionDAO->getEditorDecisions, $this->rqc_decision
+        $rr = $reviewRound;
+        $editorDecisions = $this->editDecisionDao->getEditorDecisions(
+            $rr->getSubmissionId(), $rr->getStageId(), $rr->getRound());
+        foreach ($editorDecisions as $decision) {
+            $result = $this->rqc_decision("editor", $decision['decision']);
+            if ($result) {  // use the first non-undefined decision
+                return $result;
+            }
+        }
+        return "";  // only recommendations found, no decisions
+    }
 
 	/**
 	 * Return linear array of RQC editorship descriptor objects.
@@ -133,13 +148,12 @@ class RqcData extends RqcDevHelper {
 			elseif ($level == 1)
 				$level1N++;
 			$assignment['level'] = $level;
-			$editor = array();
-			$editor['firstname'] = $user->getGivenName(RQC_LOCALE);
-			$editor['lastname'] = $user->getFamilyName(RQC_LOCALE);
-			$editor['email'] = $user->getEmail();
-			$editor['orcid_id'] = $user->getOrcid();
-			$assignment['editor'] = $editor;
-			$result[] = $assignment;  // append
+            $assignment['level'] = $level;
+            // $assignment['firstname'] = $user->getGivenName(RQC_LOCALE);
+            // $assignment['lastname'] = $user->getFamilyName(RQC_LOCALE);
+            $assignment['email'] = $user->getEmail();
+            // $assignment['orcid_id'] = $user->getOrcid();
+            $result[] = $assignment;  // append
 		}
 		if (!$level1N && count($result)) {
 			// there must be at least one level-1 editor:
@@ -192,7 +206,7 @@ class RqcData extends RqcDevHelper {
 			}
 			$rqcreview['text'] = $reviewtext;
 			$recommendation = $reviewAssignment->getRecommendation();
-			$rqcreview['suggested_decision'] = $this->rqc_decision("reviewer", $recommendation);
+            $rqcreview['suggested_decision'] = $recommendation ? $this->rqc_decision("reviewer", $recommendation) : "";
 			//--- reviewer:
 			$reviewerobject = $this->userDao->getById($reviewAssignment->getReviewerId());
 			$rqcreviewer = array();
@@ -289,44 +303,45 @@ class RqcData extends RqcDevHelper {
 		}
 	}
 
-	/**
-	 * Helper: Translate OJS recommendations into RQC decisions.
-	 */
-	protected static function rqc_decision($role, $ojs_decision) {
-		$reviewerMap = array(
-			// see lib.pkp.classes.submission.reviewAssignment.ReviewAssignment
-			// the values are 1,2,3,4,5,6
-			0 => "",
-			SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT => "accept",
-			SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS => "minorrevision",
-			SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE => "majorrevision",
-			SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE => "reject",
-			SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE => "reject",
-			SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS => "majorrevision",  // generic guess!!!
-		);
-		$editorMap = array(
-			// see classes.workflow.EditorDecisionActionsManager
-			// the values are 1,2,3,4,7,9,11,12,13,14
-			0 => "",
-			SUBMISSION_EDITOR_DECISION_ACCEPT => "accept",
-			SUBMISSION_EDITOR_DECISION_DECLINE => "reject",
-			SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE => "reject",
-			SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS => "minorrevision",
-			SUBMISSION_EDITOR_DECISION_RESUBMIT => "majorrevision",
-			SUBMISSION_EDITOR_RECOMMEND_ACCEPT => "accept",
-			SUBMISSION_EDITOR_RECOMMEND_DECLINE => "reject",
-			SUBMISSION_EDITOR_RECOMMEND_PENDING_REVISIONS => "minorrevision",
-			SUBMISSION_EDITOR_RECOMMEND_RESUBMIT => "majorrevision",
-			SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION => "accept",
-		);
-		if ($role == "reviewer")
-			return $reviewerMap[$ojs_decision];
-		elseif ($role == "editor")
-			return $editorMap[$ojs_decision];
-		else
-			assert(False, "rqc_decision: wrong role " . $role);
-			return "";
-	}
+    /**
+     * Helper: Translate OJS recommendations and decisions into RQC decisions.
+     * For editors, we use decisions only and return unknown for recommendations.
+     */
+    protected static function rqc_decision($role, $ojs_decision) {
+        $reviewerMap = array(
+            // see lib.pkp.classes.submission.reviewAssignment.ReviewAssignment
+            // the values are 1,2,3,4,5,6
+            0 => "",
+            SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT => "accept",
+            SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS => "minorrevision",
+            SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE => "majorrevision",
+            SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE => "reject",
+            SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE => "reject",
+            SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS => "majorrevision",  // generic guess!!!
+        );
+        $editorMap = array(
+            // see classes.workflow.EditorDecisionActionsManager
+            0 => "",
+            SUBMISSION_EDITOR_RECOMMEND_ACCEPT => "",
+            SUBMISSION_EDITOR_RECOMMEND_DECLINE => "",
+            SUBMISSION_EDITOR_RECOMMEND_PENDING_REVISIONS => "",
+            SUBMISSION_EDITOR_RECOMMEND_RESUBMIT => "",
+            SUBMISSION_EDITOR_DECISION_ACCEPT => "accept",
+            SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION => "accept",
+            SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE => "reject",  // probably never relevant
+            SUBMISSION_EDITOR_DECISION_DECLINE => "reject",
+            SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS => "minorrevision",
+            SUBMISSION_EDITOR_DECISION_RESUBMIT => "majorrevision",
+            SUBMISSION_EDITOR_DECISION_NEW_ROUND => "majorrevision",
+        );
+        if ($role == "reviewer")
+            return $reviewerMap[$ojs_decision];
+        elseif ($role == "editor")
+            return $editorMap[$ojs_decision];
+        else
+            assert(False, "rqc_decision: wrong role " . $role);
+        return "";
+    }
 
 	/**
 	 * Helper: Remove possible unwanted properties from text coming from textarea fields.
