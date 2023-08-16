@@ -27,29 +27,19 @@ define('RQC_OPTING_STATUS_UNDEFINED',  30);  // external only
 define('RQC_PRELIM_OPTING',  true);  // for readability
 
 /**
- * Store or query the opt-in/opt-out status of a user.
+ * Handle the opt-in/opt-out status of a user.
  * setStatus/getStatus/optingRequired manage the status in two user settings fields.
  * reviewerRecommendations.tpl adds an opting selection field into ReviewerReviewStep3Form.
  * cb_addReviewerOptingField injects the selection values.
- * cb_initOptingData (for GET) injects the current value and a flag for showing/not showing the field.
+ * cb_initOptingData (for GET) injects the current opting value and a flag for showing/not showing the field.
  * cb_readOptIn (for POST) moves the opting value from request to form.
  * cb_step3execute (for POST) stores opting value into DB.
  * The latter three hook into ReviewerReviewStep3Form.
- * TODO: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09.
+ * TODO 3: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09.
  */
-class ReviewerOpting
-{
+class ReviewerOpting extends RqcDevHelper {
 	static string $datename = 'rqc_opting_date';
 	static string $statusname = 'rqc_opting_status';
-
-	public function __construct() {
-		$this->stderr = fopen('php://stderr', 'w');  # print to php -S console stream
-	}
-
-	public function _print($msg) {
-		# print to php -S console stream (to be used during development only; remove calls in final code)
-		fwrite($this->stderr, $msg);
-	}
 
 	/**
 	 * Register callbacks. This is to be called from the plugin's register().
