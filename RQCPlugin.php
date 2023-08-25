@@ -14,6 +14,7 @@
 
 namespace APP\plugins\generic\reviewqualitycollector;
 
+/*  for OJS 3.4:
 use APP\core\Application;
 use PKP\config\Config;
 use PKP\core\JSONMessage;
@@ -23,7 +24,11 @@ use PKP\linkAction\request\AjaxModal;
 use PKP\linkAction\request\OpenWindowAction;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
+*/
 
+// needed in OJS 3.3:
+import('lib.pkp.classes.plugins.GenericPlugin');
+use GenericPlugin;
 
 define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');

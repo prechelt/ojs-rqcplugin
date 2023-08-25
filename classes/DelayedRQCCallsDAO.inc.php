@@ -15,10 +15,13 @@
 
 namespace APP\plugins\generic\reviewqualitycollector;
 
+/* for OJS 3.4:
 use \PKP\db\DAO;
 use \PKP\db\DAOResultFactory;
+*/
+import('lib.pkp.classes.db.DAO');
 
-// TODO: use SchemaDAO  https://docs.pkp.sfu.ca/dev/documentation/en/architecture-database
+// TODO 2: use SchemaDAO  https://docs.pkp.sfu.ca/dev/documentation/en/architecture-database
 class DelayedRQCCallsDAO extends DAO {
 
 	/**

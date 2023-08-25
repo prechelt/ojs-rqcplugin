@@ -15,11 +15,14 @@
 
 namespace APP\plugins\generic\reviewqualitycollector;
 
+/* for OJS 3.4:
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
 use PKP\security\Role;
 use PKP\site\VersionCheck;
-
+*/
+import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
+import('classes.workflow.EditorDecisionActionsManager');  // decision action constants
 
 /**
  * Class RqcData.

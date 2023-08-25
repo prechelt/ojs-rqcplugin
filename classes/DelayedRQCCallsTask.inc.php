@@ -16,8 +16,11 @@
 
 namespace APP\plugins\generic\reviewqualitycollector;
 
+/* for OJS 3.4:
 use PKP\db\DAORegistry;
 use PKP\scheduledTask\ScheduledTask;
+*/
+import('lib.pkp.classes.scheduledTask.ScheduledTask');
 
 define('RQCCALL_MAX_RETRIES', 10);
 

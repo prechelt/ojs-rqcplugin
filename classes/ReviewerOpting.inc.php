@@ -14,10 +14,13 @@
 
 namespace APP\plugins\generic\reviewqualitycollector;
 
+/* for OJS 3.4:
 use APP\core\Application;
 use APP\template\TemplateManager;
 use PKP\plugins\Hook;
 use PKP\user\User;
+*/
+import('plugins.generic.reviewqualitycollector.RQCPlugin');
 
 define('RQC_OPTING_STATUS_IN',  36);  // internal, external
 define('RQC_OPTING_STATUS_OUT', 35);  // internal, external

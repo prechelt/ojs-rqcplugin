@@ -15,12 +15,14 @@
 
 namespace APP\plugins\generic\reviewqualitycollector;
 
+/* for OJS 3.4:
 use APP\template\TemplateManager;
 use PKP\form\Form;
 use PKP\form\validation\FormValidatorCSRF;
 use PKP\form\validation\FormValidatorPost;
 use PKP\form\validation\FormValidatorRegExp;
-
+*/
+import('lib.pkp.classes.form.Form');
 
 class RQCSettingsForm extends Form {
 

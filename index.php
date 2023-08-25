@@ -17,6 +17,9 @@
  */
 namespace APP\plugins\generic\reviewqualitycollector;
 
+require_once("RQCPlugin.php");
+
+
 return new RQCPlugin();
 
 ?>

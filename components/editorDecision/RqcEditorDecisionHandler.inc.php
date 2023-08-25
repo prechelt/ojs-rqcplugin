@@ -15,12 +15,15 @@
 
 namespace APP\plugins\generic\reviewqualitycollector;
 
+/* for OJS 3.4:
 use APP\core\Application;
 use APP\core\PageRouter;
 use PKP\core\JSONMessage;
 use PKP\db\DAORegistry;
 use PKP\handler\PKPHandler;
 use PKP\plugins\PluginRegistry;
+*/
+import('classes.handler.Handler');
 
 class RqcEditorDecisionHandler extends PKPHandler {
     function __construct()

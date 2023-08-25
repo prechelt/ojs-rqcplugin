@@ -2,7 +2,12 @@
 
 namespace APP\plugins\generic\reviewqualitycollector;
 
+/* for OJS 3.4:
 use PKP\plugins\PluginRegistry;
+*/
+import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
+import('plugins.generic.reviewqualitycollector.RQCPlugin');
+import('plugins.generic.reviewqualitycollector.classes.RqcData');
 
 /**
  * Class RqcCall.
