@@ -13,9 +13,9 @@
  * @brief Operations for retrieving and modifying DelayedRQCCall arrays/objects.
  */
 
-namespace APP\plugins\generic\reviewqualitycollector;
 
 /* for OJS 3.4:
+namespace APP\plugins\generic\reviewqualitycollector;
 use \PKP\db\DAO;
 use \PKP\db\DAOResultFactory;
 */

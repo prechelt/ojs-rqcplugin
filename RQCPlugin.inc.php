@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/RQCPlugin.php
+ * @file plugins/generic/reviewqualitycollector/RQCPlugin.inc.php
  *
  * Copyright (c) 2018-2019 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
@@ -12,9 +12,9 @@
  * @brief Review Quality Collector (RQC) plugin class
  */
 
-namespace APP\plugins\generic\reviewqualitycollector;
 
 /*  for OJS 3.4:
+namespace APP\plugins\generic\reviewqualitycollector;
 use APP\core\Application;
 use PKP\config\Config;
 use PKP\core\JSONMessage;
@@ -27,8 +27,13 @@ use PKP\plugins\Hook;
 */
 
 // needed in OJS 3.3:
+import('lib.pkp.classes.plugins.HookRegistry');
 import('lib.pkp.classes.plugins.GenericPlugin');
-use GenericPlugin;
+import('classes.core.Application');
+import('plugins.generic.reviewqualitycollector.RQCSettingsForm');
+import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
+import('plugins.generic.reviewqualitycollector.classes.EditorActions');
+import('plugins.generic.reviewqualitycollector.classes.EditorActions');
 
 define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
@@ -64,9 +69,10 @@ class RQCPlugin extends GenericPlugin
      * @param null|mixed $mainContextId
      */
     public function register($category, $path, $mainContextId = null) {
+		import('lib.pkp.classes.plugins.HookRegistry');
         $success = parent::register($category, $path, $mainContextId);
         if ($success && $this->getEnabled()) {
-			Hook::add(
+			HookRegistry::register(
 				'TemplateResource::getFilename',
 				array($this, '_overridePluginTemplates')  // needed by ReviewerOpting
 			);
@@ -76,7 +82,7 @@ class RQCPlugin extends GenericPlugin
             $this->editorActions->register();
 
             if (RQCPlugin::has_developer_functions()) {
-                Hook::add(
+                HookRegistry::register(
                     'LoadHandler',
 					array($this, 'cb_setupDevHelperHandler')
                 );
@@ -119,12 +125,13 @@ class RQCPlugin extends GenericPlugin
     public function getActions($request, $actionArgs) {
         //----- get existing actions, stop if not enabled:
         $actions = parent::getActions($request, $actionArgs);
-        if (!$this->getEnabled()) {
+        if (!$this->getEnabled() || !$request->getContext()) {  // RQC settings are journal-specific
             return $actions;
         }
         //----- add settings dialog:
         $router = $request->getRouter();
-        import('lib.pkp.classes.linkAction.request.AjaxModal');
+		import('lib.pkp.classes.linkAction.LinkAction');
+		import('lib.pkp.classes.linkAction.request.AjaxModal');
         $additions = [];
         $additions[] = new LinkAction(
             'settings',
@@ -168,7 +175,7 @@ class RQCPlugin extends GenericPlugin
         $additions[] = new LinkAction(
             'example_request2',
             new OpenWindowAction(
-                $router->url($request, Application::ROUTE_PAGE, 'MySuperHandler', 'myop', 'mypath', ['my','array'])
+                $router->url($request, /*Application::*/ROUTE_PAGE, 'MySuperHandler', 'myop', null, ['my','array'])
             ),
             '(example_request2)',
             null

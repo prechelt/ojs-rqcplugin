@@ -1,6 +1,6 @@
 <?php
 
-namespace APP\plugins\generic\reviewqualitycollector;
+// namespace APP\plugins\generic\reviewqualitycollector;
 
 class ReviewqualitycollectorPlugin extends RQCPlugin
 {

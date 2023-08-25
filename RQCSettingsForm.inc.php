@@ -13,9 +13,9 @@
  * @brief Form for journal managers to modify RQC plugin settings
  */
 
-namespace APP\plugins\generic\reviewqualitycollector;
 
 /* for OJS 3.4:
+namespace APP\plugins\generic\reviewqualitycollector;
 use APP\template\TemplateManager;
 use PKP\form\Form;
 use PKP\form\validation\FormValidatorCSRF;
@@ -81,7 +81,7 @@ class RQCSettingsForm extends Form {
 	/**
 	 * Save settings.
 	 */
-	function execute() {
+	function execute(...$functionArgs) {
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalId', trim($this->getData('rqcJournalId')), 'string');
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalAPIKey', trim($this->getData('rqcJournalAPIKey')), 'string');
 		return parent::execute();

@@ -13,9 +13,9 @@
  * @brief Compute the JSON-like contents of a call to the RQC API.
  */
 
-namespace APP\plugins\generic\reviewqualitycollector;
 
 /* for OJS 3.4:
+namespace APP\plugins\generic\reviewqualitycollector;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
 use PKP\security\Role;

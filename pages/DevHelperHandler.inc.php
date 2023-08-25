@@ -13,12 +13,12 @@
  * @brief Handle requests to show what OJS-to-RQC requests will look like.
  */
 
+/* for OJS 3.4:
 namespace APP\plugins\generic\reviewqualitycollector;
-
-
 use APP\handler\Handler;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
+*/
 
 class DevHelperHandler extends Handler {
 	function __construct() {

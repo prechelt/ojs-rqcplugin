@@ -14,9 +14,9 @@
  * @brief Class to retry failed RQC calls as a scheduled task.
  */
 
-namespace APP\plugins\generic\reviewqualitycollector;
 
 /* for OJS 3.4:
+namespace APP\plugins\generic\reviewqualitycollector;
 use PKP\db\DAORegistry;
 use PKP\scheduledTask\ScheduledTask;
 */

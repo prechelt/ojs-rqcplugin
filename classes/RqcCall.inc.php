@@ -1,13 +1,13 @@
 <?php
 
-namespace APP\plugins\generic\reviewqualitycollector;
 
 /* for OJS 3.4:
+namespace APP\plugins\generic\reviewqualitycollector;
 use PKP\plugins\PluginRegistry;
 */
-import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
 import('plugins.generic.reviewqualitycollector.RQCPlugin');
 import('plugins.generic.reviewqualitycollector.classes.RqcData');
+import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
 
 /**
  * Class RqcCall.

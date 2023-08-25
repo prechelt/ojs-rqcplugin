@@ -12,7 +12,7 @@
  * @brief Base class providing a _print() method for ad-hoc manual tracing during development
  */
 
-namespace APP\plugins\generic\reviewqualitycollector;
+// namespace APP\plugins\generic\reviewqualitycollector;
 
 class RqcDevHelper {
 	public function __construct() {

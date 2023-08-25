@@ -13,9 +13,9 @@
  * @brief Handle modal dialog before submitting and redirecting to RQC.
  */
 
-namespace APP\plugins\generic\reviewqualitycollector;
 
 /* for OJS 3.4:
+namespace APP\plugins\generic\reviewqualitycollector;
 use APP\core\Application;
 use APP\core\PageRouter;
 use PKP\core\JSONMessage;

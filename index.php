@@ -15,9 +15,8 @@
  * @brief Wrapper for reviewqualitycollector plugin.
  *
  */
-namespace APP\plugins\generic\reviewqualitycollector;
 
-require_once("RQCPlugin.php");
+require_once('RQCPlugin.inc.php');
 
 
 return new RQCPlugin();

@@ -1,11 +1,10 @@
 <?php
 
+/* for OJS 3.4:
 namespace APP\plugins\generic\reviewqualitycollector;
-
-
-
 use APP\pages\workflow\WorkflowHandler;
 use PKP\plugins\PluginRegistry;
+*/
 
 /**
  * Class RqccallHandler.
