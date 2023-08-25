@@ -8,20 +8,22 @@ services:
     image: postgres:14-bullseye
     restart: on-failure
     hostname: db
+    container_name: ojs34-db
     ports:
       - "5034:5432"  # HOST:CONTAINER
     environment:
       POSTGRES_USER: ojs
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
     volumes:
-      - "/srv/ojs/test/db/data:/var/lib/postgresql/data:rw"
+      - "/srv/ojs34/test/db/data:/var/lib/postgresql/data:rw"
   db33:
     # https://hub.docker.com/_/postgres
     image: postgres:14-bullseye
     restart: on-failure
     hostname: db
+    container_name: ojs33-db
     ports:
-      - "5033:5432"  # HOST:CONTAINER
+      - "5033:5432"  # "5033:5432"  # HOST:CONTAINER
     environment:
       POSTGRES_USER: ojs
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
