@@ -35,6 +35,8 @@ import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
 import('plugins.generic.reviewqualitycollector.classes.EditorActions');
 import('plugins.generic.reviewqualitycollector.classes.EditorActions');
 
+define('RQC_API_VERSION', '2023-08-29');  // the API documentation version last used during development
+define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
 define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
 define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
@@ -210,9 +212,9 @@ class RQCPlugin extends GenericPlugin
                     }
                 } else {
                     $form->initData();
-	                $result = new JSONMessage(true, $form->fetch($request));
-    	            return $result;
 				}
+				$result = new JSONMessage(true, $form->fetch($request));
+				return $result;
 			case 'example_request':
             // TODO
 		}
@@ -291,8 +293,8 @@ class RQCPlugin extends GenericPlugin
         if ($page == 'rqcdevhelper') {
 			$this->import('pages/DevHelperHandler');
             define('HANDLER_CLASS', 'DevHelperHandler');
-			return true;
+			return true;  // this hook's handling is done
         }
-		return false;
+		return false;  // continue calling hook functions for this hook
     }
 }

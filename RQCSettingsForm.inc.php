@@ -23,6 +23,36 @@ use PKP\form\validation\FormValidatorPost;
 use PKP\form\validation\FormValidatorRegExp;
 */
 import('lib.pkp.classes.form.Form');
+import('plugins.generic.reviewqualitycollector.classes.RqcCall');
+
+class RQCFormValidator extends FormValidator {
+	function isValid() {
+		$form = $this->_form;
+		$hostUrl = $form->_plugin->rqc_server();
+		$rqcJournalId = $form->getData('rqcJournalId');
+		$rqcJournalAPIKey = $form->getData('rqcJournalAPIKey');
+		$result = call_mhs_apikeycheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey);
+		$status = $result['status'];
+		if ($status == 200) {
+			return true;  // all is fine
+		}
+		if ($status == 400 || $status == 404) {
+			$msg = $result['json'] ? $result['json']['error'] : "something went wrong with the RQC request";
+			$form->addError('rqcJournalId', $msg);
+			return true;  // suppress the message configured at the FormValidator level
+		}
+		if ($status == 403) {
+			$msg = $result['json'] ? $result['json']['error'] : "something went horribly wrong with the RQC request";
+			$form->addError('rqcJournalAPIKey', $msg);
+			return true;  // suppress the message configured at the FormValidator level
+		}
+		if ($status >= 500) {
+			$form->addError('rqcJournalId', "Internal server error at RQC with status " . $status);
+			return true;  // suppress the message configured at the FormValidator level
+		}
+		return true;  // suppress the message configured at the FormValidator level
+	}
+}
 
 class RQCSettingsForm extends Form {
 
@@ -41,14 +71,15 @@ class RQCSettingsForm extends Form {
 		$this->_contextId = $contextId;
 		$this->_plugin = $plugin;
 		parent::__construct($plugin->getTemplateResource('settingsForm.tpl'));
+		$this->addCheck(new FormValidatorPost($this));
+		$this->addCheck(new FormValidatorCSRF($this));
 		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalId', 'required',
 								'plugins.generic.reviewqualitycollector.settingsform.rqcJournalIDInvalid',
 								'/^[0-9]+$/'));
 		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalAPIKey', 'required',
 								'plugins.generic.reviewqualitycollector.settingsform.rqcJournalAPIKeyInvalid',
 								'/^[0-9A-Za-z]+$/'));
-		$this->addCheck(new FormValidatorPost($this));
-		$this->addCheck(new FormValidatorCSRF($this));
+		$this->addCheck(new RQCFormValidator($this, null, 'required',""));
 	}
 
 	/**
