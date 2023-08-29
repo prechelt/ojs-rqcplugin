@@ -1,6 +1,4 @@
 <?php
-
-
 /* for OJS 3.4:
 namespace APP\plugins\generic\reviewqualitycollector;
 use PKP\plugins\PluginRegistry;
@@ -8,6 +6,65 @@ use PKP\plugins\PluginRegistry;
 import('plugins.generic.reviewqualitycollector.RQCPlugin');
 import('plugins.generic.reviewqualitycollector.classes.RqcData');
 import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
+
+define('RQC_MHS_APIKEYCHECK_URL', "%s/api/mhs_apikeycheck/%s");  // host, rqcJournalId
+define('RQC_MHS_SUBMISSION_URL', "%s/api/mhs_submission/%s/%s");  // host, rqcJournalId, externalUid
+
+
+function call_mhs_submission(string $hostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
+									$user, $journal, $submissionId)
+{
+	$rqcdata = new RqcData();
+	$data = $rqcdata->rqcdata_array($user, $journal, $submissionId);
+	$json = json_encode($data, JSON_PRETTY_PRINT);
+	// $this->_print($json);
+	$url = sprintf(RQC_MHS_SUBMISSION_URL, $hostUrl, $rqcJournalId, $submissionId);
+	//----- call $url with POST and $json in the body:
+	$cc = curl_init($url);
+	curl_setopt_array($cc, array(
+		CURLOPT_POST => TRUE,
+		CURLOPT_RETURNTRANSFER => TRUE,
+		CURLOPT_HTTPHEADER => array(
+			'Content-Type: application/json',
+			'Authorization: Bearer ' . $rqcJournalAPIKey,  // a la https://datatracker.ietf.org/doc/html/rfc6750
+		),
+		CURLOPT_POSTFIELDS => $json,
+	));
+	$output = curl_exec($cc);
+	$status = curl_getinfo($cc, CURLINFO_RESPONSE_CODE);
+	curl_close($cc);
+	return array($status, $output);
+}
+
+function call_mhs_apikeycheck(string $hostUrl, string $rqcJournalId, string $rqcJournalAPIKey)
+{
+	$url = sprintf(RQC_MHS_APIKEYCHECK_URL, $hostUrl, $rqcJournalId);
+	//----- call $url with GET:
+	$cc = curl_init($url);
+	curl_setopt_array($cc, array(
+		CURLOPT_POST => FALSE,
+		CURLOPT_RETURNTRANSFER => TRUE,
+		CURLOPT_HTTPHEADER => array(
+			'Authorization: Bearer ' . $rqcJournalAPIKey,  // a la https://datatracker.ietf.org/doc/html/rfc6750
+			'X-RQC-API-VERSION: ' . RQC_API_VERSION,
+			'X-RQC-MHS-ADAPTER: ' . RQC_MHS_ADAPTER,  // imprecise: lacking a version
+			'X-RQC-MHS-VERSION: ' . RQC_PLUGIN_VERSION,  // precise for plugin, questionable for OJS itself
+			'X-RQC-TIME: ' . (new DateTime())->format('Y-m-d\TH:i:s\Z'),
+		),
+	));
+	$output = curl_exec($cc);
+	$status = curl_getinfo($cc, CURLINFO_RESPONSE_CODE);
+	$content_type = curl_getinfo($cc, CURLINFO_CONTENT_TYPE);
+	curl_close($cc);
+	//----- return with no response:
+	if ($content_type != 'application/json') {
+		return array($status, array());
+	}
+	//----- decode response:
+	error_log($output);
+	$json = json_decode($output, true);
+	return array('status' => $status, 'json' => $json);
+}
 
 /**
  * Class RqcCall.
