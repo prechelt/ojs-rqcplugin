@@ -21,8 +21,9 @@ use PKP\plugins\PluginRegistry;
 use PKP\security\Role;
 use PKP\site\VersionCheck;
 */
-import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
 import('classes.workflow.EditorDecisionActionsManager');  // decision action constants
+import('lib.pkp.classes.site.VersionCheck');
+import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
 
 /**
  * Class RqcData.
@@ -58,29 +59,18 @@ class RqcData extends RqcDevHelper {
 		//----- prepare processing:
 		$submission = $this->submissionDao->getById($submissionId);
 		$data = array();
-		$this->_print("### rqcdata_array\n");
 		//----- fundamentals:
-		$data['api_version'] = '1.0alpha';
-		$data['mhs'] = "OJS";
-		// master/HEAD will show the upcoming release for the following:
-		$data['mhs_version'] = VersionCheck::getCurrentCodeVersion()->getVersionString();
-		$data['mhs_adapter_version'] = RQC_PLUGIN_VERSION;
 		$data['interactive_user'] = $this->get_interactive_user($user);
 
 		//----- submission data:
 		$lastReviewRound = $this->reviewRoundDao->getLastReviewRoundBySubmissionId($submissionId);
 		$reviewroundN = $lastReviewRound->getRound();
-        $data['visible_uid'] = $this->get_uid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
-        // $submissionId is unsuitable as submission_id: it will recur in next review round.
-        // We could use $lastReviewRound->getId(), but use the artificial visible_uid (easier debugging!)
-        $data['submission_id'] = $data['visible_uid'];
+		$data['visible_uid'] = $this->get_uid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
+		$data['external_uid'] = $this->get_uid($journal, $submission, $reviewroundN, true);  // URL-friendly version.
         $data['title'] = $this->get_title($submission->getTitle(null));
         $alldata = $submission->getAllData();
-		$data['submitted'] = $this->rqcify_datetime($alldata['dateSubmitted']);
+		$data['submitted'] = rqcify_datetime($alldata['dateSubmitted']);
 		// assume that round $reviewroundN-1 exists (but it may not!!!):
-		$data['predecessor_visible_uid'] = $this->get_uid($journal, $submission,
-			$reviewroundN-1, false);
-        $data['predecessor_submission_id'] = $data['predecessor_visible_uid'];
 
 		//----- authors, editor assignments, reviews, decision:
         $data['author_set'] = $this->get_author_set($submission->getAuthors());
@@ -97,12 +87,14 @@ class RqcData extends RqcDevHelper {
 	protected static function get_author_set($authorsobjects) {
 		$result = array();
 		foreach ($authorsobjects as $authorobject) {
+			if (!(bool)$authorobject->getIncludeInBrowse())  // TODO 2: correct like this?
+				continue;  // skip non-corresponding authors
 			$rqcauthor = array();
 			$rqcauthor['email'] = $authorobject->getEmail();
-			$rqcauthor['firstname'] = $authorobject->getGivenName(RQC_LOCALE);
-			$rqcauthor['lastname'] = $authorobject->getFamilyName(RQC_LOCALE);
-			$rqcauthor['is_corresponding'] = true;  // TODO 2
+			$rqcauthor['firstname'] = get_nonlocalized_attr($authorobject, "getGivenName");
+			$rqcauthor['lastname'] = get_nonlocalized_attr($authorobject, "getFamilyName");
 			$rqcauthor['order_number'] = (int)($authorobject->getSequence());
+			$rqcauthor['orcid_id'] = get_orcid_id($authorobject->getOrcid());
 			$result[] = $rqcauthor;
 		}
 		return $result;
@@ -143,19 +135,18 @@ class RqcData extends RqcDevHelper {
 			$user = $this->userDao->getById($stageassign->getUserId());
 			$userGroup = $this->userGroupDao->getById($stageassign->getUserGroupId());
 			$role = $userGroup->getRoleId();
-			$levelMap = array(Role::ROLE_ID_MANAGER => 3,
-                Role::ROLE_ID_SUB_EDITOR => 1);
+			$levelMap = array(ROLE_ID_MANAGER => 3,  // OJS 3.4: use prefix Role:: to find the constants
+                ROLE_ID_SUB_EDITOR => 1);
 			$level = $levelMap[$role] ?? 0;
 			if (!$level)
 				continue;  // irrelevant role, skip stage assignment entry
 			elseif ($level == 1)
 				$level1N++;
-			$assignment['level'] = $level;
             $assignment['level'] = $level;
-            // $assignment['firstname'] = $user->getGivenName(RQC_LOCALE);
-            // $assignment['lastname'] = $user->getFamilyName(RQC_LOCALE);
             $assignment['email'] = $user->getEmail();
-            // $assignment['orcid_id'] = $user->getOrcid();
+			$assignment['firstname'] = get_nonlocalized_attr($user, "getGivenName");
+			$assignment['lastname'] = get_nonlocalized_attr($user, "getFamilyName");
+            $assignment['orcid_id'] = get_orcid_id($user->getOrcid());
             $result[] = $assignment;  // append
 		}
 		if (!$level1N && count($result)) {
@@ -172,6 +163,7 @@ class RqcData extends RqcDevHelper {
 	protected static function get_interactive_user($user) {
 		return $user ? $user->getEmail() : "";
 	}
+
 
 	/**
 	 * Return linear array of RQC review descriptor objects.
@@ -193,10 +185,10 @@ class RqcData extends RqcDevHelper {
 			$reviewerSubmission = $this->reviewerSubmissionDao->getReviewerSubmission($reviewId);
 			//--- review metadata:
 			$rqcreview['visible_id'] = $reviewId;
-			$rqcreview['invited'] = $this->rqcify_datetime($reviewAssignment->getDateNotified());
-			$rqcreview['agreed'] = $this->rqcify_datetime($reviewAssignment->getDateConfirmed());
-			$rqcreview['expected'] = $this->rqcify_datetime($reviewAssignment->getDateDue());
-			$rqcreview['submitted'] = $this->rqcify_datetime($reviewAssignment->getDateCompleted());
+			$rqcreview['invited'] = rqcify_datetime($reviewAssignment->getDateNotified());
+			$rqcreview['agreed'] = rqcify_datetime($reviewAssignment->getDateConfirmed());
+			$rqcreview['expected'] = rqcify_datetime($reviewAssignment->getDateDue());
+			$rqcreview['submitted'] = rqcify_datetime($reviewAssignment->getDateCompleted());
 			//--- review text:
 			$reviewFormId = $reviewAssignment->getReviewFormId();
 			if ($reviewFormId) {  // case 1
@@ -214,9 +206,9 @@ class RqcData extends RqcDevHelper {
 			$reviewerobject = $this->userDao->getById($reviewAssignment->getReviewerId());
 			$rqcreviewer = array();
 			$rqcreviewer['email'] = $reviewerobject->getEmail();
-			$rqcreviewer['firstname'] = $reviewerobject->getGivenName(RQC_LOCALE);
-			$rqcreviewer['lastname'] = $reviewerobject->getFamilyName(RQC_LOCALE);
-			$rqcreviewer['orcid_id'] = $reviewerobject->getOrcid();
+			$rqcreviewer['firstname'] = get_nonlocalized_attr($reviewerobject, "getGivenName");
+			$rqcreviewer['lastname'] = get_nonlocalized_attr($reviewerobject, "getFamilyName");
+			$rqcreviewer['orcid_id'] = get_orcid_id($reviewerobject->getOrcid());
 			$rqcreview['reviewer'] = $rqcreviewer;
 			$result[] = $rqcreview;  // append
 		}
@@ -283,25 +275,27 @@ class RqcData extends RqcDevHelper {
 	 * @param array $all_titles  mapping from locale name to title string
 	 */
 	protected static function get_title($all_titles) {
-		return RqcData::englishest($all_titles, true);
+		return englishest($all_titles, true);
 	}
 
 	/**
 	 * Get visible_uid or submission_id for given round.
 	 * First round is 1;
-	 * if round is 0 (for a non-existing predecessor), return null.
+	 * if round is 0 (for a non-existing predecessor), return "".
+	 * We could use $lastReviewRound->getId(), but don't.
 	 */
      protected static function get_uid($journal, $submission, $round, $for_url=false) {
 		if ($round == 0) {
-			return null;
+			return "";
 		}
 		else {
 			$journalname = $journal->getPath();
 			$submission_id = $submission->getId();
 			if ($for_url) {
-				$journalname = preg_replace('/[^a-z0-9-_.:()-]/i', '-', $journalname);
+				// TODO 3: beware: The following _could_ be non-unique and so not in fact a uid
+				$journalname = preg_replace('/[^a-z0-9-_.:()-]/i', '_', $journalname);
 			}
-			return sprintf("%s-%s.R%d",
+			return sprintf($round == 1 ? "%s-%s" : "%s-%s.R%d",
 				$journalname, $submission_id, $round);
 		}
 	}
@@ -343,7 +337,6 @@ class RqcData extends RqcDevHelper {
             return $editorMap[$ojs_decision];
         else
             assert(False, "rqc_decision: wrong role " . $role);
-        return "";
     }
 
 	/**
@@ -352,45 +345,6 @@ class RqcData extends RqcDevHelper {
 	protected static function cleanPlaintextTextarea($text): string {
 		$text = str_replace('\r', '', $text);  // may contain CR LF, we want only LF
 		return $text;
-	}
-
-	/**
-	 * Helper: Get first english entry if one exists or else:
-	 * all entries in one string if $else_all or
-	 * the entry of the alphabetically first locale otherwise.
-	 * @param array $all_entries  mapping from locale name to string
-	 */
-	protected static function englishest($all_entries, $else_all=false) {
-		$all_nonenglish_locales = array();
-		foreach ($all_entries as $locale => $entry) {
-			if (substr($locale, 0, 2) === "en") {
-				return $entry;  // ...and we're done!
-			}
-			$all_nonenglish_locales[] = $locale;
-		}
-		// no en locale found. Return first-of or all others, sorted by locale:
-		sort($all_nonenglish_locales);
-		$all_nonenglish_entries = array();
-		foreach ($all_nonenglish_locales as $locale) {
-			$all_nonenglish_entries[] = $all_entries[$locale];
-		}
-		if ($else_all) {
-			return implode(" / ", $all_nonenglish_entries);
-		}
-		else {
-			return $all_nonenglish_entries[0];
-		}
-	}
-
-	/**
-	 * Helper: Transform timestamp format to RQC convention.
-	 */
-	protected static function rqcify_datetime($ojs_datetime) {
-		if (!$ojs_datetime) {
-			return NULL;
-		}
-		$result = str_replace(" ", "T", $ojs_datetime);
-		return $result . "Z";
 	}
 }
 
@@ -411,4 +365,71 @@ class RqcOjsData {
 		}
 		return false;  // everything else isn't
 	}
+}
+
+/**
+ * Helper: Get first english entry if one exists or else:
+ * all entries in one string if $else_all or
+ * the entry of the alphabetically first locale otherwise.
+ * @param array $all_entries  mapping from locale name to string
+ */
+function englishest($all_entries, $else_all=false) {
+	$all_nonenglish_locales = array();
+	foreach ($all_entries as $locale => $entry) {
+		if (substr($locale, 0, 2) === "en") {
+			return $entry;  // ...and we're done!
+		}
+		$all_nonenglish_locales[] = $locale;
+	}
+	// no en locale found. Return first-of or all others, sorted by locale:
+	sort($all_nonenglish_locales);
+	$all_nonenglish_entries = array();
+	foreach ($all_nonenglish_locales as $locale) {
+		$all_nonenglish_entries[] = $all_entries[$locale];
+	}
+	if ($else_all) {
+		return implode(" / ", $all_nonenglish_entries);
+	}
+	else {
+		return $all_nonenglish_entries[0];
+	}
+}
+
+/**
+ * Helper: Obtain an attribute value in the most sensible localized version we can identify:
+ * RQC_LOCALE if possible, the englishest available one otherwise.
+ */
+function get_nonlocalized_attr($obj, $functionname) {
+	$result = $obj->$functionname(RQC_LOCALE);  // get preferred value
+	if (!$result) {  // get random first value from full localized list of attribute values
+		$all_localized_attrs = $obj->$functionname(null);
+		// $result = $all_localized_attrs[array_key_first($all_localized_attrs)];
+		$result = englishest($all_localized_attrs);
+	}
+	if (!$result)  // avoid null results
+		$result = "";
+	return $result;
+}
+
+
+/**
+ * Helper: Obtain the ORCID ID number from an ORCID URL as stored in OJS.
+ */
+function get_orcid_id($orcid_url) {
+	$pattern = '/(https?:\/\/\w+\.\w+\/)?(\d+-\d+-\d+-\d+)/';
+	$success = preg_match($pattern, $orcid_url, $match);
+	return $success ? $match[2] : "";
+}
+
+
+
+/**
+ * Helper: Transform timestamp format to RQC convention.
+ */
+function rqcify_datetime($ojs_datetime) {
+	if (!$ojs_datetime) {
+		return NULL;
+	}
+	$result = str_replace(" ", "T", $ojs_datetime);
+	return $result . "Z";
 }
