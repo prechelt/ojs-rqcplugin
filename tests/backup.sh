@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# https://www.postgresql.org/docs/9.5/static/backup.html
+# https://www.postgresql.org/docs/current/static/backup.html
 # create a full DB backup into a hardcoded directory, or restore it.
 # Keep multiple such backups around.
+# Assumes localhost and default port.
 
 BACKUPDIR=$HOME/backup
-BACKUPFILENAME=ojs_postgres_backup.sql
+BACKUPFILENAME=ojs_db_backup.sql
 BACKUPFILE=$BACKUPDIR/$BACKUPFILENAME
 LOGFILE=$BACKUPDIR/backup.log
 
@@ -21,10 +22,12 @@ if [[ $1 == backup ]]; then
     #--- back up the last backup:
     mv -f --backup=numbered $BACKUPFILE $BACKUPFILE.bak
     #--- make new backup:
-    sudo -u postgres pg_dumpall -U postgres --clean >$BACKUPFILE
-else
+    # sudo -u postgres pg_dumpall -U postgres --clean >$BACKUPFILE
+    pg_dump -U ojs --dbname=ojs --clean --file=$BACKUPFILE
+fi
+if [[ $1 == restore ]]; then
     #--- restore the most recent backup:
-    sudo -u postgres psql -U postgres -f $BACKUPFILE postgres
+    postgres psql --file=$BACKUPFILE ojs ojs
 fi
 END=`date -Iseconds`
 SIZE=`du $BACKUPFILE`
