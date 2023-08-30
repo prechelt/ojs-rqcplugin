@@ -36,12 +36,17 @@ class DevHelperHandler extends Handler {
 	}
 
 	/**
-	 * Show RQC request corresponding to a given submissionId=n arg.
+	 * Show RQC request corresponding to a given ?submissionId=n arg.
 	 */
 	function rqccall($args, $request) {
 		//----- prepare processing:
 		$router = $request->getRouter();
-		$requestArgs = $request->getQueryArray();
+		// $requestArgs = $request->getQueryArray();  // OJS 3.3.0: "Application::getContextList() cannot be called statically", workaround:
+		$queryString = $request->getQueryString();
+		$requestArgs = array();
+		if (isset($queryString)) {
+			parse_str($queryString, $requestArgs);
+		}  // end of workaround
 		$context = $request->getContext();
 		$user = $request->getUser();
 		$journal = $router->getContext($request);
