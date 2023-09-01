@@ -309,12 +309,12 @@ class RqcData extends RqcDevHelper {
             // see lib.pkp.classes.submission.reviewAssignment.ReviewAssignment
             // the values are 1,2,3,4,5,6
             0 => "",
-            SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT => "accept",
-            SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS => "minorrevision",
-            SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE => "majorrevision",
-            SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE => "reject",
-            SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE => "reject",
-            SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS => "majorrevision",  // generic guess!!!
+            SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT => "ACCEPT",
+            SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS => "MINORREVISION",
+            SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE => "MAJORREVISION",
+            SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE => "REJECT",
+            SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE => "REJECT",
+            SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS => "MAJORREVISION",  // generic guess!!!
         );
         $editorMap = array(
             // see classes.workflow.EditorDecisionActionsManager
@@ -323,13 +323,13 @@ class RqcData extends RqcDevHelper {
             SUBMISSION_EDITOR_RECOMMEND_DECLINE => "",
             SUBMISSION_EDITOR_RECOMMEND_PENDING_REVISIONS => "",
             SUBMISSION_EDITOR_RECOMMEND_RESUBMIT => "",
-            SUBMISSION_EDITOR_DECISION_ACCEPT => "accept",
-            SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION => "accept",
-            SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE => "reject",  // probably never relevant
-            SUBMISSION_EDITOR_DECISION_DECLINE => "reject",
-            SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS => "minorrevision",
-            SUBMISSION_EDITOR_DECISION_RESUBMIT => "majorrevision",
-            SUBMISSION_EDITOR_DECISION_NEW_ROUND => "majorrevision",
+            SUBMISSION_EDITOR_DECISION_ACCEPT => "ACCEPT",
+            SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION => "ACCEPT",
+            SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE => "REJECT",  // probably never relevant
+            SUBMISSION_EDITOR_DECISION_DECLINE => "REJECT",
+            SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS => "MINORREVISION",
+            SUBMISSION_EDITOR_DECISION_RESUBMIT => "MAJORREVISION",
+            SUBMISSION_EDITOR_DECISION_NEW_ROUND => "MAJORREVISION",
         );
         if ($role == "reviewer")
             return $reviewerMap[$ojs_decision];
