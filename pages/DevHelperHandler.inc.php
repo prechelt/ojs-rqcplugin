@@ -21,62 +21,86 @@ use PKP\plugins\PluginRegistry;
 */
 
 class DevHelperHandler extends Handler {
+	var $plugin;
+
 	function __construct() {
 		parent::__construct();
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
-		//--- store DAOs:
-		$this->journalDao = DAORegistry::getDAO('JournalDAO');
-		$this->authorDao = DAORegistry::getDAO('AuthorDAO');
-		$this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-		$this->reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
-		$this->reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
-		$this->stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
-		$this->userDao = DAORegistry::getDAO('UserDAO');
-		$this->userGroupDao = DAORegistry::getDAO('UserGroupDAO');
 	}
 
 	/**
-	 * Show RQC request corresponding to a given ?submissionId=n arg.
+	 * Show RQC request corresponding to a given submissionId (args[0]) (with ?viewonly=1) or
+	 * make the RQC request and show errors or perform the RQC redirect (with ?viewonly=0).
 	 */
 	function rqccall($args, $request) {
+		$show_confirmation_page = true;  // hardcoded behavior switch
 		//----- prepare processing:
 		$router = $request->getRouter();
-		// $requestArgs = $request->getQueryArray();  // OJS 3.3.0: "Application::getContextList() cannot be called statically", workaround:
-		$queryString = $request->getQueryString();
-		$requestArgs = array();
-		if (isset($queryString)) {
-			parse_str($queryString, $requestArgs);
-		}  // end of workaround
+		$requestArgs = getQueryArray($request);
 		$context = $request->getContext();
 		$user = $request->getUser();
 		$journal = $router->getContext($request);
-		$submissionId = $requestArgs['submissionId'];
-		//----- get RQC data:
-		$rqcDataObj = new RqcData();
-		$data = $rqcDataObj->rqcdata_array($user, $journal, $submissionId);
-		//----- add interesting bits:
-		$data['=========='] = "####################";
-		//$data['journal'] = $journal;
-		$data['rqc_journal_id'] = $this->plugin->getSetting($context->getId(), 'rqcJournalId');
-        $data['rqc_journal_api_key'] = $this->plugin->getSetting($context->getId(), 'rqcJournalAPIKey');
-        //----- produce output:
-		header("Content-Type: application/json; charset=utf-8");
-		//header("Content-Type: text/plain; charset=utf-8");
-		print(json_encode($data, JSON_PRETTY_PRINT));
+		$submissionId = $args[0];
+		$viewOnly = array_key_exists('viewonly', $requestArgs) ? $requestArgs['viewonly'] : true;
+		$rqcJournalId = $this->plugin->getSetting($context->getId(), 'rqcJournalId');
+		$rqcJournalAPIKey = $this->plugin->getSetting($context->getId(), 'rqcJournalAPIKey');
+		if ($viewOnly) {
+			//----- get RQC data:
+			$rqcDataObj = new RqcData();
+			$data = $rqcDataObj->rqcdata_array($request, $journal, $submissionId);
+			//----- add interesting bits:
+			$data['=========='] = "####################";
+			//$data['journal'] = $journal;
+			$data['rqc_journal_id'] = $rqcJournalId;
+			$data['rqc_journal_api_key'] = $rqcJournalAPIKey;
+			//----- produce output:
+			header("Content-Type: application/json; charset=utf-8");
+			//header("Content-Type: text/plain; charset=utf-8");
+			print(json_encode($data, JSON_PRETTY_PRINT));
+		}
+		else {  //----- make an actual RQC call:
+			$result = call_mhs_submission($this->plugin->rqc_server(), $rqcJournalId, $rqcJournalAPIKey,
+										  $request, $journal, $submissionId);
+			$status = $result['status'];
+			$response = $result['response'];
+			if ($status == 303) {  // that's what we expect: redirect
+				if ($show_confirmation_page) {
+					header("Content-Type: text/html; charset=utf-8");
+					$target_url = $response['redirect_target'];
+					$submission_title = $result['request']['title'];
+					print(rqcgrading_confirmation_page($target_url, $submission_title));
+				}
+				else {
+					header("HTTP/1.1 303 See Other");
+					header("Location: " . $response['redirect_target']);
+				}
+			}
+			else {  // hmm, something is wrong: Show the JSON response
+				header("Content-Type: application/json; charset=utf-8");
+				print(json_encode($response, JSON_PRETTY_PRINT));
+			}
+		}
 	}
 
+	/**
+	 * Make a previously submitted OJS reviewing case RQC-submittable again.
+	 */
 	public function ra_reset($args, $request) {
 		header("Content-Type: text/plain; charset=utf-8");
 		$submissionId =& $args[0];
 		$userId = $request->getUser()->getId();
-		$ra = $this->reviewAssignmentDao->getLastReviewRoundReviewAssignmentByReviewer($submissionId, $userId);
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$ra = $reviewAssignmentDao->getLastReviewRoundReviewAssignmentByReviewer($submissionId, $userId);
 		$raId = $ra->getId();
 		$ra->setRecommendation(null);
 		$ra->setDateCompleted(null);
-		$this->reviewAssignmentDao->updateObject($ra);
+		$reviewAssignmentDao->updateObject($ra);
 		return("ra_reset $raId (submission $submissionId, reviewer $userId)\n");
 	}
 
+	/**
+	 * Simple "Hello, world!" request. TODO 2: remove?
+	 */
 	public function hello($args, $request) {
 		header("Content-Type: text/plain; charset=utf-8");
 		$rq = array(
@@ -101,27 +125,8 @@ class DevHelperHandler extends Handler {
 	}
 
 	/**
-	 * Show contents of would-be RQCCall for submission given as arg.
-	 */
-	function callrqc($args, $request) {
-		//----- obtain data:
-		$submissionId = $args[0];
-		$router = $request->getRouter();
-		$requestArgs = $request->getQueryArray();
-		$context = $request->getContext();
-		$user = $request->getUser();
-		//----- make call:
-		$this->rqccall = new RqcCall();
-		$output = "Hallo!\n";  // $this->rqccall->send($user, $context, "1");
-		//----- send response:
-		header("Content-Type: application/json; charset=utf-8");
-		print $output;
-	}
-
-
-	/**
 	  * Make review case (MRC) in the current journal.
-	  * INCOMPLETE AND OUTDATED. TODO: remove.
+	  * INCOMPLETE AND OUTDATED. TODO 1: remove or rewrite.
 	  */
 	function mrc($args, $request) {
 		header("Content-Type: text/html; charset=utf-8");
@@ -163,4 +168,18 @@ class DevHelperHandler extends Handler {
 		//print(json_encode($data, JSON_PRETTY_PRINT));
 		echo "END.\n";
 	}
+}
+
+/**
+ * Workaround for $request->getQueryArray().
+ * In OJS 3.3.0, that call produces the error
+ * "Application::getContextList() cannot be called statically"
+ */
+ function getQueryArray($request) {
+	$queryString = $request->getQueryString();
+	$requestArgs = array();
+	if (isset($queryString)) {
+		parse_str($queryString, $requestArgs);
+	}
+	return $requestArgs;
 }
