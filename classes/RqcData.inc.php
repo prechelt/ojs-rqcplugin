@@ -36,34 +36,25 @@ class RqcData extends RqcDevHelper {
 
 	function __construct() {
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
-		//--- store DAOs:
-        $this->editDecisionDao = DAORegistry::getDAO('EditDecisionDAO');
-        $this->journalDao = DAORegistry::getDAO('JournalDAO');
-		$this->submissionDao = DAORegistry::getDAO('SubmissionDAO');
-		$this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-		$this->reviewFormDao = DAORegistry::getDAO('ReviewFormDAO');
-		$this->reviewFormElementDao = DAORegistry::getDAO('ReviewFormElementDAO');
-		$this->reviewFormResponseDao = DAORegistry::getDAO('ReviewFormResponseDAO');
-		$this->reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
-		$this->reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
-		$this->stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
-		$this->userDao = DAORegistry::getDAO('UserDAO');
-		$this->userGroupDao = DAORegistry::getDAO('UserGroupDAO');
 		parent::__construct();
 	}
 
 	/**
 	 * Build PHP array with the data for an RQC call to be made.
 	 */
-	function rqcdata_array($user, $journal, $submissionId) {
+	function rqcdata_array($request, $journal, $submissionId) {
+		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		//----- prepare processing:
-		$submission = $this->submissionDao->getById($submissionId);
+		$submission = $submissionDao->getById($submissionId);
 		$data = array();
 		//----- fundamentals:
-		$data['interactive_user'] = $this->get_interactive_user($user);
+		$data['interactive_user'] = $this->get_interactive_user($request);
+		$data['mhs_submissionpage'] = $request->getRequestUrl();
+
 
 		//----- submission data:
-		$lastReviewRound = $this->reviewRoundDao->getLastReviewRoundBySubmissionId($submissionId);
+		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submissionId);
 		$reviewroundN = $lastReviewRound->getRound();
 		$data['visible_uid'] = $this->get_uid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
 		$data['external_uid'] = $this->get_uid($journal, $submission, $reviewroundN, true);  // URL-friendly version.
@@ -109,8 +100,9 @@ class RqcData extends RqcDevHelper {
      */
     protected function get_decision($submission, $reviewRound) {
         // See EditDecisionDAO->getEditorDecisions, $this->rqc_decision
-        $rr = $reviewRound;
-        $editorDecisions = $this->editDecisionDao->getEditorDecisions(
+		$editDecisionDao = DAORegistry::getDAO('EditDecisionDAO');
+		$rr = $reviewRound;
+        $editorDecisions = $editDecisionDao->getEditorDecisions(
             $rr->getSubmissionId(), $rr->getStageId(), $rr->getRound());
         foreach ($editorDecisions as $decision) {
             $result = $this->rqc_decision("editor", $decision['decision']);
@@ -125,15 +117,17 @@ class RqcData extends RqcDevHelper {
 	 * Return linear array of RQC editorship descriptor objects.
 	 */
 	protected function get_editorassignment_set($submissionId) {
+		$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
 		$result = array();
-		$dao = $this->stageAssignmentDao;
-		$iter = $dao->getBySubmissionAndStageId($submissionId,
+		$iter = $stageAssignmentDao->getBySubmissionAndStageId($submissionId,
 			WORKFLOW_STAGE_ID_EXTERNAL_REVIEW);
 		$level1N = 0;
 		foreach ($iter->toArray() as $stageassign) {
 			$assignment = array();
-			$user = $this->userDao->getById($stageassign->getUserId());
-			$userGroup = $this->userGroupDao->getById($stageassign->getUserGroupId());
+			$user = $userDao->getById($stageassign->getUserId());
+			$userGroup = $userGroupDao->getById($stageassign->getUserGroupId());
 			$role = $userGroup->getRoleId();
 			$levelMap = array(ROLE_ID_MANAGER => 3,  // OJS 3.4: use prefix Role:: to find the constants
                 ROLE_ID_SUB_EDITOR => 1);
@@ -157,10 +151,11 @@ class RqcData extends RqcDevHelper {
 	}
 
 	/**
-	 * Return emailaddress of user.
-	 * (And hope this same address is registered with RQC as well.)
+	 * Return emailaddress of current user or "" if this is not an interactive call.
+	 * The adapter needs to hope this same address is registered with RQC as well.
 	 */
-	protected static function get_interactive_user($user) {
+	protected static function get_interactive_user($request) {
+		$user = $request->getUser();
 		return $user ? $user->getEmail() : "";
 	}
 
@@ -174,15 +169,18 @@ class RqcData extends RqcDevHelper {
 	 * See PKPReviewerReviewStep3Form::saveReviewForm() for details.
 	 */
 	protected function get_review_set($submissionId, $reviewRound) {
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
+		$userDao = DAORegistry::getDAO('UserDAO');
 		$result = array();
 		$reviewRoundN = $reviewRound->getRound();
-		$assignments = $this->reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRoundN-1);
+		$assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRoundN-1);
 		foreach ($assignments as $reviewId => $reviewAssignment) {
 			if ($reviewAssignment->getRound() != $reviewRoundN ||
 				$reviewAssignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
 				continue;  // irrelevant record, skip it.
 			$rqcreview = array();
-			$reviewerSubmission = $this->reviewerSubmissionDao->getReviewerSubmission($reviewId);
+			$reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewId);
 			//--- review metadata:
 			$rqcreview['visible_id'] = $reviewId;
 			$rqcreview['invited'] = rqcify_datetime($reviewAssignment->getDateNotified());
@@ -203,7 +201,7 @@ class RqcData extends RqcDevHelper {
 			$recommendation = $reviewAssignment->getRecommendation();
             $rqcreview['suggested_decision'] = $recommendation ? $this->rqc_decision("reviewer", $recommendation) : "";
 			//--- reviewer:
-			$reviewerobject = $this->userDao->getById($reviewAssignment->getReviewerId());
+			$reviewerobject = $userDao->getById($reviewAssignment->getReviewerId());
 			$rqcreviewer = array();
 			$rqcreviewer['email'] = $reviewerobject->getEmail();
 			$rqcreviewer['firstname'] = get_nonlocalized_attr($reviewerobject, "getGivenName");
