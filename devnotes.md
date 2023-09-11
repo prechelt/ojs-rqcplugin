@@ -1,4 +1,4 @@
-## Development notes: Development setup
+## Development setup
 
 - configure the machine itself:
 - starting point: This repo has been cloned into `/ws/gh/ojs34` on WSL Debian.
@@ -8,18 +8,11 @@
 - We do not need a venv for ojs development if `fabric` is installed globally.
 - We develop on branch `lutz34`, which branches off of
   `stable-3_4_0` and is rebased on that or its 3.4.x successor
-  from time to time.
+  from time to time. (Ditto for 3.3.x)
   See `init_rqc33`/`init_rqc34` in `.bashrc`.
 - I'll accumulate my required patches to OJS and PKP locally
   and see what to do with them once RQC is more-or-less release-ready.
   https://docs.pkp.sfu.ca/dev/contributors/#before-you-begin
-- I may want them in 3.3 _and_ 3.4, because as of 2022-09 the release timeline so far was
-  - 3.0: 2016-08-31
-  - 3.1: 2017-10-23
-  - 3.2: 2020-02-28
-  - 3.3: 2020-11-28
-  - 3.4: 2023-06-09
-  - 3.5: under development as of 2023-08
 - set up OJS for development:
   see OJS developer installation for reference:
   https://docs.pkp.sfu.ca/dev/documentation/en/getting-started
@@ -45,37 +38,34 @@
   - Settings->Website->Plugins turn on RQC plugin
 - tests/backup.sh backup
   so you can quickly restore the review case during testing
-- http://localhost:<port>/index.php/rqctest/rqcdevhelper/
+- http://localhost:<port>/index.php/rqctest/rqcdevhelper/1/?viewonly=1
 - Perhaps apply patches to OJS codebase from `ojspatches`.
 - For OJS to talk to RQC, start the Django dev server
 
 
-## Development notes: General OJS knowledge
+## OJS knowledge
+### General OJS knowledge
 
 - Overall PKP/OJS developer documentation
-- Architecture: https://docs.pkp.sfu.ca/dev/documentation/en/architecture
-
+  - Architecture: https://docs.pkp.sfu.ca/dev/documentation/en/architecture
 - Templates:
-- Smarty: https://smarty-php.github.io/smarty/designers/language-builtin-functions.html
-- fbv: FormBuilderVocabulary
-- Accessing data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/html-smarty
-- Injecting data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/advanced-custom-data.html
-- ...
-- DAO class names are in classes/core/Application.inc.php::getDAOmap())
-- Forum: [create plugin and custom URL](https://forum.pkp.sfu.ca/t/ojs-3-0-3-0-1-browse-plugin-doesnt-show/26145/9?u=prechelt)
-- Control flow, dispatch, URLs:
-https://pkp.sfu.ca/wiki/index.php?title=Router_Architecture
-- see notes in 2018.3.txt of 2018-10-02
-- Editor assignment:
-"Can only recommend decision, authorized editor must record it."
-- Settings->Website->Plugins->Plugin Gallery
-- Beware of the various _persistent_ caches, e.g. for plugin settings
-- LoadHandler described in OSJ2.1 TechRef p. 46
-- Maybe-helpful items from the code:
-_callbackHandleCustomNavigationMenuItems
+  - Smarty: https://smarty-php.github.io/smarty/designers/language-builtin-functions.html
+  - fbv: FormBuilderVocabulary
+- Data:
+  - Accessing data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/html-smarty
+  - Injecting data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/advanced-custom-data.html
+  - DAO class names are in classes/core/Application.inc.php::getDAOmap())
+- Forum:
+  - [create plugin and custom URL](https://forum.pkp.sfu.ca/t/ojs-3-0-3-0-1-browse-plugin-doesnt-show/26145/9?u=prechelt)
+- Misc:
+  - see notes in 2018.3.txt of 2018-10-02
+  - Editor assignment:
+    "Can only recommend decision, authorized editor must record it."
+  - Maybe-helpful items from the code:
+    _callbackHandleCustomNavigationMenuItems
 
 
-## Development notes: OJS data model (the relevant parts)
+### OJS data model (the relevant parts)
 
 RQC speaks of Journals, Submissions (i.e. articles), Authors,
 Reviewers, Reviews, Editors, EditorAssignments (which Editor has which
@@ -83,151 +73,79 @@ role for which Submission).
 Authors, Editors, and Reviewers are all Persons.
 
 This is how these concepts are represented in OJS (class names,
-other typical identifiers for such objects).
-OJS speaks of four "stages": submission, review, copyediting, production.
-RQC is concerned with the review stage only.
-A revised article in OJS is not a new submission but rather a new
-"review round" of the same submission (with new files).
-Most classes have a corresponding DAO (data access object, as the ORM).
-Accessing objects often involves retrieving them (by using the DAO)
-via the primary key, called the `id`:
+other typical identifiers for such objects):
+- OJS speaks of four "stages": submission, review, copyediting, production.
+  RQC is concerned with the review stage only.
+- A revised article in OJS is not a new submission but rather a new
+  "review round" of the same submission (with new files).
+- Most classes have a corresponding DAO (data access object, as the ORM).
+  Accessing objects often involves retrieving them (by using the DAO)
+  via the primary key, called the `id`:
 - Journal: `Journal`;
-the journal is often called the `context`.
+  the journal is often called the `context`.
 - Submission: `Article`
-(there is a `Submission` class as well: the PKP library's superclass).
+  (there is a `Submission` class as well: the PKP library's superclass).
 - Person: `User` (extends `Identity`).
 - Author: `Author` (but the term is oddly also used for the 'author' of
-a Review: the Reviewer).
-Inheritance: `Author<--PKPAuthor<--Identity<--DataObject`.
+  a Review: the Reviewer).
+  Inheritance: `Author<--PKPAuthor<--Identity<--DataObject`.
 - Editor: `User`(?)
-Decision constants see `EditorDecisionActionsManager`.
-Role ID constants see `Role`.
-The handling editor is called Section Editor in OJS.
-`StageAssignment` appears to map a user ID to
-a stage (constants see `PKPApplication`, e.g. `WORKFLOW_STAGE_ID_EXTERNAL_REVIEW`)
-in a given role(?) (`UserGroup`(?), constants see ` `???).
+  The handling editor is called Section Editor in OJS.
+- Decision constants see `EditorDecisionActionsManager`.
+  Role ID constants see `Role`.
+- `StageAssignment` maps (submission, user, usergroup(=role?) to
+  two flags `recommend_only` and `can_change_metadata`.
+  These are settings valid for the stage `stage_id` in the submission object
+  (constants see far down in `PKPApplication`, e.g. `WORKFLOW_STAGE_ID_EXTERNAL_REVIEW`).
 - Reviewer: `User` (but usually called `reviewer`).
 - A `ReviewAssignment` connects a Reviewer to a Submission and also contains
-various timestamps, `declined`, `round`, `reviewRoundId`, `reviewMethod`.
+  various timestamps, `declined`, `round`, `reviewRoundId`, `reviewMethod`.
 - A `ReviewRound` represents the version number of a manuscript:
-OJS could theoretically use the same `Article` for the, say,
-three versions of a manuscript until
-eventual acceptance or rejection and represents the versions explicitly.
-In contrast, RQC always uses three separate Submission
-objects connected more implicitly via predecessor links.
-How to get it: `ReviewRoundDAO::getLastReviewRoundBySubmissionId`
-(`ReviewRoundDAO::getCurrentRoundBySubmissionId` gets the round number).
-- Once the proper `ReviewRound` is known, get the `ReviewAssignments` by
-`ReviewAssignmentDAO::getByReviewRoundId` (one could also use
-`ReviewAssignmentDAO::getBySubmissionId`).
-This returns an array. Its indices are the review IDs!.
-- Review: `ReviewerSubmission`, but please hold on:
-- This class extends `Article`, presumably because reviewers can upload annotated
-versions of the submission.
-- Get one by `ReviewerSubmissionDAO::getReviewerSubmission($reviewId)`. ``
-- Attributes: timestamps, `declined`, `reviewMethod`, `reviewerId`,
-`reviewId` (in fact reviewAssignmentId), `recommendation`, `decisions`.
-- Recommendation constants see
-define('SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT', 1);
-define('SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS', 2);
-define('SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE', 3);
-define('SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE', 4);
-define('SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE', 5);
-define('SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS', 6);
-- Also an array of `SubmissionComments` which represent
-review text. Retrieve by `getMostRecentPeerReviewComment`
-- `SubmissionComment` attributes: `authorEmail`, `authorId`,
-`comments`, `commentTitle`, `commentType` (should be 1: `COMMENT_TYPE_PEER_REVIEW`),
-timestamps, `roleId`, `submissionId`, `viewable`.
+  OJS could theoretically use the same `Article` for all, say,
+  three versions of a manuscript until
+  eventual acceptance or rejection and represents the versions explicitly.
+  In contrast, RQC always uses three separate Submission
+  objects.
+  How to get it: `ReviewRoundDAO::getLastReviewRoundBySubmissionId`
+  (`ReviewRoundDAO::getCurrentRoundBySubmissionId` gets the round number).
+  - Once the proper `ReviewRound` is known, get the `ReviewAssignments` by
+    `ReviewAssignmentDAO::getByReviewRoundId` (one could also use
+    `ReviewAssignmentDAO::getBySubmissionId`).
+    This returns an array. Its indices are the review IDs!.
 
 
-## Development notes: OJS3
+### OJS 3.4
 
-- installation: https://pkp.sfu.ca/wiki/index.php?title=Github_Documentation_for_PKP_Contributors
-- DAO class names are in classes/core/Application.inc.php::getDAOmap())
-- Forum: [create plugin and custom URL](https://forum.pkp.sfu.ca/t/ojs-3-0-3-0-1-browse-plugin-doesnt-show/26145/9?u=prechelt)
-- Control flow, dispatch, URLs:
-https://pkp.sfu.ca/wiki/index.php?title=Router_Architecture
-- see notes in 2018.3.txt of 2018-10-02
-- Editor assignment:
-"Can only recommend decision, authorized editor must record it."
-- Settings->Website->Plugins->Plugin Gallery
-- Plugins with Settings:
-Google Analytics (Settings fail)
-RQC (settings fail)
-Web Feed (2 radiobuttons, one with an integer textbox)
-Usage statistics (Sections, checkboxes, text fields, pulldown)
-- Beware of the various _persistent_ caches, e.g. for plugin settings
-- LoadHandler described in OSJ2.1 TechRef p. 46
-- Maybe-helpful items from the code:
-_callbackHandleCustomNavigationMenuItems
-
-After setting up OJS anew:
-- config.inc.php:
-show_stacktrace = On
-display_errors = Off
-activate_developer_functions = On
-rqc_server = http://192.168.3.1:8000
-(display_errors breaks Ajax functions when it kicks in)
-- create journal rqctest:
-create users editor1, author1, reviewer1, reviewer2;
-create a submission, 2 review assignments, 2 reviews;
-Settings->Website->Plugins turn on RQC plugin
-- tests/backup.sh backup
-so you can quickly restore the review case during testing
-- http://localhost:8000/index.php/rqctest/rqcdevhelper/
-
-Patches to OJS codebase that may be needed:
-
---- a/classes/template/PKPTemplateManager.inc.php
-+++ b/classes/template/PKPTemplateManager.inc.php
-@@ -869,7 +869,7 @@ class PKPTemplateManager extends Smarty {
-static function &getManager($request = null) {
-if (!isset($request)) {
-$request = Registry::get('request');
--                       if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated call without request object.');
-+                       // if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated call without request object.');
-}
-assert(is_a($request, 'PKPRequest'));
-
-
-### Development notes: phpunit and PKPTestCase/DatabaseTestCase
-
-- Complete DB reset is available by returning `PKP_TEST_ENTIRE_DB`
-from `getAffectedTables`.
-- Selenium test example see `StaticPagesFunctionalTest`.
-
-
-## Development notes: OJS 3.4
-
-- Hooks: `php lib/pkp/tools/getHooks.php | tr , '\n'`
+- List all hooks: `php lib/pkp/tools/getHooks.php | tr , '\n'`
   Many hooks live in lib/pkp, not in ojs.
-- Hook: statt `modifydecisionoptionshook` gibt es jetzt `Decision::add`
-  und `Decision::validate`.
+- `HookRegistry::register()` turns into `Hook::add()`.
+- Hook: the former `modifydecisionoptionshook` is now `Decision::add`
+  and `Decision::validate`.
+- Convert code to use namespaces, new data model, new hooks.
+  Will make it incompatible with OJS 3.3. Hmm.
+  Hints regarding namespaces: https://github.com/pkp/pkp-lib/issues/6091
+  in section "Additional details on plugins"
 
 
-## Development notes: RQC
+### phpunit and PKPTestCase/DatabaseTestCase
 
-- resubmit elsewhere counts as reject (or is its own decision?)
-- do not submit confidential comments as part of the review.
-- allow a file upload instead of review text???
+- 3.3: Complete DB reset is available by returning `PKP_TEST_ENTIRE_DB`
+  from `getAffectedTables`.
+
+
+
+## RQC adapter
+
 - submit flag that RQC should emphasize the MHS page link,
   because grading-relevant material is only on the MHS page.
 
-- Review Forms can be configured freely.
-  We will use only the 'extended text box' parts that are marked as
-  'will be sent to authors'
-- Our opt-in field must be added in review step3, which currently shows:
-  Review files, Review form (several fields), Reviewer files, Review discussions,
-  Recommendation.
-  The best place would be at the very bottom, after the recommendation.
-  To put my field there, I simply put a
-  `templates/reviewer/review/reviewerRecommendations.tpl` in the plugin
 - Add hook to PKPReviewerReviewStep3Form::saveForLater() so that I can do
   ReviewerOpting::setStatus(..., RQC_PRELIM_OPTING), which currently is never used.
 - Setting `activate_developer_functions = On` in `config.inc.php`
-  enables `example_request` functionality in `RQCPlugin::manage`
-  and `::getActions`. Not yet implemented.
+  enables helpers from DevHelperHandler:
+  - `http://localhost:8033/index.php/rqctest/rqcdevhelper/hello` shows some request information
+  - `http://localhost:8033/index.php/rqctest/rqcdevhelper/rqccall/1/?viewonly=1` shows what would get sent to RQC
+  - `http://localhost:8033/index.php/rqctest/rqcdevhelper/rqccall/1/?viewonly=0` makes an RQC call
 - See [my PKP forum thread](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/6)
 - In particular regarding [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
 - Pieces that take part in review submission[superclasslevel]:
@@ -256,11 +174,16 @@ from `getAffectedTables`.
 - Delayed-call storage via Plugin::updateSchema and my own DAO?
 
 
-### TO DO
+### TO DO and status
 
+- settings: add the journal ID/key validation via an RQC call.
+  - Status: When an existing validation check fails (e.g. Journal ID = "a"),
+    the form submission hangs and the
+    `POST /index.php/rqctest/notification/fetchNotification` produces
+    `PHP Fatal error:  Uncaught Exception: Unhandled management action! in /ws/gh/ojs33/lib/pkp/classes/plugins/Plugin.inc.php:181`
+    from RQCPlugin line 219. The action is `'fetchNotification'` I guess.
 - store opt-in response in review submission
   https://docs.pkp.sfu.ca/dev/plugin-guide/en/examples-custom-field
-- settings: add the journal ID/key validation via an RQC call
 - add all hooks and actual activity
 - Switch to LetsEncrypt and put its root certificate into the plugin,
   because the Telekom certificate ends 2019-07-09
@@ -271,3 +194,56 @@ from `getAffectedTables`.
 - Refactorings:
     - change names with underscores into convention: `rqc_opt_in` -> `rqcOptIn` etc.
     - ...
+
+
+## OJS versions
+
+### Release timeline
+
+- 3.0: 2016-08-31
+- 3.1: 2017-10-23
+- 3.2: 2020-02-28
+- 3.3: 2020-11-28
+- 3.4: 2023-06-09
+- 3.5: under development as of 2023-08
+
+### Which release is used how much (as of 2022-11)?
+
+Number of journals using this version.
+Taken from the CSV file at
+https://dataverse.harvard.edu/file.xhtml?fileId=6708853&version=3.0&toolType=QUERY
+(which is updated yearly)
+via `sort /tmp/ojs-version-per-journal | sort -r |uniq -c`
+
+```
+     31 3.4.0
+     51 3.3.1
+  35160 3.3.0
+  12840 3.2.1
+   1857 3.2.0
+  10414 3.1.2
+   6604 3.1.1
+   1614 3.1.0
+   1562 3.0.2
+    305 3.0.1
+    239 3.0.0
+      1 2.9.0
+  14857 2.4.8
+   1514 2.4.7
+    455 2.4.6
+    379 2.4.5
+     76 2.4.4
+     50 2.4.3
+    145 2.4.2
+      1 2.4.0
+      4 2.3.8
+     45 2.3.7
+    106 2.3.6
+     69 2.3.2
+     33 2.3.1
+      1 2.2.4
+     44 2.2.2
+      6 1.2.0
+      1 1.1.1
+   1823 (no version indicated)
+```
