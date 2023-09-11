@@ -17,6 +17,7 @@ namespace APP\plugins\generic\reviewqualitycollector;
 use PKP\plugins\Hook;
 */
 import('lib.pkp.classes.plugins.HookRegistry');
+import('plugins.generic.reviewqualitycollector.pages.RqccallHandler');
 
 /**
  * ...
@@ -27,7 +28,7 @@ class EditorActions extends RqcDevHelper
     /**
      * Register callbacks. This is to be called from the plugin's register().
      */
-    public function register()
+    public function register(): void
     {
         HookRegistry::register(
             'LoadComponentHandler',
@@ -45,21 +46,20 @@ class EditorActions extends RqcDevHelper
             'EditorAction::recordDecision',
             array($this, 'cb_recordDecision')
         );
-
     }
 
     /**
      * Callback for LoadComponentHandler.
      * Directs clicks of button "RQC-Grade the Reviews" to RqcEditorDecisionHandler.
      */
-    public function cb_editorActionRqcGrade($hookName, $args)
+    public function cb_editorActionRqcGrade($hookName, $args): bool
     {
         $component = &$args[0];
         $op = &$args[1];
         if ($component == 'modals.editorDecision.EditorDecisionHandler' &&
             $op == 'rqcGrade') {
             $component = 'plugins.generic.reviewqualitycollector.components.editorDecision.RqcEditorDecisionHandler';
-            return true;  // no more handling needed
+            return true;  // no more handling needed, RqcEditorDecisionHandler will do the work
         }
         return false;  // proceed with normal processing
     }
@@ -69,7 +69,7 @@ class EditorActions extends RqcDevHelper
      * Callback for EditorAction::modifyDecisionOptions.
      * Adds button "RQC-Grade the Reviews" to the Workflow page.
      */
-    public function cb_modifyDecisionOptions($hookName, $args)
+    public function cb_modifyDecisionOptions($hookName, $args): bool
     {
         $context = $args[0];
         $submission = $args[1];
@@ -90,7 +90,7 @@ class EditorActions extends RqcDevHelper
     /**
      * Callback for installing page handlers.
      */
-    public function cb_pagehandlers($hookName, $params)
+    public function cb_pagehandlers($hookName, $params): bool
     {
         $page =& $params[0];
         $op =& $params[1];
@@ -103,21 +103,30 @@ class EditorActions extends RqcDevHelper
 
     /**
      * Callback for EditorAction::recordDecision.
+	 * See lib.pkp.classes.EditorAction::recordDecision for the $args.
+	 * We send data to RQC like for a non-interactive call and no redirection is performed
+	 * in order to give the editors full control over when they want to visit RQC.
+	 * (Besides, redirection would be enormously difficult in the OJS control flow.)
      */
     public function cb_recordDecision($hookName, $args)
     {
         import('plugins.generic.reviewqualitycollector.classes.RqcData');
-        $GO_ON = true;  // false continues processing, true stops it (needed during development).
+        $GO_ON = false;  // false continues processing (default), true stops it (for testing during development).
         $submission = &$args[0];
         $decision = &$args[1];
-        $result = &$args[2];
         $is_recommendation = &$args[3];
-        $this->_print('### cb_recordDecision called');
-        if ($is_recommendation || !RqcOjsData::is_decision($decision)) {
+		$this->_print("### cb_recordDecision called\n");
+		$the_decision = $decision['decision'];
+		$the_status = $is_recommendation ? 'is-rec-only' : 'is-decision';
+		//--- ignore non-decision:
+        if ($is_recommendation || !RqcOjsData::is_decision($the_decision)) {
+			$this->_print("### cb_recordDecision ignores the $the_decision|$the_status call\n");
             return $GO_ON;
         }
-        // act on decision:
-        $this->_print('### cb_recordDecision calls RQC');
-        return $GO_ON;
+        //--- act on decision:
+        $this->_print("### cb_recordDecision calls RQC ($the_decision|$the_status)\n");
+		$caller = new RqccallHandler();
+		$rqc_result = $caller->sendToRqc(null, $submission->getContextId(), $submission->getId());  // TODO 2: catch failures and queue
+		return $GO_ON;
     }
 }
