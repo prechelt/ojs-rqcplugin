@@ -1,13 +1,13 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/RQCSettingsForm.inc.php
+ * @file plugins/generic/reviewqualitycollector/RqcSettingsForm.inc.php
  *
  * Copyright (c) 2014-2017 Simon Fraser University
  * Copyright (c) 2018-2019 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class RQCSettingsForm
+ * @class RqcSettingsForm
  * @ingroup plugins_generic_reviewqualitycollector
  *
  * @brief Form for journal managers to modify RQC plugin settings
@@ -26,24 +26,28 @@ import('lib.pkp.classes.form.Form');
 import('plugins.generic.reviewqualitycollector.classes.RqcCall');
 
 class RQCFormValidator extends FormValidator {
-	function isValid() {
+	function isValid(): bool {
 		$form = $this->_form;
 		$hostUrl = $form->_plugin->rqc_server();
 		$rqcJournalId = $form->getData('rqcJournalId');
 		$rqcJournalAPIKey = $form->getData('rqcJournalAPIKey');
-		$result = call_mhs_apikeycheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey);
+		$result = RqcCall::call_mhs_apikeycheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey);
 		$status = $result['status'];
 		if ($status == 200) {
 			return true;  // all is fine
 		}
 		if ($status == 400 || $status == 404) {
-			$msg = $result['json'] ? $result['json']['error'] : "something went wrong with the RQC request";
+			$msg = array_key_exists('response', $result) ? $result['response']['error']
+				                                             : "something went wrong with the RQC request";
 			$form->addError('rqcJournalId', $msg);
+			// $form->addError('rqcJournalId', print_r($result, true));  // debug
 			return true;  // suppress the message configured at the FormValidator level
 		}
 		if ($status == 403) {
-			$msg = $result['json'] ? $result['json']['error'] : "something went horribly wrong with the RQC request";
+			$msg = array_key_exists('response', $result) ? $result['response']['error']
+				                                             : "something went horribly wrong with the RQC request";
 			$form->addError('rqcJournalAPIKey', $msg);
+			// $form->addError('rqcJournalAPI', print_r($result, true));  // debug
 			return true;  // suppress the message configured at the FormValidator level
 		}
 		if ($status >= 500) {
@@ -54,13 +58,13 @@ class RQCFormValidator extends FormValidator {
 	}
 }
 
-class RQCSettingsForm extends Form {
+class RqcSettingsForm extends Form {
 
 	/** @var int */
-	var $_contextId;
+	var int $_contextId;
 
-	/** @var object */
-	var $_plugin;
+	/** @var RQCPlugin */
+	var RQCPlugin $_plugin;
 
 	/**
 	 * Constructor
@@ -85,7 +89,7 @@ class RQCSettingsForm extends Form {
 	/**
 	 * Initialize form data.
 	 */
-	function initData() {
+	function initData(): void {
 		$this->_data = array(
 			'rqcJournalId' => $this->_plugin->getSetting($this->_contextId, 'rqcJournalId'),
 			'rqcJournalAPIKey' => $this->_plugin->getSetting($this->_contextId, 'rqcJournalAPIKey'),
@@ -95,7 +99,7 @@ class RQCSettingsForm extends Form {
 	/**
 	 * Assign form data to user-submitted data.
 	 */
-	function readInputData() {
+	function readInputData(): void {
 		$this->readUserVars(array('rqcJournalId', 'rqcJournalAPIKey'));
 	}
 
@@ -103,7 +107,7 @@ class RQCSettingsForm extends Form {
 	 * Fetch the form.
 	 * @copydoc Form::fetch()
 	 */
-	function fetch($request, $template = NULL, $display = false) {
+	function fetch($request, $template = NULL, $display = false): string {
 		$templateMgr = TemplateManager::getManager($request);
 		$templateMgr->assign('pluginName', $this->_plugin->getName());
 		return parent::fetch($request);
