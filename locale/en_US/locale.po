@@ -14,54 +14,54 @@ msgstr ""
 msgid "grid.action.rqcGradeName"
 msgstr "Send to Review Quality Collector"
 
-msgid "plugins.generic.reviewqualitycollector.description"
-msgstr "The RQC plugin allows sending review data to the reviewqualitycollector.org service."
+msgid "plugins.generic.rqc.description"
+msgstr "The RQC plugin allows sending review data to the rqc.org service."
 
-msgid "plugins.generic.reviewqualitycollector.displayName"
+msgid "plugins.generic.rqc.displayName"
 msgstr "Review Quality Collector (RQC)"
 
-msgid "plugins.generic.reviewqualitycollector.editoraction.grade.button"
+msgid "plugins.generic.rqc.editoraction.grade.button"
 msgstr "RQC-Grade the Reviews"
 
-msgid "plugins.generic.reviewqualitycollector.editoraction.grade.title"
+msgid "plugins.generic.rqc.editoraction.grade.title"
 msgstr "Grade the reviews in RQC"
 
-msgid "plugins.generic.reviewqualitycollector.editoraction.grade.explanation"
-msgstr "<p>You are about to submit this submission's review data to <a href='https://reviewqualitycollector.org' target='_blank'>Review Quality Collector (RQC)</a>.</p><p>If you are assigned a role that should grade the reviews, you will be redirected to RQC to perform the grading and then directed back here to OJS.</p>"
+msgid "plugins.generic.rqc.editoraction.grade.explanation"
+msgstr "<p>You are about to submit this submission's review data to <a href='https://rqc.org' target='_blank'>Review Quality Collector (RQC)</a>.</p><p>If you are assigned a role that should grade the reviews, you will be redirected to RQC to perform the grading and then directed back here to OJS.</p>"
 
-msgid "plugins.generic.reviewqualitycollector.reviewer_opt_in.header"
+msgid "plugins.generic.rqc.reviewer_opt_in.header"
 msgstr "Take part in Review Quality Collector?"
 
-msgid "plugins.generic.reviewqualitycollector.reviewer_opt_in.text"
-msgstr "<p><a href=\"https://reviewqualitycollector.org/\" target=\"_blank\">Review Quality Collector (RQC)</a> is an initiative for improving the quality of scientific peer review. Its core is a mechanism that supplies a reviewer with a receipt for their work for each journal year. The receipt certifies the quality of the rewiewing work based on a journal-specific review quality definition. This turns reviewing into a source of reputation and so improves reviewer motivation and hence review quality.</p><p>If I agree, the journal will forward my review data (my identity, the review text, various metadata) to RQC and I will receive a reviewing receipt from RQC in exchange.<br>If I do not agree, neither my identity nor the review text will be passed on to RQC.</p><p>See <a href=\"https://reviewqualitycollector.org/t/faq\" target=\"_blank\">reviewqualitycollector.org/t/faq</a> for details.</p><p>The agreement covers all my reviews for the present journal in the present calendar year; a separate one is needed for any other journal and any other year."
+msgid "plugins.generic.rqc.reviewer_opt_in.text"
+msgstr "<p><a href=\"https://rqc.org/\" target=\"_blank\">Review Quality Collector (RQC)</a> is an initiative for improving the quality of scientific peer review. Its core is a mechanism that supplies a reviewer with a receipt for their work for each journal year. The receipt certifies the quality of the rewiewing work based on a journal-specific review quality definition. This turns reviewing into a source of reputation and so improves reviewer motivation and hence review quality.</p><p>If I agree, the journal will forward my review data (my identity, the review text, various metadata) to RQC and I will receive a reviewing receipt from RQC in exchange.<br>If I do not agree, neither my identity nor the review text will be passed on to RQC.</p><p>See <a href=\"https://rqc.org/t/faq\" target=\"_blank\">rqc.org/t/faq</a> for details.</p><p>The agreement covers all my reviews for the present journal in the present calendar year; a separate one is needed for any other journal and any other year."
 
-msgid "plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_yes"
+msgid "plugins.generic.rqc.reviewer_opt_in.choice_yes"
 msgstr "Yes, take part in RQC"
 
-msgid "plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_no"
+msgid "plugins.generic.rqc.reviewer_opt_in.choice_no"
 msgstr "No, opt out from RQC"
 
-msgid "plugins.generic.reviewqualitycollector.settings.description"
-msgstr "<p>Review Quality Collector (RQC) is an initiative for improving the quality of scientific peer review. Its core is a mechanism that supplies a reviewer with a receipt for their work for each journal year. The receipt certifies the quality of the rewiewing work based on a journal-specific review quality definition. This turns reviewing into a source of reputation and so improves reviewer motivation and hence review quality.<br> See <a href=\"https://reviewqualitycollector.org/\">reviewqualitycollector.org</a> for details.</p>"
+msgid "plugins.generic.rqc.settings.description"
+msgstr "<p>Review Quality Collector (RQC) is an initiative for improving the quality of scientific peer review. Its core is a mechanism that supplies a reviewer with a receipt for their work for each journal year. The receipt certifies the quality of the rewiewing work based on a journal-specific review quality definition. This turns reviewing into a source of reputation and so improves reviewer motivation and hence review quality.<br> See <a href=\"https://rqc.org/\">rqc.org</a> for details.</p>"
 
-msgid "plugins.generic.reviewqualitycollector.settings.header"
+msgid "plugins.generic.rqc.settings.header"
 msgstr "RQC configuration for the current journal"
 
-msgid "plugins.generic.reviewqualitycollector.settingsform.rqcJournalID"
+msgid "plugins.generic.rqc.settingsform.rqcJournalID"
 msgstr "RQC journal ID"
 
-msgid "plugins.generic.reviewqualitycollector.settingsform.rqcJournalIDDescription"
-msgstr "The journal ID as generated by RQC (you may need to ask your publisher to create one at reviewqualitycollector.org or use RQC's Demo mode to try it out all by yourself):"
+msgid "plugins.generic.rqc.settingsform.rqcJournalIDDescription"
+msgstr "The journal ID as generated by RQC (you may need to ask your publisher to create one at rqc.org or use RQC's Demo mode to try it out all by yourself):"
 
-msgid "plugins.generic.reviewqualitycollector.settingsform.rqcJournalIDInvalid"
+msgid "plugins.generic.rqc.settingsform.rqcJournalIDInvalid"
 msgstr "RQC journal ID must be an integer"
 
-msgid "plugins.generic.reviewqualitycollector.settingsform.rqcJournalAPIKey"
+msgid "plugins.generic.rqc.settingsform.rqcJournalAPIKey"
 msgstr "RQC secret journal API key"
 
-msgid "plugins.generic.reviewqualitycollector.settingsform.rqcJournalAPIKeyDescription"
+msgid "plugins.generic.rqc.settingsform.rqcJournalAPIKeyDescription"
 msgstr "The journal API key as generated by RQC. Ask your publisher to tell you yours or use RQC's Demo mode and create one yourself."
 
-msgid "plugins.generic.reviewqualitycollector.settingsform.rqcJournalAPIKeyInvalid"
-msgstr "Invalid RQC journal API key. Ask a publisherperson to retrieve the correct one at reviewqualitycollector.org"
+msgid "plugins.generic.rqc.settingsform.rqcJournalAPIKeyInvalid"
+msgstr "Invalid RQC journal API key. Ask a publisherperson to retrieve the correct one at rqc.org"
 

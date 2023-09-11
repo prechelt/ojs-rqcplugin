@@ -1,5 +1,5 @@
 {**
- * plugins/generic/reviewqualitycollector/settingsForm.tpl
+ * plugins/generic/rqc/settingsForm.tpl
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
@@ -18,17 +18,17 @@
     {csrf}
     {include file="controllers/notification/inPlaceNotification.tpl" notificationId="rqcSettingsFormNotification"}
 
-    <div id="description">{translate key="plugins.generic.reviewqualitycollector.settings.description"}</div>
+    <div id="description">{translate key="plugins.generic.rqc.settings.description"}</div>
 
-    {fbvFormArea id="rqcSettingsFormArea" title="plugins.generic.reviewqualitycollector.settings.header"}
+    {fbvFormArea id="rqcSettingsFormArea" title="plugins.generic.rqc.settings.header"}
         <br>
     {fbvFormSection id="rqcSettingsFormSectionId"}
-        <div id="rqcJournalIdDescription">{translate key="plugins.generic.reviewqualitycollector.settingsform.rqcJournalIDDescription"}</div>
-    {fbvElement type="text" id="rqcJournalId" name="rqcJournalId" value=$rqcJournalId label="plugins.generic.reviewqualitycollector.settingsform.rqcJournalID" required="true"}
+        <div id="rqcJournalIdDescription">{translate key="plugins.generic.rqc.settingsform.rqcJournalIDDescription"}</div>
+    {fbvElement type="text" id="rqcJournalId" name="rqcJournalId" value=$rqcJournalId label="plugins.generic.rqc.settingsform.rqcJournalID" required="true"}
     {/fbvFormSection}
     {fbvFormSection id="rqcSettingsFormSectionKey"}
-        <div id="rqcJournalAPIKeyDescription">{translate key="plugins.generic.reviewqualitycollector.settingsform.rqcJournalAPIKeyDescription"}</div>
-    {fbvElement type="text" id="rqcJournalAPIKey" name="rqcJournalAPIKey" value=$rqcJournalAPIKey label="plugins.generic.reviewqualitycollector.settingsform.rqcJournalAPIKey" required="true"}
+        <div id="rqcJournalAPIKeyDescription">{translate key="plugins.generic.rqc.settingsform.rqcJournalAPIKeyDescription"}</div>
+    {fbvElement type="text" id="rqcJournalAPIKey" name="rqcJournalAPIKey" value=$rqcJournalAPIKey label="plugins.generic.rqc.settingsform.rqcJournalAPIKey" required="true"}
     {/fbvFormSection}
     {/fbvFormArea}
 

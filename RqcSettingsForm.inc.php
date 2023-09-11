@@ -1,20 +1,20 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/RqcSettingsForm.inc.php
+ * @file plugins/generic/rqc/RqcSettingsForm.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcSettingsForm
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief Form for journal managers to modify RQC plugin settings
  */
 
 
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use APP\template\TemplateManager;
 use PKP\form\Form;
 use PKP\form\validation\FormValidatorCSRF;
@@ -22,7 +22,7 @@ use PKP\form\validation\FormValidatorPost;
 use PKP\form\validation\FormValidatorRegExp;
 */
 import('lib.pkp.classes.form.Form');
-import('plugins.generic.reviewqualitycollector.classes.RqcCall');
+import('plugins.generic.rqc.classes.RqcCall');
 
 class RQCFormValidator extends FormValidator {
 	function isValid(): bool {
@@ -77,10 +77,10 @@ class RqcSettingsForm extends Form {
 		$this->addCheck(new FormValidatorPost($this));
 		$this->addCheck(new FormValidatorCSRF($this));
 		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalId', 'required',
-								'plugins.generic.reviewqualitycollector.settingsform.rqcJournalIDInvalid',
+								'plugins.generic.rqc.settingsform.rqcJournalIDInvalid',
 								'/^[0-9]+$/'));
 		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalAPIKey', 'required',
-								'plugins.generic.reviewqualitycollector.settingsform.rqcJournalAPIKeyInvalid',
+								'plugins.generic.rqc.settingsform.rqcJournalAPIKeyInvalid',
 								'/^[0-9A-Za-z]+$/'));
 		$this->addCheck(new RQCFormValidator($this, null, 'required',""));
 	}

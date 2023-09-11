@@ -1,12 +1,12 @@
 <?php
 
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use APP\pages\workflow\WorkflowHandler;
 use PKP\plugins\PluginRegistry;
 */
 import('pages.workflow.WorkflowHandler');
-import('plugins.generic.reviewqualitycollector.classes.RqcCall');
+import('plugins.generic.rqc.classes.RqcCall');
 
 /**
  * Class RqccallHandler.

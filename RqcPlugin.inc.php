@@ -1,20 +1,20 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/RqcPlugin.inc.php
+ * @file plugins/generic/rqc/RqcPlugin.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcPlugin
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief Review Quality Collector (RQC) plugin class
  */
 
 
 /*  for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use APP\core\Application;
 use PKP\config\Config;
 use PKP\core\JSONMessage;
@@ -30,16 +30,16 @@ use PKP\plugins\Hook;
 import('lib.pkp.classes.plugins.HookRegistry');
 import('lib.pkp.classes.plugins.GenericPlugin');
 import('classes.core.Application');
-import('plugins.generic.reviewqualitycollector.RqcSettingsForm');
-import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
-import('plugins.generic.reviewqualitycollector.classes.EditorActions');
-import('plugins.generic.reviewqualitycollector.classes.EditorActions');
+import('plugins.generic.rqc.RqcSettingsForm');
+import('plugins.generic.rqc.classes.ReviewerOpting');
+import('plugins.generic.rqc.classes.EditorActions');
+import('plugins.generic.rqc.classes.EditorActions');
 
 define('RQC_API_VERSION', '2023-09-06');  // the API documentation version last used during development
 define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
 define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
-define('RQC_ROOTCERTFILE', 'plugins/generic/reviewqualitycollector/DeutscheTelekomRootCA2.pem');
+define('RQC_ROOTCERTFILE', 'plugins/generic/rqc/DeutscheTelekomRootCA2.pem');
 define('RQC_LOCALE', 'en');  // Plugin will enforce this locale internally
 define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
 
@@ -101,7 +101,7 @@ class RqcPlugin extends GenericPlugin
 	 */
 	public function getDisplayName(): string
 	{
-		return __('plugins.generic.reviewqualitycollector.displayName');
+		return __('plugins.generic.rqc.displayName');
 	}
 
 	/**
@@ -109,7 +109,7 @@ class RqcPlugin extends GenericPlugin
 	 */
 	public function getDescription(): string
 	{
-		return __('plugins.generic.reviewqualitycollector.description');
+		return __('plugins.generic.rqc.description');
 	}
 
 	/**
@@ -175,12 +175,12 @@ class RqcPlugin extends GenericPlugin
 
 	public static function has_developer_functions(): bool
 	{
-		return Config::getVar('reviewqualitycollector', 'activate_developer_functions', false);
+		return Config::getVar('rqc', 'activate_developer_functions', false);
 	}
 
 	public static function rqc_server(): string
 	{
-		return Config::getVar('reviewqualitycollector', 'rqc_server', RQC_SERVER);
+		return Config::getVar('rqc', 'rqc_server', RQC_SERVER);
 	}
 
 	/**

@@ -1,20 +1,20 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/components/editorDecision/RqcEditorDecisionHandler.inc.php
+ * @file plugins/generic/rqc/components/editorDecision/RqcEditorDecisionHandler.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcEditorDecisionHandler
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief Handle modal dialog before submitting and redirecting to RQC.
  */
 
 
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use APP\core\Application;
 use APP\core\PageRouter;
 use PKP\core\JSONMessage;
@@ -51,7 +51,7 @@ class RqcEditorDecisionHandler extends PKPHandler
             array('submissionId' => $submissionId, 'stageId' => $submission->getStageId()));
         $okButton = "<a href='$target' class='pkp_button_primary submitFormButton'>" . __('common.ok') . '</a>';  // TODO: set focus
         // $cancelButton = '<a href="#" class="pkp_button pkpModalCloseButton cancelButton">' . __('common.cancel') . '</a>';  // TODO: does not do anything
-        $content = __('plugins.generic.reviewqualitycollector.editoraction.grade.explanation');
+        $content = __('plugins.generic.rqc.editoraction.grade.explanation');
         $buttons = "<p>$okButton</p>";  // TODO: add a working cancel button, use PKP button bar layout
         return new JSONMessage(true, "$content$buttons");
     }

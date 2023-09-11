@@ -2,7 +2,7 @@
 <!DOCTYPE schema SYSTEM "../../../dtd/xmlSchema.dtd">
 
 <!--
-  * plugins/generic/reviewqualitycollector/schema.xml
+  * plugins/generic/rqc/schema.xml
   *
   * Copyright (c) 2013-2018 Simon Fraser University
   * Copyright (c) 2018-2019 Lutz Prechelt

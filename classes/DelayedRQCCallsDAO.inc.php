@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/classes/DelyedRQCCallsDAO.inc.php
+ * @file plugins/generic/rqc/classes/DelyedRQCCallsDAO.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
@@ -14,7 +14,7 @@
 
 
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use \PKP\db\DAO;
 use \PKP\db\DAOResultFactory;
 */

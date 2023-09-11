@@ -1,21 +1,21 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/classes/DelayedRQCCalls.inc.php
+ * @file plugins/generic/rqc/classes/DelayedRQCCalls.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class DelayedRQCCalls
  * @ingroup tasks
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief Class to retry failed RQC calls as a scheduled task.
  */
 
 
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use PKP\db\DAORegistry;
 use PKP\scheduledTask\ScheduledTask;
 */

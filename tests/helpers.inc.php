@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/tests/helpers.inc.php
+ * @file plugins/generic/rqc/tests/helpers.inc.php
  *
  * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
@@ -12,8 +12,8 @@
 import('lib.pkp.classes.user.User');
 import('classes.submission.Submission');
 
-import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
-import('plugins.generic.reviewqualitycollector.RqcPlugin');
+import('plugins.generic.rqc.classes.ReviewerOpting');
+import('plugins.generic.rqc.RqcPlugin');
 
 function make_reviewable_submission($context, $authors, $reviewers): Submission {
 	$newSubmission = make_submission($context);

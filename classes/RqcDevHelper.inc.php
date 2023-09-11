@@ -1,18 +1,18 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/classes/RqcDevHelper.php
+ * @file plugins/generic/rqc/classes/RqcDevHelper.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcDevHelper
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief Base class providing a _print() method for ad-hoc manual tracing during development
  */
 
-// namespace APP\plugins\generic\reviewqualitycollector;
+// namespace APP\plugins\generic\rqc;
 
 class RqcDevHelper {
 	public function __construct() {

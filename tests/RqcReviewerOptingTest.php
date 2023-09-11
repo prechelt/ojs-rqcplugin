@@ -1,13 +1,13 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/tests/RqcReviewerOptingTest.php
+ * @file plugins/generic/rqc/tests/RqcReviewerOptingTest.php
  *
  * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcReviewerOptingTest
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief Test reviewer opt-in/opt-out functionality.
  */
@@ -19,8 +19,8 @@ import('lib.pkp.tests.DatabaseTestCase');
 import('lib.pkp.classes.db.DAORegistry');
 //import('lib.pkp.classes.core.PKPRouter');
 
-import('plugins.generic.reviewqualitycollector.classes.ReviewerOpting');
-import('plugins.generic.reviewqualitycollector.tests.helpers');
+import('plugins.generic.rqc.classes.ReviewerOpting');
+import('plugins.generic.rqc.tests.helpers');
 
 class RqcReviewerReviewerOptingTest extends DatabaseTestCase {
 

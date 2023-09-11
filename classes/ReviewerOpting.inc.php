@@ -1,28 +1,28 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/classes/ReviewerOpting.inc.php
+ * @file plugins/generic/rqc/classes/ReviewerOpting.inc.php
  *
  * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class ReviewerOpting
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief Store or query the opt-in/opt-out status of a user.
  */
 
 
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use APP\core\Application;
 use APP\template\TemplateManager;
 use PKP\plugins\Hook;
 use PKP\user\User;
 */
 import('lib.pkp.classes.plugins.HookRegistry');
-import('plugins.generic.reviewqualitycollector.RqcPlugin');
-import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
+import('plugins.generic.rqc.RqcPlugin');
+import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define('RQC_OPTING_STATUS_IN',  36);  // internal, external
 define('RQC_OPTING_STATUS_OUT', 35);  // internal, external
@@ -79,8 +79,8 @@ class ReviewerOpting extends RqcDevHelper {
 			$templateMgr->assign(
 				['rqcReviewerOptingChoices' => [
 					'' => 'common.chooseOne',
-					RQC_OPTING_STATUS_IN => 'plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_yes',
-					RQC_OPTING_STATUS_OUT => 'plugins.generic.reviewqualitycollector.reviewer_opt_in.choice_no',
+					RQC_OPTING_STATUS_IN => 'plugins.generic.rqc.reviewer_opt_in.choice_yes',
+					RQC_OPTING_STATUS_OUT => 'plugins.generic.rqc.reviewer_opt_in.choice_no',
 				]]);
 		}
 		return false;  // proceed with normal processing

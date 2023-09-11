@@ -1,20 +1,20 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/classes/RqcData.inc.php
+ * @file plugins/generic/rqc/classes/RqcData.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcData
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief Compute the JSON-like contents of a call to the RQC API.
  */
 
 
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
 use PKP\security\Role;
@@ -23,7 +23,7 @@ use PKP\site\VersionCheck;
 import('classes.workflow.EditorDecisionActionsManager');  // decision action constants
 import('lib.pkp.classes.core.PKPPageRouter');
 import('lib.pkp.classes.site.VersionCheck');
-import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
+import('plugins.generic.rqc.classes.RqcDevHelper');
 
 /**
  * Class RqcData.

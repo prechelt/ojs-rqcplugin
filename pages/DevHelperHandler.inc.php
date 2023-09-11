@@ -1,19 +1,19 @@
  <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/pages/DevHelperHandler.inc.php
+ * @file plugins/generic/rqc/pages/DevHelperHandler.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class DevHelperHandler
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief Handle requests to show what OJS-to-RQC requests will look like or make one "by hand".
  */
 
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use APP\handler\Handler;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;

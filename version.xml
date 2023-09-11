@@ -2,7 +2,7 @@
 <!DOCTYPE version SYSTEM "../../../lib/pkp/dtd/pluginVersion.dtd">
 
 <!--
-  * plugins/generic/reviewqualitycollector/version.xml
+  * plugins/generic/rqc/version.xml
   *
   * Copyright (c) 2014-2017 Simon Fraser University
   * Copyright (c) 2018-2019 Lutz Prechelt

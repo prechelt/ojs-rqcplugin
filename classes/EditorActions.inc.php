@@ -1,23 +1,23 @@
 <?php
 
 /**
- * @file plugins/generic/reviewqualitycollector/classes/EditorActions.inc.php
+ * @file plugins/generic/rqc/classes/EditorActions.inc.php
  *
  * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class EditorActions
- * @ingroup plugins_generic_reviewqualitycollector
+ * @ingroup plugins_generic_rqc
  *
  * @brief RQC adapter parts revolving around editorial decisions.
  */
 
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use PKP\plugins\Hook;
 */
 import('lib.pkp.classes.plugins.HookRegistry');
-import('plugins.generic.reviewqualitycollector.pages.RqccallHandler');
+import('plugins.generic.rqc.pages.RqccallHandler');
 
 /**
  * ...
@@ -58,7 +58,7 @@ class EditorActions extends RqcDevHelper
         $op = &$args[1];
         if ($component == 'modals.editorDecision.EditorDecisionHandler' &&
             $op == 'rqcGrade') {
-            $component = 'plugins.generic.reviewqualitycollector.components.editorDecision.RqcEditorDecisionHandler';
+            $component = 'plugins.generic.rqc.components.editorDecision.RqcEditorDecisionHandler';
             return true;  // no more handling needed, RqcEditorDecisionHandler will do the work
         }
         return false;  // proceed with normal processing
@@ -81,7 +81,7 @@ class EditorActions extends RqcDevHelper
             $decisionOpts[SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = [
                 'operation' => 'rqcGrade',
                 'name' => 'rqcGradeName',
-                'title' => 'plugins.generic.reviewqualitycollector.editoraction.grade.button',
+                'title' => 'plugins.generic.rqc.editoraction.grade.button',
             ];
         }
         return false;  // proceed with other callbacks, if any
@@ -110,7 +110,7 @@ class EditorActions extends RqcDevHelper
      */
     public function cb_recordDecision($hookName, $args)
     {
-        import('plugins.generic.reviewqualitycollector.classes.RqcData');
+        import('plugins.generic.rqc.classes.RqcData');
         $GO_ON = false;  // false continues processing (default), true stops it (for testing during development).
         $submission = &$args[0];
         $decision = &$args[1];

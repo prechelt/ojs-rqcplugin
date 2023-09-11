@@ -1,11 +1,11 @@
 <?php
 /* for OJS 3.4:
-namespace APP\plugins\generic\reviewqualitycollector;
+namespace APP\plugins\generic\rqc;
 use PKP\plugins\PluginRegistry;
 */
-import('plugins.generic.reviewqualitycollector.RqcPlugin');
-import('plugins.generic.reviewqualitycollector.classes.RqcData');
-import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
+import('plugins.generic.rqc.RqcPlugin');
+import('plugins.generic.rqc.classes.RqcData');
+import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define('RQC_MHS_APIKEYCHECK_URL', "%s/api/mhs_apikeycheck/%s");  // host, rqcJournalId
 define('RQC_MHS_SUBMISSION_URL', "%s/api/mhs_submission/%s/%s");  // host, rqcJournalId, externalUid

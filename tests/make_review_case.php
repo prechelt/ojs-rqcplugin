@@ -3,7 +3,7 @@
  * NO LONGER NEEDED AND DOES NOT WORK. See DevHelperHandler instead.
  *
  * Helper for manual testing, to be called from the command line like this:
- * alias mrc='php -f plugins/reviewqualitycollector/tests/make_review_case.php --'
+ * alias mrc='php -f plugins/rqc/tests/make_review_case.php --'
  * mrc -s"submission title" -a"authorlastname" -e"editorlastname" -r"reviewer1lastname"...
  * Creates a submission object assigns existing authors, editors, reviewers, gives each reviewer a
  * default pseudo-review.
