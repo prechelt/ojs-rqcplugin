@@ -3,7 +3,7 @@
 /**
  * @file plugins/generic/reviewqualitycollector/tests/RqcReviewerOptingTest.php
  *
- * Copyright (c) 2022 Lutz Prechelt
+ * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcReviewerOptingTest

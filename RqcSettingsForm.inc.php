@@ -3,8 +3,7 @@
 /**
  * @file plugins/generic/reviewqualitycollector/RqcSettingsForm.inc.php
  *
- * Copyright (c) 2014-2017 Simon Fraser University
- * Copyright (c) 2018-2019 Lutz Prechelt
+ * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcSettingsForm
@@ -63,12 +62,12 @@ class RqcSettingsForm extends Form {
 	/** @var int */
 	var int $_contextId;
 
-	/** @var RQCPlugin */
-	var RQCPlugin $_plugin;
+	/** @var RqcPlugin */
+	var RqcPlugin $_plugin;
 
 	/**
 	 * Constructor
-	 * @param $plugin RQCPlugin
+	 * @param $plugin RqcPlugin
 	 * @param $contextId int  the OJS context (the OJS journal)
 	 */
 	function __construct($plugin, $contextId) {

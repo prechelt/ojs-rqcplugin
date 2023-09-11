@@ -7,8 +7,7 @@
 /**
  * @file plugins/generic/reviewqualitycollector/index.php
  *
- * Copyright (c) 2014-2017 Simon Fraser University
- * Copyright (c) 2018-2019 Lutz Prechelt
+ * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @ingroup plugins_generic_reviewqualitycollector
@@ -16,9 +15,8 @@
  *
  */
 
-require_once('RQCPlugin.inc.php');
+require_once('RqcPlugin.inc.php');
 
-
-return new RQCPlugin();
+return new RqcPlugin();
 
 ?>

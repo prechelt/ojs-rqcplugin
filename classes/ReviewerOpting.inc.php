@@ -3,7 +3,7 @@
 /**
  * @file plugins/generic/reviewqualitycollector/classes/ReviewerOpting.inc.php
  *
- * Copyright (c) 2022 Lutz Prechelt
+ * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class ReviewerOpting
@@ -21,7 +21,7 @@ use PKP\plugins\Hook;
 use PKP\user\User;
 */
 import('lib.pkp.classes.plugins.HookRegistry');
-import('plugins.generic.reviewqualitycollector.RQCPlugin');
+import('plugins.generic.reviewqualitycollector.RqcPlugin');
 import('plugins.generic.reviewqualitycollector.classes.RqcDevHelper');
 
 define('RQC_OPTING_STATUS_IN',  36);  // internal, external

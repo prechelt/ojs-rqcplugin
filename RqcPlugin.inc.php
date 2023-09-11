@@ -3,7 +3,7 @@
 /**
  * @file plugins/generic/reviewqualitycollector/RqcPlugin.inc.php
  *
- * Copyright (c) 2018-2019 Lutz Prechelt
+ * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcPlugin
@@ -156,22 +156,20 @@ class RqcPlugin extends GenericPlugin
 			__('manager.plugins.settings'),
 			null
 		);
-		//----- perhaps return:
-		if (!RqcPlugin::has_developer_functions()) {
-			$actions = array_merge($additions, $actions);
-			return $actions;
+		//----- perhaps add development-only stuff:
+		if (RqcPlugin::has_developer_functions()) {
+			//		import('lib.pkp.classes.linkAction.request.OpenWindowAction');
+			//		$additions[] = new LinkAction(
+			//			'example_request2',
+			//			new OpenWindowAction(
+			//				$router->url($request, /*Application::*/ ROUTE_PAGE, 'MySuperHandler', 'myop', null, ['my', 'array'])
+			//			),
+			//			'(example_request2)',
+			//			null
+			//		);
 		}
-//		import('lib.pkp.classes.linkAction.request.OpenWindowAction');
-//		$additions[] = new LinkAction(
-//			'example_request2',
-//			new OpenWindowAction(
-//				$router->url($request, /*Application::*/ ROUTE_PAGE, 'MySuperHandler', 'myop', null, ['my', 'array'])
-//			),
-//			'(example_request2)',
-//			null
-//		);
-//		//----- return:
-//		$actions = array_merge($additions, $actions);
+		//----- return:
+		$actions = array_merge($additions, $actions);
 		return $actions;
 	}
 

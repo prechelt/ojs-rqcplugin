@@ -3,7 +3,7 @@
 /**
  * @file plugins/generic/reviewqualitycollector/classes/RqcDevHelper.php
  *
- * Copyright (c) 2018-2019 Lutz Prechelt
+ * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @class RqcDevHelper
@@ -20,8 +20,8 @@ class RqcDevHelper {
 	}
 
 	public function _print($msg) {
-		# print to php -S console stream (to be used during development only; remove calls in final code)
-		if (RQCPlugin::has_developer_functions()) {
+		# print to php -S console stream (during development only)
+		if (RqcPlugin::has_developer_functions()) {
 			fwrite($this->stderr, $msg);
 		}
 	}
