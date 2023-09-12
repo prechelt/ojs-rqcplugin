@@ -83,8 +83,12 @@ class EditorActions extends RqcDevHelper
                 'name' => 'rqcGradeName',
                 'title' => 'plugins.generic.rqc.editoraction.grade.button',
             ];
+			// $this->_print("### rqcGrade Button added");
         }
-        return false;  // proceed with other callbacks, if any
+		else {
+			// $this->_print("### no rqcGrade Button added: wrong stage");
+		}
+		return false;  // proceed with other callbacks, if any
     }
 
     /**
@@ -115,16 +119,16 @@ class EditorActions extends RqcDevHelper
         $submission = &$args[0];
         $decision = &$args[1];
         $is_recommendation = &$args[3];
-		$this->_print("### cb_recordDecision called\n");
+		// $this->_print("### cb_recordDecision called\n");
 		$the_decision = $decision['decision'];
 		$the_status = $is_recommendation ? 'is-rec-only' : 'is-decision';
 		//--- ignore non-decision:
         if ($is_recommendation || !RqcOjsData::is_decision($the_decision)) {
-			$this->_print("### cb_recordDecision ignores the $the_decision|$the_status call\n");
+			// $this->_print("### cb_recordDecision ignores the $the_decision|$the_status call\n");
             return $GO_ON;
         }
         //--- act on decision:
-        $this->_print("### cb_recordDecision calls RQC ($the_decision|$the_status)\n");
+        // $this->_print("### cb_recordDecision calls RQC ($the_decision|$the_status)\n");
 		$caller = new RqccallHandler();
 		$rqc_result = $caller->sendToRqc(null, $submission->getContextId(), $submission->getId());  // TODO 2: catch failures and queue
 		return $GO_ON;

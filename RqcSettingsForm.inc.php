@@ -30,7 +30,8 @@ class RQCFormValidator extends FormValidator {
 		$hostUrl = $form->_plugin->rqc_server();
 		$rqcJournalId = $form->getData('rqcJournalId');
 		$rqcJournalAPIKey = $form->getData('rqcJournalAPIKey');
-		$result = RqcCall::call_mhs_apikeycheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey);
+		$result = RqcCall::call_mhs_apikeycheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey,
+			!$form->_plugin->has_developer_functions());
 		$status = $result['status'];
 		if ($status == 200) {
 			return true;  // all is fine

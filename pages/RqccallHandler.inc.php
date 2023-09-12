@@ -53,7 +53,8 @@ class RqccallHandler extends WorkflowHandler
         $rqcJournalId = $this->plugin->getSetting($contextId, 'rqcJournalId');
         $rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
 		return RqcCall::call_mhs_submission($this->plugin->rqc_server(), $rqcJournalId, $rqcJournalAPIKey,
-								            $request, $contextId, $submissionId);
+								            $request, $contextId, $submissionId,
+											!$this->plugin->has_developer_functions());
     }
 
 
