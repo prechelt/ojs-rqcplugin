@@ -23,7 +23,7 @@
 - [debug]: show_stacktrace = On; display_errors = Off  (display_errors breaks Ajax functions when it kicks in)
 - [database]: host, port, name, username, password, persistent
 - [email]: smtp_server, smtp_port, smtp_auth, smtp_username, smtp_password
-- [reviewqualitycollector]: activate_developer_functions = On; rqc_server = http://localhost:<port>
+- [rqc]: activate_developer_functions = On; rqc_server = http://localhost:<port>
   (the plugin will use rqc_server if set and a fixed default otherwise)
 - For DB setup (schema, admin user), you must use the web config dialog
   at `http://localhost:port`.
@@ -46,8 +46,7 @@
 ## OJS knowledge
 ### General OJS knowledge
 
-- Overall PKP/OJS developer documentation
-  - Architecture: https://docs.pkp.sfu.ca/dev/documentation/en/architecture
+- Overall PKP/OJS developer documentation: https://docs.pkp.sfu.ca/dev/
 - Templates:
   - Smarty: https://smarty-php.github.io/smarty/designers/language-builtin-functions.html
   - fbv: FormBuilderVocabulary
@@ -132,6 +131,20 @@ other typical identifiers for such objects):
 - 3.3: Complete DB reset is available by returning `PKP_TEST_ENTIRE_DB`
   from `getAffectedTables`.
 
+
+### Releasing a plugin
+
+- Docs: https://docs.pkp.sfu.ca/dev/plugin-guide/en/release
+- Perhaps install the tool:
+  `npm install pkp-plugin-cli; alias pkp-plugin-cli="./node_modules/pkp-plugin-cli/bin/index.js"`
+- A plugin is released as a plain, publicly downloadable .tar.gz file,
+  accompanied by a pull-request on the
+  [plugin gallery repo](https://github.com/pkp/plugin-gallery))
+  for the corresponding XMl descriptor block.
+- The .tar.gz contains only the required files, LICENSE, version.xml.
+  Its root is the 'rqc' directory (not only its contents).
+- We use `(cd plugins/generic/rqc; make tar)` to create a bare-named
+  tarfile in `tar/` and rename and upload it manually.
 
 
 ## RQC adapter
