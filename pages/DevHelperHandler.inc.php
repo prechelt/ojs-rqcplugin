@@ -18,6 +18,7 @@ use APP\handler\Handler;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
 */
+use Composer\Semver\Semver;  // used by x()
 
 class DevHelperHandler extends Handler
 {
@@ -71,6 +72,20 @@ class DevHelperHandler extends Handler
 		$ra->setDateCompleted(null);
 		$reviewAssignmentDao->updateObject($ra);
 		return("ra_reset $raId (submission $submissionId, reviewer $userId)\n");
+	}
+
+	/**
+	 * Sandbox operation for trying this out.
+	 */
+	public function x($args, $request)
+	{
+		header("Content-Type: text/plain; charset=utf-8");
+		$version = $args[0];
+		$versionspec = $args[1];
+		$semver = new Semver();
+		$result = $semver->satisfies($version, $versionspec);
+		print("Version: " . $version . ", Versionspec: " . $versionspec . "\n");
+		print(" satisifies: " . ($result ? "yes" : "no"));
 	}
 
 	/**
