@@ -4,7 +4,7 @@
 <!--
   * plugins/generic/rqc/version.xml
   *
-  * Copyright (c) 2018-2019 Lutz Prechelt
+  * Copyright (c) 2018-2023 Lutz Prechelt
   * Distributed under the GNU General Public License, Version 3.
   *
   * Plugin version information.
@@ -12,7 +12,7 @@
 <version>
 	<application>rqc</application>
 	<type>plugins.generic</type>
-	<release>2023.09.12beta-for-OJS3.3.0</release>
+	<release>1.0.0-33</release>  <!-- major.minor.patch-OJSversion -->
 	<date>2023-09-12</date>
 	<lazy-load>1</lazy-load>
 	<class>RqcPlugin</class>
