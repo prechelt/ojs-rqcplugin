@@ -1,7 +1,7 @@
 # Review Quality Collector (RQC) plugin for OJS
 created 2017-08-30, Lutz Prechelt
 
-Version 2023-09-11
+Version 2023-09-12
 Status: **beta test, please ask if you want to participate**
 
 
@@ -143,13 +143,14 @@ implemented on the RQC side.)
 
 The current version of the plugin has the following limitations:
 
+User-visible:
 - The RQC-submission confirmation dialog has no "Cancel" button.
   If you need to close it, use the "x" in the top right corner.
-- The certificate used by the RQC server for https
-  will not be validated by the plugin, so that theoretically
-  a man-in-the-middle attack could be performed to modify your submissions.
+- Attachments uploaded by reviewers are not yet transmitted to RQC.
+- Handling journal-specific review forms is implemented,
+  but has not yet been tested and may not work.
+
+Internal/technical:
 - Automatically repeating the submission to RQC after a failed
   request is not yet implemented.
-- Handling journal-specific review forms is implemented,
-  but has not yet been tested.
-- Attachments uploaded by reviewers are not yet transmitted to RQC.
+- No automated tests exist yet. (They are complicated with OJS.)
