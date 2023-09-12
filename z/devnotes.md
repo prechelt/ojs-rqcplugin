@@ -145,6 +145,8 @@ other typical identifiers for such objects):
   Its root is the 'rqc' directory (not only its contents).
 - We use `(cd plugins/generic/rqc; make tar)` to create a bare-named
   tarfile in `tar/` and rename and upload it manually.
+- When preparing the XML snippet for the plugin gallery, the
+  OJS version for the `<version>` tag is found in `dbscripts/xml/version.xml`.
 
 
 ## RQC adapter

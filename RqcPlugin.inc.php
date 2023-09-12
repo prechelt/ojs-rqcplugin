@@ -39,7 +39,6 @@ define('RQC_API_VERSION', '2023-09-06');  // the API documentation version last 
 define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
 define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
 define('RQC_SERVER', 'https://reviewqualitycollector.org');
-define('RQC_ROOTCERTFILE', 'plugins/generic/rqc/DeutscheTelekomRootCA2.pem');
 define('RQC_LOCALE', 'en');  // Plugin will enforce this locale internally
 define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
 
