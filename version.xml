@@ -4,17 +4,16 @@
 <!--
   * plugins/generic/rqc/version.xml
   *
-  * Copyright (c) 2014-2017 Simon Fraser University
   * Copyright (c) 2018-2019 Lutz Prechelt
   * Distributed under the GNU General Public License, Version 3.
   *
   * Plugin version information.
   -->
 <version>
-	<application>reviewqualitycollector</application>
+	<application>rqc</application>
 	<type>plugins.generic</type>
-	<release>0.2.1prealpha-for-OJS3.3.0</release>
-	<date>2022-09-02</date>
+	<release>2023.09.12beta-for-OJS3.3.0</release>
+	<date>2023-09-12</date>
 	<lazy-load>1</lazy-load>
-	<class>RQCPlugin</class>
+	<class>RqcPlugin</class>
 </version>
