@@ -58,6 +58,30 @@ class DevHelperHandler extends Handler
 	}
 
 	/**
+	 * reset/delete the RQC API-key and Id to test if the plugin responds correctly
+	 */
+	public function resetRQCAPIKeyAndId($args, $request) {
+		// http://localhost:8000/index.php/test/rqcdevhelper/resetTestAPIKeyAndId/reset
+		if ($args[0] == "set") {
+			$this->setRQCAPIKeyAndId($request, $args[1], $args[2]);
+		} elseif ($args[0] == "delete") {
+			$this->setRQCAPIKeyAndId($request, "", "");
+		} else {
+			print("huh?");
+		}
+	}
+
+	public function setRQCAPIKeyAndId($request, String $rqcId, String $rqcAPIKey) {
+		$contextId = $request->getContext()->getId();
+		$this->plugin->updateSetting($contextId, 'rqcJournalId', $rqcId, 'string');
+		$this->plugin->updateSetting($contextId, 'rqcJournalAPIKey', $rqcAPIKey, 'string');
+
+		$hasId = $this->plugin->getSetting($contextId, 'rqcJournalId');
+		$hasKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
+		print("Id: ".$hasId."<br>Key: ".$hasKey."<br>Returns: ValidKeyPair ".(PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair() ? "true" : "false"));
+	}
+
+	/**
 	 * Make a previously submitted OJS reviewing case RQC-submittable again.
 	 */
 	public function ra_reset($args, $request)
