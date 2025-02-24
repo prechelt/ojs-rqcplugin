@@ -78,13 +78,14 @@ class RqcPlugin extends GenericPlugin
 		import('lib.pkp.classes.plugins.HookRegistry');
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success && $this->getEnabled()) {
-			HookRegistry::register(
-				'TemplateResource::getFilename',
-				array($this, '_overridePluginTemplates')  // needed by ReviewerOpting
-			);
-			(new ReviewerOpting())->register();
-			(new EditorActions())->register();
-
+			if ($this->hasValidRqcIdKeyPair()) {
+				HookRegistry::register(
+					'TemplateResource::getFilename',
+					array($this, '_overridePluginTemplates')
+				); // needed by ReviewerOpting (automatically override all the templates of ojs with templates set by this plugin. In this case: /reviewer/review/reviewerRecommendation.tpl)
+				(new ReviewerOpting())->register();
+				(new EditorActions())->register();
+			}
 			if (RqcPlugin::has_developer_functions()) {
 				HookRegistry::register(
 					'LoadHandler',
@@ -240,5 +241,20 @@ class RqcPlugin extends GenericPlugin
 			parse_str($queryString, $requestArgs);
 		}
 		return $requestArgs;
+	}
+
+	/**
+	 * returns true if the RQC-Key and ID are set in the db
+	 * these should only be set if the check for the id-key pair was successfully done in the past (else the entry shouldn't be there or empty)
+	 */
+	public function hasValidRqcIdKeyPair(): bool
+	{
+		// PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair()
+		$request = Application::get()->getRequest();
+		$contextId = $request->getContext()->getId();
+		$hasId = $this->getSetting($contextId, 'rqcJournalId');
+		$hasKey = $this->getSetting($contextId, 'rqcJournalAPIKey');
+		$this->_print("\nhasValidRqcIdKeyPair\nId: ".$hasId."\t\tKey: ".$hasKey."\nReturns: ValidkeyPair ".(($hasId and $hasKey) ? "True" : "False")."\n\n");
+		return ($hasId and $hasKey);
 	}
 }
