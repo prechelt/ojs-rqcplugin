@@ -76,7 +76,12 @@ class EditorActions extends RqcDevHelper
         $stageId = $args[2];
         $makeDecision = &$args[3];
         $decisionOpts = &$args[4];  // result
-        if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
+
+		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submission->getId());
+		//$this->_print("\n\n### Lastreviewroundstatus: ".$lastReviewRound->determineStatus()."\n\n");
+
+		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $lastReviewRound->determineStatus() != REVIEW_ROUND_STATUS_PENDING_REVIEWERS) { // stage 3 && at least one reviewer assigned
             //----- add button for RQC grading:
             $decisionOpts[SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = [
                 'operation' => 'rqcGrade',
