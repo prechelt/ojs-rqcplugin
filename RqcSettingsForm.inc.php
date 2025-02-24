@@ -27,11 +27,11 @@ import('plugins.generic.rqc.classes.RqcCall');
 class RQCFormValidator extends FormValidator {
 	function isValid(): bool {
 		$form = $this->_form;
-		$hostUrl = $form->_plugin->rqc_server();
+		$hostUrl = $form->_plugin->rqcServer();
 		$rqcJournalId = $form->getData('rqcJournalId');
 		$rqcJournalAPIKey = $form->getData('rqcJournalAPIKey');
-		$result = RqcCall::call_mhs_apikeycheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey,
-			!$form->_plugin->has_developer_functions());
+		$result = RqcCall::callMhsApikeycheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey,
+			!$form->_plugin->hasDeveloperFunctions());
 		$status = $result['status'];
 		if ($status == 200) {
 			return true;  // all is fine

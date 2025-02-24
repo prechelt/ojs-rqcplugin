@@ -14,14 +14,14 @@
 
 // namespace APP\plugins\generic\rqc;
 
-class RqcDevHelper {
+class RqcDevHelper { // TODO 2: Use trait instead of a Class: https://www.geeksforgeeks.org/multiple-inheritance-in-php/
 	public function __construct() {
 		$this->stderr = fopen('php://stderr', 'w');  # print to php -S console stream
 	}
 
 	public function _print($msg) {
 		# print to php -S console stream (during development only)
-		if (RqcPlugin::has_developer_functions()) {
+		if (RqcPlugin::hasDeveloperFunctions()) {
 			fwrite($this->stderr, $msg);
 		}
 	}

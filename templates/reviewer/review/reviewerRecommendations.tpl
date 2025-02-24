@@ -19,8 +19,8 @@
 {/fbvFormSection}
 
 {if $rqcOptingRequired}
-	{fbvFormSection label="plugins.generic.rqc.reviewer_opt_in.header"
-					description=$description|default:"plugins.generic.rqc.reviewer_opt_in.text"}
+	{fbvFormSection label="plugins.generic.rqc.reviewerOptIn.header"
+					description=$description|default:"plugins.generic.rqc.reviewerOptIn.text"}
 		{fbvElement type="select" id="rqcOptIn"
 					from=$rqcReviewerOptingChoices
 					selected=null

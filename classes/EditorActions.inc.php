@@ -32,19 +32,19 @@ class EditorActions extends RqcDevHelper
     {
         HookRegistry::register(
             'LoadComponentHandler',
-            array($this, 'cb_editorActionRqcGrade')
+            array($this, 'callbackEditorActionRqcGrade')
         );
         HookRegistry::register(
             'EditorAction::modifyDecisionOptions',
-            array($this, 'cb_modifyDecisionOptions')
+            array($this, 'callbackModifyDecisionOptions')
         );
         HookRegistry::register(
             'LoadHandler',
-            array($this, 'cb_pagehandlers')
+            array($this, 'callbackPagehandlers')
         );
         HookRegistry::register(
             'EditorAction::recordDecision',
-            array($this, 'cb_recordDecision')
+            array($this, 'callbackRecordDecision')
         );
     }
 
@@ -52,7 +52,7 @@ class EditorActions extends RqcDevHelper
      * Callback for LoadComponentHandler.
      * Directs clicks of button "RQC-Grade the Reviews" to RqcEditorDecisionHandler.
      */
-    public function cb_editorActionRqcGrade($hookName, $args): bool
+    public function callbackEditorActionRqcGrade($hookName, $args): bool
     {
         $component = &$args[0];
         $op = &$args[1];
@@ -69,7 +69,7 @@ class EditorActions extends RqcDevHelper
      * Callback for EditorAction::modifyDecisionOptions.
      * Adds button "RQC-Grade the Reviews" to the Workflow page.
      */
-    public function cb_modifyDecisionOptions($hookName, $args): bool
+    public function callbackModifyDecisionOptions($hookName, $args): bool
     {
         $context = $args[0];
         $submission = $args[1];
@@ -94,7 +94,7 @@ class EditorActions extends RqcDevHelper
     /**
      * Callback for installing page handlers.
      */
-    public function cb_pagehandlers($hookName, $params): bool
+    public function callbackPagehandlers($hookName, $params): bool
     {
         $page =& $params[0];
         $op =& $params[1];
@@ -112,25 +112,25 @@ class EditorActions extends RqcDevHelper
 	 * in order to give the editors full control over when they want to visit RQC.
 	 * (Besides, redirection would be enormously difficult in the OJS control flow.)
      */
-    public function cb_recordDecision($hookName, $args)
+    public function callbackRecordDecision($hookName, $args)
     {
         import('plugins.generic.rqc.classes.RqcData');
         $GO_ON = false;  // false continues processing (default), true stops it (for testing during development).
         $submission = &$args[0];
         $decision = &$args[1];
-        $is_recommendation = &$args[3];
-		// $this->_print("### cb_recordDecision called\n");
-		$the_decision = $decision['decision'];
-		$the_status = $is_recommendation ? 'is-rec-only' : 'is-decision';
+        $isRecommendation = &$args[3];
+		// $this->_print("### callbackRecordDecision called\n");
+		$theDecision = $decision['decision'];
+		$theStatus = $isRecommendation ? 'is-rec-only' : 'is-decision';
 		//--- ignore non-decision:
-        if ($is_recommendation || !RqcOjsData::is_decision($the_decision)) {
-			// $this->_print("### cb_recordDecision ignores the $the_decision|$the_status call\n");
+        if ($isRecommendation || !RqcOjsData::isDecision($theDecision)) {
+			// $this->_print("### callbackRecordDecision ignores the $theDecision|$theStatus call\n");
             return $GO_ON;
         }
         //--- act on decision:
-        // $this->_print("### cb_recordDecision calls RQC ($the_decision|$the_status)\n");
+        // $this->_print("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
 		$caller = new RqccallHandler();
-		$rqc_result = $caller->sendToRqc(null, $submission->getContextId(), $submission->getId());  // TODO 2: catch failures and queue
+		$rqcResult = $caller->sendToRqc(null, $submission->getContextId(), $submission->getId());  // TODO 2: catch failures and queue
 		return $GO_ON;
     }
 }

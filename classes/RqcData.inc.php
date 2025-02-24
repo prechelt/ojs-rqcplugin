@@ -44,7 +44,7 @@ class RqcData extends RqcDevHelper
 	 * Build PHP array with the data for an RQC call to be made.
 	 * if $request is null, interactive_user and mhs_submissionpage are transmitted as "".
 	 */
-	function rqcdata_array($request, $contextId, $submissionId): array
+	function rqcdataArray($request, $contextId, $submissionId): array
 	{
 		$contextDao = Application::getContextDAO();
 		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
@@ -54,25 +54,28 @@ class RqcData extends RqcDevHelper
 		$submission = $submissionDao->getById($submissionId);
 		$data = array();
 		//----- fundamentals:
-		$data['interactive_user'] = $request ? $this->get_interactive_user($request) : "";
-		$data['mhs_submissionpage'] = $request ? $this->get_mhs_submissionpage($request, $submissionId) : "";
+		$data['interactive_user'] = $request ? $this->getInteractiveUser($request) : "";
+		$data['mhs_submissionpage'] = $request ? $this->getMhsSubmissionpage($request, $submissionId) : "";
 
 
 		//----- submission data:
 		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submissionId);
 		$reviewroundN = $lastReviewRound->getRound();
-		$data['visible_uid'] = $this->get_uid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
-		$data['external_uid'] = $this->get_uid($journal, $submission, $reviewroundN, true);  // URL-friendly version.
-        $data['title'] = $this->get_title($submission->getTitle(null));
+		$data['visible_uid'] = $this->getUid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
+		$data['external_uid'] = $this->getUid($journal, $submission, $reviewroundN, true);  // URL-friendly version.
+        $data['title'] = $this->getTitle($submission->getTitle(null));
         $alldata = $submission->getAllData();
-		$data['submitted'] = rqcify_datetime($alldata['dateSubmitted']);
-		// assume that round $reviewroundN-1 exists (but it may not!!!):
+		$data['submitted'] = rqcifyDatetime($alldata['dateSubmitted']);
+		// TODO 1 assume that round $reviewroundN-1 exists (but it may not!!!):
 
 		//----- authors, editor assignments, reviews, decision:
-        $data['author_set'] = $this->get_author_set($submission->getAuthors());
-        $data['edassgmt_set'] = $this->get_editorassignment_set($submissionId);
-        $data['review_set'] = $this->get_review_set($submissionId, $lastReviewRound);
-        $data['decision'] = $this->get_decision($lastReviewRound);
+        $data['author_set'] = $this->getAuthorSet($submission->getAuthors());
+		// TODO 3: getAuthors($onlyIncludeInBrowse=true) statt continue in schleife
+		// TODO 3: deprecated function. But no clue what to put in instead
+
+        $data['edassgmt_set'] = $this->getEditorassignmentSet($submissionId);
+        $data['review_set'] = $this->getReviewSet($submissionId, $lastReviewRound);
+        $data['decision'] = $this->getDecision($lastReviewRound);
 
 		return $data;
 	}
@@ -80,7 +83,7 @@ class RqcData extends RqcDevHelper
 	/**
 	 * Return linear array of RQC-ish attachment objects.
 	 */
-	protected static function get_attachment_set($reviewerSubmission): array
+	protected static function getAttachmentSet($reviewerSubmission): array
 	{
 		$reviewFilesDao = DAORegistry::getDAO("ReviewFilesDAO");
 		$submissionFileDao = DAORegistry::getDAO("SubmissionFileDAO");
@@ -100,7 +103,7 @@ class RqcData extends RqcDevHelper
 	/**
 	 * Return linear array of RQC-ish author objects.
 	 */
-	protected static function get_author_set($authorsobjects): array
+	protected static function getAuthorSet($authorsobjects): array
 	{
 		$result = array();
 		foreach ($authorsobjects as $authorobject) {
@@ -108,10 +111,10 @@ class RqcData extends RqcDevHelper
 				continue;  // skip non-corresponding authors
 			$rqcauthor = array();
 			$rqcauthor['email'] = $authorobject->getEmail();
-			$rqcauthor['firstname'] = get_nonlocalized_attr($authorobject, "getGivenName");
-			$rqcauthor['lastname'] = get_nonlocalized_attr($authorobject, "getFamilyName");
+			$rqcauthor['firstname'] = getNonlocalizedAttr($authorobject, "getGivenName");
+			$rqcauthor['lastname'] = getNonlocalizedAttr($authorobject, "getFamilyName");
 			$rqcauthor['order_number'] = (int)($authorobject->getSequence());
-			$rqcauthor['orcid_id'] = get_orcid_id($authorobject->getOrcid());
+			$rqcauthor['orcid_id'] = getOrcidId($authorobject->getOrcid());
 			$result[] = $rqcauthor;
 		}
 		return $result;
@@ -124,16 +127,16 @@ class RqcData extends RqcDevHelper
      * We use decisions only and return an 'unknown' if there are only recommendations.
      * We simply use the first decision we see.
      */
-    protected function get_decision($reviewRound): string
+    protected function getDecision($reviewRound): string
 	{
-        // See EditDecisionDAO->getEditorDecisions, $this->rqc_decision
+        // See EditDecisionDAO->getEditorDecisions, $this->rqcDecision
 		$editDecisionDao = DAORegistry::getDAO('EditDecisionDAO');
 		$rr = $reviewRound;
         $editorDecisions = $editDecisionDao->getEditorDecisions(
             $rr->getSubmissionId(), $rr->getStageId(), $rr->getRound());
         foreach ($editorDecisions as $decision) {
-            $result = $this->rqc_decision("editor", $decision['decision']);
-            if ($result) {  // use the first non-undefined decision
+            $result = $this->rqcDecision("editor", $decision['decision']);
+            if ($result) {  // use the first non-undefined decision TODO 3: understand it better (maybe its generally better to use the last decision?)
                 return $result;
             }
         }
@@ -143,7 +146,7 @@ class RqcData extends RqcDevHelper
 	/**
 	 * Return linear array of RQC editorship descriptor objects.
 	 */
-	protected function get_editorassignment_set($submissionId): array
+	protected function getEditorassignmentSet($submissionId): array
 	{
 		$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
 		$userDao = DAORegistry::getDAO('UserDAO');
@@ -166,9 +169,9 @@ class RqcData extends RqcDevHelper
 				$level1N++;
             $assignment['level'] = $level;
             $assignment['email'] = $user->getEmail();
-			$assignment['firstname'] = get_nonlocalized_attr($user, "getGivenName");
-			$assignment['lastname'] = get_nonlocalized_attr($user, "getFamilyName");
-            $assignment['orcid_id'] = get_orcid_id($user->getOrcid());
+			$assignment['firstname'] = getNonlocalizedAttr($user, "getGivenName");
+			$assignment['lastname'] = getNonlocalizedAttr($user, "getFamilyName");
+            $assignment['orcid_id'] = getOrcidId($user->getOrcid());
             $result[] = $assignment;  // append
 		}
 		if (!$level1N && count($result)) {
@@ -182,7 +185,7 @@ class RqcData extends RqcDevHelper
 	 * Return emailaddress of current user or "" if this is not an interactive call.
 	 * The adapter needs to hope this same address is registered with RQC as well.
 	 */
-	protected static function get_interactive_user($request)
+	protected static function getInteractiveUser($request)
 	{
 		$user = $request->getUser();
 		return $user ? $user->getEmail() : "";
@@ -191,10 +194,10 @@ class RqcData extends RqcDevHelper
 	/**
 	 * Return the URL to which RQC should redirect after grading.
 	 */
-	protected function get_mhs_submissionpage(PKPRequest $request, int $submissionId)
+	protected function getMhsSubmissionpage(PKPRequest $request, int $submissionId)
 	{
 		return $request->url(null, 'workflow', 'index',
-			array($submissionId, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW));
+			array($submissionId, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)); // TODO 3: deprecated
 	}
 
 	/**
@@ -205,7 +208,7 @@ class RqcData extends RqcDevHelper
 	 * case 2) default review data structure (using SubmissionComment).
 	 * See PKPReviewerReviewStep3Form::saveReviewForm() for details.
 	 */
-	protected function get_review_set($submissionId, $reviewRound): array
+	protected function getReviewSet($submissionId, $reviewRound): array
 	{
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
@@ -221,31 +224,31 @@ class RqcData extends RqcDevHelper
 			$reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewId);
 			//--- review metadata:
 			$rqcreview['visible_id'] = $reviewId;
-			$rqcreview['invited'] = rqcify_datetime($reviewAssignment->getDateNotified());
-			$rqcreview['agreed'] = rqcify_datetime($reviewAssignment->getDateConfirmed());
-			$rqcreview['expected'] = rqcify_datetime($reviewAssignment->getDateDue());
-			$rqcreview['submitted'] = rqcify_datetime($reviewAssignment->getDateCompleted());
+			$rqcreview['invited'] = rqcifyDatetime($reviewAssignment->getDateNotified());
+			$rqcreview['agreed'] = rqcifyDatetime($reviewAssignment->getDateConfirmed());
+			$rqcreview['expected'] = rqcifyDatetime($reviewAssignment->getDateDue());
+			$rqcreview['submitted'] = rqcifyDatetime($reviewAssignment->getDateCompleted());
 			//--- review text:
 			$reviewFormId = $reviewAssignment->getReviewFormId();
 			if ($reviewFormId) {  // case 1
 				$reviewtext = $this->getReviewTextFromForm($reviewerSubmission, $reviewFormId);
-				$is_html = false;  // TODO 2: is there really no way to get HTML here?
+				$isHtml = false;  // TODO 2: is there really no way to get HTML here?
 			} else {  // case 2
 				$reviewtext = $this->getReviewTextDefault($reviewAssignment);
-				$is_html = true;
+				$isHtml = true;
 			}
 			$rqcreview['text'] = $reviewtext;
-			$rqcreview['is_html'] = $is_html;
-			$rqcreview['attachment_set'] = $this->get_attachment_set($reviewerSubmission);
+			$rqcreview['is_html'] = $isHtml;
+			$rqcreview['attachment_set'] = $this->getAttachmentSet($reviewerSubmission);
 			$recommendation = $reviewAssignment->getRecommendation();
-            $rqcreview['suggested_decision'] = $recommendation ? $this->rqc_decision("reviewer", $recommendation) : "";
+            $rqcreview['suggested_decision'] = $recommendation ? $this->rqcDecision("reviewer", $recommendation) : "";
 			//--- reviewer:
 			$reviewerobject = $userDao->getById($reviewAssignment->getReviewerId());
 			$rqcreviewer = array();
 			$rqcreviewer['email'] = $reviewerobject->getEmail();
-			$rqcreviewer['firstname'] = get_nonlocalized_attr($reviewerobject, "getGivenName");
-			$rqcreviewer['lastname'] = get_nonlocalized_attr($reviewerobject, "getFamilyName");
-			$rqcreviewer['orcid_id'] = get_orcid_id($reviewerobject->getOrcid());
+			$rqcreviewer['firstname'] = getNonlocalizedAttr($reviewerobject, "getGivenName");
+			$rqcreviewer['lastname'] = getNonlocalizedAttr($reviewerobject, "getFamilyName");
+			$rqcreviewer['orcid_id'] = getOrcidId($reviewerobject->getOrcid());
 			$rqcreview['reviewer'] = $rqcreviewer;
 			$result[] = $rqcreview;  // append
 		}
@@ -313,32 +316,32 @@ class RqcData extends RqcDevHelper
 
 	/**
 	 * Get first english title if one exists or all titles otherwise.
-	 * @param array $all_titles  mapping from locale name to title string
+	 * @param array $allTitles  mapping from locale name to title string
 	 */
-	protected static function get_title(array $all_titles): string
+	protected static function getTitle(array $allTitles): string
 	{
-		return englishest($all_titles, true);
+		return englishest($allTitles, true);
 	}
 
 	/**
-	 * Get visible_uid or submission_id for given round.
+	 * Get visibleUid or submissionId for given round.
 	 * First round is 1;
 	 * if round is 0 (for a non-existing predecessor), return "".
 	 * We could use $lastReviewRound->getId(), but don't.
 	 */
-     protected static function get_uid($journal, $submission, $round, $for_url=false): string
+     protected static function getUid($journal, $submission, $round, $forUrl=false): string
 	 {
 		if ($round == 0) {
 			return "";
 		} else {
 			$journalname = $journal->getPath();
-			$submission_id = $submission->getId();
-			if ($for_url) {
+			$submissionId = $submission->getId();
+			if ($forUrl) {
 				// TODO 3: beware: The following _could_ be non-unique and so not in fact a uid
 				$journalname = preg_replace('/[^a-z0-9-_.:()-]/i', '_', $journalname);
 			}
 			return sprintf($round == 1 ? "%s-%s" : "%s-%s.R%d",
-				$journalname, $submission_id, $round);
+				$journalname, $submissionId, $round);
 		}
 	}
 
@@ -346,7 +349,7 @@ class RqcData extends RqcDevHelper
      * Helper: Translate OJS recommendations and decisions into RQC decisions.
      * For editors, we use decisions only and return unknown for recommendations.
      */
-    protected static function rqc_decision($role, $ojs_decision)
+    protected static function rqcDecision($role, $ojsDecision)
 	{
         $reviewerMap = array(
             // see lib.pkp.classes.submission.reviewAssignment.ReviewAssignment
@@ -375,11 +378,11 @@ class RqcData extends RqcDevHelper
             SUBMISSION_EDITOR_DECISION_NEW_ROUND => "MAJORREVISION",
         );
         if ($role == "reviewer")
-            return $reviewerMap[$ojs_decision];
+            return $reviewerMap[$ojsDecision];
         elseif ($role == "editor")
-            return $editorMap[$ojs_decision];
+            return $editorMap[$ojsDecision];
         else
-            assert(False, "rqc_decision: wrong role " . $role);
+            assert(False, "rqcDecision: wrong role " . $role);
     }
 
 	/**
@@ -396,9 +399,9 @@ class RqcOjsData {
 	/**
 	 * Helper: Discriminate decisions from recommendations.
 	 */
-	public static function is_decision($ojs_decision): bool
+	public static function isDecision($ojsDecision): bool
 	{
-		switch ($ojs_decision) {
+		switch ($ojsDecision) {
 			case SUBMISSION_EDITOR_DECISION_ACCEPT:
 			case SUBMISSION_EDITOR_DECISION_DECLINE:
 			case SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE:
@@ -442,7 +445,7 @@ function englishest(array $all_entries, $else_all=false)
  * Helper: Obtain an attribute value in the most sensible localized version we can identify:
  * RQC_LOCALE if possible, the englishest available one otherwise.
  */
-function get_nonlocalized_attr($obj, $functionname): string
+function getNonlocalizedAttr($obj, $functionname): string
 {
 	$result = $obj->$functionname(RQC_LOCALE);  // get preferred value
 	if (!$result) {  // get random first value from full localized list of attribute values
@@ -459,7 +462,7 @@ function get_nonlocalized_attr($obj, $functionname): string
 /**
  * Helper: Obtain the ORCID ID number from an ORCID URL as stored in OJS.
  */
-function get_orcid_id($orcid_url): string
+function getOrcidId($orcid_url): string
 {
 	$pattern = '/(https?:\/\/\w+\.\w+\/)?(\d+-\d+-\d+-\d+)/';
 	$success = preg_match($pattern, $orcid_url, $match);
@@ -471,7 +474,7 @@ function get_orcid_id($orcid_url): string
 /**
  * Helper: Transform timestamp format to RQC convention.
  */
-function rqcify_datetime($ojs_datetime): string
+function rqcifyDatetime($ojs_datetime): string
 {
 	if (!$ojs_datetime) {
 		return "";

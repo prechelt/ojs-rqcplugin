@@ -1,6 +1,6 @@
 ## Development setup
 
-- configure the machine itself:
+### Windows with WSL Debian
 - starting point: This repo has been cloned into `/ws/gh/ojs34` on WSL Debian.
 - sudo apt-get install `cat z/apt-packages.txt`
 - add `/home/prechelt/.local/bin` to `$PATH`.
@@ -13,6 +13,29 @@
 - I'll accumulate my required patches to OJS and PKP locally
   and see what to do with them once RQC is more-or-less release-ready.
   https://docs.pkp.sfu.ca/dev/contributors/#before-you-begin
+
+### Debian
+TODO 2: insert the .txt file contents??
+
+
+
+### Fedora
+TODO 2: insert the .sh file contents
+
+my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/documentation/3.3/en/getting-started)
+- [general]:
+	- base_url = "http://localhost:8000"
+	- allowed_hosts = "[\"localhost\"]"
+- [database]:
+	- driver = postgres9
+	- name = ojs3_3
+- [files]:
+	- files_dir = "_your_path_to_files_folder"
+- [rqc]:
+	- activate_developer_functions = On
+
+
+### generally used
 - set up OJS for development:
   see OJS developer installation for reference:
   https://docs.pkp.sfu.ca/dev/documentation/en/getting-started
@@ -206,9 +229,7 @@ other typical identifiers for such objects):
 - elaborate on "ask your publisher" in locale.po
 - write automated tests
 - package the plugin, submit it for publication in OJS plugin gallery
-- Refactorings:
-    - change names with underscores into convention: `rqc_opt_in` -> `rqcOptIn` etc.
-    - ...
+- Refactorings
 
 
 ## OJS versions

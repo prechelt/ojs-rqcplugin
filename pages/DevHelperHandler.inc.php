@@ -45,15 +45,15 @@ class DevHelperHandler extends Handler
 		if ($viewOnly) {
 			//----- get RQC data:
 			$rqcDataObj = new RqcData();
-			$data = $rqcDataObj->rqcdata_array($request, $journal->getId(), $submissionId);
+			$data = $rqcDataObj->rqcdataArray($request, $journal->getId(), $submissionId);
 			//----- produce output:
 			header("Content-Type: application/json; charset=utf-8");
 			//header("Content-Type: text/plain; charset=utf-8");
 			print(json_encode($data, JSON_PRETTY_PRINT));
 		} else {  //----- make an actual RQC call:
 			$handler = new RqccallHandler();
-			$rqc_result = $handler->sendToRqc($request, $journal->getId(), $submissionId);
-			$handler->processRqcResponse($rqc_result['status'], $rqc_result['response']);
+			$rqcResult = $handler->sendToRqc($request, $journal->getId(), $submissionId);
+			$handler->processRqcResponse($rqcResult['status'], $rqcResult['response']);
 		}
 	}
 
@@ -84,7 +84,7 @@ class DevHelperHandler extends Handler
 	/**
 	 * Make a previously submitted OJS reviewing case RQC-submittable again.
 	 */
-	public function ra_reset($args, $request)
+	public function raReset($args, $request)
 	{
 		header("Content-Type: text/plain; charset=utf-8");
 		$submissionId =& $args[0];
@@ -95,7 +95,7 @@ class DevHelperHandler extends Handler
 		$ra->setRecommendation(null);
 		$ra->setDateCompleted(null);
 		$reviewAssignmentDao->updateObject($ra);
-		return("ra_reset $raId (submission $submissionId, reviewer $userId)\n");
+		return("raReset $raId (submission $submissionId, reviewer $userId)\n");
 	}
 
 	/**

@@ -63,7 +63,7 @@ class RqcPlugin extends GenericPlugin
 	public function _print($msg)
 	{
 		# print to php -S console stream (during development only)
-		if (RqcPlugin::has_developer_functions()) {
+		if (RqcPlugin::hasDeveloperFunctions()) {
 			fwrite($this->stderr, $msg);
 		}
 	}
@@ -86,10 +86,10 @@ class RqcPlugin extends GenericPlugin
 				(new ReviewerOpting())->register();
 				(new EditorActions())->register();
 			}
-			if (RqcPlugin::has_developer_functions()) {
+			if (RqcPlugin::hasDeveloperFunctions()) {
 				HookRegistry::register(
 					'LoadHandler',
-					array($this, 'cb_setupDevHelperHandler')
+					array($this, 'callbackSetupDevHelperHandler')
 				);
 			}
 		}
@@ -157,7 +157,7 @@ class RqcPlugin extends GenericPlugin
 			null
 		);
 		//----- perhaps add development-only stuff:
-		if (RqcPlugin::has_developer_functions()) {
+		if (RqcPlugin::hasDeveloperFunctions()) {
 			//		import('lib.pkp.classes.linkAction.request.OpenWindowAction');
 			//		$additions[] = new LinkAction(
 			//			'example_request2',
@@ -173,12 +173,12 @@ class RqcPlugin extends GenericPlugin
 		return $actions;
 	}
 
-	public static function has_developer_functions(): bool
+	public static function hasDeveloperFunctions(): bool
 	{
 		return Config::getVar('rqc', 'activate_developer_functions', false);
 	}
 
-	public static function rqc_server(): string
+	public static function rqcServer(): string
 	{
 		return Config::getVar('rqc', 'rqc_server', RQC_SERVER);
 	}
@@ -212,13 +212,15 @@ class RqcPlugin extends GenericPlugin
 
 	/**
 	 * Installs Handlers for ad-hoc utilities, used during development only.
+	 * => https://base.url/context/devhelperhandler/method1/arg0/arg1
+	 * => devhelperhandler is the router; method1 is the method to be called with the args
 	 */
-	public function cb_setupDevHelperHandler($hookName, $params)
+	public function callbackSetupDevHelperHandler($hookName, $params)
 	{
 		$page =& $params[0];
 		$op =& $params[1];
-		// $this->_print("### cb_setupDevHelperHandler: page='$page' op='$op'\n");
-		if (self::has_developer_functions() && $page == 'rqcdevhelper') {
+		// $this->_print("### callbackSetupDevHelperHandler: page='$page' op='$op'\n");
+		if (self::hasDeveloperFunctions() && $page == 'rqcdevhelper') {
 			$this->import('pages/DevHelperHandler');
 			define('HANDLER_CLASS', 'DevHelperHandler');
 			return true;  // this hook's handling is done

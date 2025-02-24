@@ -16,20 +16,20 @@ define('RQC_MHS_SUBMISSION_URL', "%s/api/mhs_submission/%s/%s");  // host, rqcJo
  * The technical parts of calls to the RQC server.
  */
 class RqcCall {
-	static function call_mhs_submission(string $rqcHostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
+	static function callMhsSubmission(string $rqcHostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
 										$request, $contextId, $submissionId, bool $strict = false): array
 	{
 		$rqcdata = new RqcData();
-		$data = $rqcdata->rqcdata_array($request, $contextId, $submissionId);
+		$data = $rqcdata->rqcdataArray($request, $contextId, $submissionId);
 		$url = sprintf(RQC_MHS_SUBMISSION_URL, $rqcHostUrl, $rqcJournalId, $submissionId);
-		return RqcCall::curlcall($url, $rqcJournalAPIKey, "POST", $data, $strict);
+		return RqcCall::curlCall($url, $rqcJournalAPIKey, "POST", $data, $strict);
 	}
 
-	static function call_mhs_apikeycheck(string $hostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
+	static function callMhsApikeycheck(string $hostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
 										 bool $strict = false): array
 	{
 		$url = sprintf(RQC_MHS_APIKEYCHECK_URL, $hostUrl, $rqcJournalId);
-		return RqcCall::curlcall($url, $rqcJournalAPIKey, "GET", array(), $strict);
+		return RqcCall::curlCall($url, $rqcJournalAPIKey, "GET", array(), $strict);
 	}
 
 	/**
@@ -43,7 +43,7 @@ class RqcCall {
 	 * @param bool   $strict  whether to do proper SSL checking
 	 * @return array  status and error information
 	 */
-	static function curlcall(string $url, string $rqcJournalAPIKey, string $mode, array $postdata,
+	static function curlCall(string $url, string $rqcJournalAPIKey, string $mode, array $postdata,
 	                         bool $strict): array
 	{
 		assert($mode == "GET" || $mode == "POST");

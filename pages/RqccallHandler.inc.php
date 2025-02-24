@@ -40,21 +40,21 @@ class RqccallHandler extends WorkflowHandler
         $user = $request->getUser();
         $context = $request->getContext();
         $submissionId = $qargs['submissionId'];
-        $rqc_result = $this->sendToRqc($request, $context->getId(), $submissionId);
-        $this->processRqcResponse($rqc_result['status'], $rqc_result['response']);
+        $rqcResult = $this->sendToRqc($request, $context->getId(), $submissionId);
+        $this->processRqcResponse($rqcResult['status'], $rqcResult['response']);
     }
 
     /**
      * The workhorse for actually sending one submission's reviewing data to RQC.
-     * TODO: Upon a network failure or non-response, puts call in queue.
+     * TODO 1: Upon a network failure or non-response, puts call in queue.
      */
     function sendToRqc($request, $contextId, $submissionId)
     {
         $rqcJournalId = $this->plugin->getSetting($contextId, 'rqcJournalId');
         $rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
-		return RqcCall::call_mhs_submission($this->plugin->rqc_server(), $rqcJournalId, $rqcJournalAPIKey,
+		return RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
 								            $request, $contextId, $submissionId,
-											!$this->plugin->has_developer_functions());
+											!$this->plugin->hasDeveloperFunctions());
     }
 
 
@@ -77,12 +77,12 @@ class RqccallHandler extends WorkflowHandler
     /**
      * Resend reviewing data for one submission to RQC after a previous call failed.
      * Called by DelayedRQCCallsTask.
-     * @param $journal_id
-     * @param $submission_id
+     * @param $journalId
+     * @param $submissionId
      */
-    public function resend($journal_id, $submission_id)
+    public function resend($journalId, $submissionId)
     {
-        // TODO!!!
+        // TODO 1
     }
 }
 
