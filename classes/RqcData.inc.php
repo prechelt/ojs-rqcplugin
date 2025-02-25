@@ -25,6 +25,10 @@ import('lib.pkp.classes.core.PKPPageRouter');
 import('lib.pkp.classes.site.VersionCheck');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
+define("RQC_AllOWED_FILE_EXTENSIONS", array(
+	"pdf", "docx", "xlsx", "pptx", "odt", "ods", "odp", "odg", "txt"
+)); // which files are allowed to be included in the review_set['attachment_set']
+
 /**
  * Class RqcData.
  * Builds the data object to be sent to the RQC server from the various pieces of the OJS data model:
@@ -70,7 +74,7 @@ class RqcData extends RqcDevHelper
 
 		//----- authors, editor assignments, reviews, decision:
         $data['author_set'] = $this->getAuthorSet($submission->getAuthors());
-		// TODO 3: getAuthors($onlyIncludeInBrowse=true) statt continue in schleife
+		// TODO 3: getAuthors($onlyIncludeInBrowse=true) statt continue in for loop
 		// TODO 3: deprecated function. But no clue what to put in instead
 
         $data['edassgmt_set'] = $this->getEditorassignmentSet($submissionId);
@@ -85,19 +89,33 @@ class RqcData extends RqcDevHelper
 	 */
 	protected static function getAttachmentSet($reviewerSubmission): array
 	{
-		$reviewFilesDao = DAORegistry::getDAO("ReviewFilesDAO");
-		$submissionFileDao = DAORegistry::getDAO("SubmissionFileDAO");
-		$result = array();  // TODO 1: get attachments
-		/* getting attachments is not for the faint-of-heart:
-		   $reviewerSubmission.reviewer_file_id points to
-		   table review_files with attr submission_file_id which points to
-		   table submission_file with attr file_id which points to
-		   table file with attr path in dir files_dir from config.inc.php.
-		   In case you want a filename (the path in file is a hash value),
-		   just look in submission_file_settings, which are I18Ned.
-		   However, ReviewFilesDAO has no retrieval op?
-		*/
-		return $result;
+		$attachmentSet = array();  // TODO 1: Does it work for all cases?
+		//RqcDevHelper::_staticPrint("\nReviewer: ".$reviewerSubmission->getReviewerFullName()." with Id: ".$reviewerSubmission->getReviewerId()."\n");
+
+		$submissionFilesIterator = Services::get('submissionFile')->getMany(
+			[	'submissionIds' => [$reviewerSubmission->getId()],
+				'uploaderUserIds' =>  [$reviewerSubmission->getReviewerId()],
+			]);
+		foreach ($submissionFilesIterator as $submissionFile) {
+			$attachment = array();
+			$submissionFileName = englishest($submissionFile->getData('name'), false);
+
+			$ext = pathinfo($submissionFileName, PATHINFO_EXTENSION);
+			if (!in_array($ext, RQC_AllOWED_FILE_EXTENSIONS) ) {
+				continue;
+			}
+			$fileId = $submissionFile->getData('fileId'); // !! not the submissionFileId
+			//RqcDevHelper::_staticPrint("SubmissionFile: ".$submissionFileName." with FileId: ".$fileId."\n");
+			$fileService = Services::get('file');
+			$file = $fileService->get($fileId);
+			$fileContent = $fileService->fs->read($file->path);
+			//RqcDevHelper::_staticPrint("File: ".$file->id." ".$file->path." with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n".$fileContent."##EndOfFile##\n\n");
+
+			$attachment['filename'] = $submissionFileName;
+			$attachment['data'] = base64_encode($fileContent);
+			$attachmentSet[] = $attachment;
+		}
+		return $attachmentSet;
 	}
 
 	/**
@@ -217,6 +235,7 @@ class RqcData extends RqcDevHelper
 		$reviewRoundN = $reviewRound->getRound();
 		$assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRoundN-1);
 		foreach ($assignments as $reviewId => $reviewAssignment) {
+			// TODO 1: What if not submitted but some data is already there?
 			if ($reviewAssignment->getRound() != $reviewRoundN ||
 				$reviewAssignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
 				continue;  // irrelevant record, skip it.
@@ -415,29 +434,29 @@ class RqcOjsData {
 
 /**
  * Helper: Get first english entry if one exists or else:
- * all entries in one string if $else_all or
+ * all entries in one string if $elseAll or
  * the entry of the alphabetically first locale otherwise.
- * @param array $all_entries  mapping from locale name to string
+ * @param array $allEntries  mapping from locale name to string
  */
-function englishest(array $all_entries, $else_all=false)
+function englishest(array $allEntries, $elseAll=false)
 {
-	$all_nonenglish_locales = array();
-	foreach ($all_entries as $locale => $entry) {
+	$allNonenglishLocales = array();
+	foreach ($allEntries as $locale => $entry) {
 		if (substr($locale, 0, 2) === "en") {
 			return $entry;  // ...and we're done!
 		}
-		$all_nonenglish_locales[] = $locale;
+		$allNonenglishLocales[] = $locale;
 	}
 	// no en locale found. Return first-of or all others, sorted by locale:
-	sort($all_nonenglish_locales);
-	$all_nonenglish_entries = array();
-	foreach ($all_nonenglish_locales as $locale) {
-		$all_nonenglish_entries[] = $all_entries[$locale];
+	sort($allNonenglishLocales);
+	$allNonenglishEntries = array();
+	foreach ($allNonenglishLocales as $locale) {
+		$allNonenglishEntries[] = $allEntries[$locale];
 	}
-	if ($else_all) {
-		return implode(" / ", $all_nonenglish_entries);
+	if ($elseAll) {
+		return implode(" / ", $allNonenglishEntries);
 	} else {
-		return $all_nonenglish_entries[0];
+		return $allNonenglishEntries[0];
 	}
 }
 
@@ -449,9 +468,9 @@ function getNonlocalizedAttr($obj, $functionname): string
 {
 	$result = $obj->$functionname(RQC_LOCALE);  // get preferred value
 	if (!$result) {  // get random first value from full localized list of attribute values
-		$all_localized_attrs = $obj->$functionname(null);
-		// $result = $all_localized_attrs[array_key_first($all_localized_attrs)];
-		$result = englishest($all_localized_attrs);
+		$allLocalizedAttrs = $obj->$functionname(null);
+		// $result = $allLocalizedAttrs[array_key_first($allLocalizedAttrs)];
+		$result = englishest($allLocalizedAttrs);
 	}
 	if (!$result)  // avoid null results
 		$result = "";
@@ -462,10 +481,10 @@ function getNonlocalizedAttr($obj, $functionname): string
 /**
  * Helper: Obtain the ORCID ID number from an ORCID URL as stored in OJS.
  */
-function getOrcidId($orcid_url): string
+function getOrcidId($orcidUrl): string
 {
 	$pattern = '/(https?:\/\/\w+\.\w+\/)?(\d+-\d+-\d+-\d+)/';
-	$success = preg_match($pattern, $orcid_url, $match);
+	$success = preg_match($pattern, $orcidUrl, $match);
 	return $success ? $match[2] : "";
 }
 
@@ -474,11 +493,11 @@ function getOrcidId($orcid_url): string
 /**
  * Helper: Transform timestamp format to RQC convention.
  */
-function rqcifyDatetime($ojs_datetime): string
+function rqcifyDatetime($ojsDatetime): string
 {
-	if (!$ojs_datetime) {
+	if (!$ojsDatetime) {
 		return "";
 	}
-	$result = str_replace(" ", "T", $ojs_datetime);
+	$result = str_replace(" ", "T", $ojsDatetime);
 	return $result . "Z";
 }

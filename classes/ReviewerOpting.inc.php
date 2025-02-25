@@ -129,7 +129,7 @@ class ReviewerOpting extends RqcDevHelper {
 		$this->_print("##### callbackStep3execute: optingRequired=$optingRequired\n");
 		if (!$optingRequired) return false;  // nothing to do because form field was not shown
 		$rqcOptIn = $step3Form->getData('rqcOptIn');
-		$this->setStatus($contextId, $user, $rqcOptIn);
+		$this->setStatus($contextId, $user, $rqcOptIn); // TODO: if $rqcOptIn was not selected => reject the value (like an validator) and add an if so that the program doesn't crash
 		$this->_print("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
 		return false;
 	}

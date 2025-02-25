@@ -34,7 +34,7 @@ class DevHelperHandler extends Handler
 	 * Show RQC request corresponding to a given submissionId (args[0]) (with ?viewonly=1) or
 	 * make the RQC request and show errors or perform the RQC redirect (with ?viewonly=0&stageId=3).
 	 */
-	function rqccall($args, $request)
+	function rqcCall($args, $request)
 	{
 		//----- prepare processing:
 		$router = $request->getRouter();

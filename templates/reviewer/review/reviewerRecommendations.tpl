@@ -17,7 +17,7 @@
 {fbvFormSection label="reviewer.article.recommendation" description=$description|default:"reviewer.article.selectRecommendation"}
 	{fbvElement type="select" id="recommendation" from=$reviewerRecommendationOptions selected=$reviewAssignment->getRecommendation() size=$fbvStyles.size.MEDIUM required=$required|default:true disabled=$readOnly}
 {/fbvFormSection}
-
+{**TODO 2 : $rqcOptingRequired is set where? == $optingRequired?? **}
 {if $rqcOptingRequired}
 	{fbvFormSection label="plugins.generic.rqc.reviewerOptIn.header"
 					description=$description|default:"plugins.generic.rqc.reviewerOptIn.text"}

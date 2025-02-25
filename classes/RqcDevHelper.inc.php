@@ -26,4 +26,13 @@ class RqcDevHelper { // TODO 2: Use trait instead of a Class: https://www.geeksf
 		}
 	}
 
+	public static function _staticPrint($msg) { // TODO 3: Is there a better variant?
+		# print to php -S console stream (during development only)
+		if (RqcPlugin::hasDeveloperFunctions()) {
+			$stderr = fopen('php://stderr', 'w');
+			fwrite($stderr, $msg);
+			fclose($stderr);
+		}
+	}
+
 }
