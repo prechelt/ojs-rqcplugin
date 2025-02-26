@@ -125,7 +125,8 @@ class RqcData extends RqcDevHelper
 	{
 		$result = array();
 		foreach ($authorsobjects as $authorobject) {
-			if (!(bool)$authorobject->getIncludeInBrowse())  // TODO 2: correct like this?
+			// TODO 3 if issue closed: https://github.com/pkp/pkp-lib/issues/6178
+			if (false) //!(bool)$authorobject->isCorrespondingAuthor()) is currently not available (primaryAuthor or includeInBrowse don't suffice/fulfill that role)
 				continue;  // skip non-corresponding authors
 			$rqcauthor = array();
 			$rqcauthor['email'] = $authorobject->getEmail();
