@@ -70,13 +70,9 @@ class RqcData extends RqcDevHelper
         $data['title'] = $this->getTitle($submission->getTitle(null));
         $alldata = $submission->getAllData();
 		$data['submitted'] = rqcifyDatetime($alldata['dateSubmitted']);
-		// TODO 1 assume that round $reviewroundN-1 exists (but it may not!!!):
 
 		//----- authors, editor assignments, reviews, decision:
-        $data['author_set'] = $this->getAuthorSet($submission->getAuthors());
-		// TODO 3: getAuthors($onlyIncludeInBrowse=true) statt continue in for loop
-		// TODO 3: deprecated function. But no clue what to put in instead
-
+        $data['author_set'] = $this->getAuthorSet($submission->getAuthors()); // TODO 3: getAuthors($onlyIncludeInBrowse=true) statt continue in for loop // TODO 3: but deprecated function. But no clue what to put in instead
         $data['edassgmt_set'] = $this->getEditorassignmentSet($submissionId);
         $data['review_set'] = $this->getReviewSet($submissionId, $lastReviewRound);
         $data['decision'] = $this->getDecision($lastReviewRound);
