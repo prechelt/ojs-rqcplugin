@@ -229,11 +229,11 @@ class RqcData extends RqcDevHelper
 		$reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$result = array();
-		$reviewRoundN = $reviewRound->getRound();
-		$assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRoundN-1);
+		$assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRound->getId());
 		foreach ($assignments as $reviewId => $reviewAssignment) {
-			// TODO 1: What if not submitted but some data is already there?
-			if ($reviewAssignment->getRound() != $reviewRoundN ||
+			// TODO 2: What if a reviewer has not submitted his review but some data is already there (something like save for later)? Questions @Prechelt
+			// => what data is min needed?
+			if ($reviewAssignment->getRound() != $reviewRound->getRound() ||
 				$reviewAssignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
 				continue;  // irrelevant record, skip it.
 			$rqcreview = array();  // will become one entry in the result set
