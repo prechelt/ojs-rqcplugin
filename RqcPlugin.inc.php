@@ -256,7 +256,7 @@ class RqcPlugin extends GenericPlugin
 		$contextId = $request->getContext()->getId();
 		$hasId = $this->getSetting($contextId, 'rqcJournalId');
 		$hasKey = $this->getSetting($contextId, 'rqcJournalAPIKey');
-		$this->_print("\nhasValidRqcIdKeyPair\nId: ".$hasId."\t\tKey: ".$hasKey."\nReturns: ValidkeyPair ".(($hasId and $hasKey) ? "True" : "False")."\n\n");
+		//$this->_print("\nhasValidRqcIdKeyPair\nId: ".$hasId."\t\tKey: ".$hasKey."\nReturns: ValidkeyPair ".(($hasId and $hasKey) ? "True" : "False")."\n\n");
 		return ($hasId and $hasKey);
 	}
 }

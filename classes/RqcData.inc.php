@@ -85,7 +85,7 @@ class RqcData extends RqcDevHelper
 	 */
 	protected static function getAttachmentSet($reviewerSubmission): array
 	{
-		$attachmentSet = array();  // TODO 1: Does it work for all cases?
+		$attachmentSet = array();
 		//RqcDevHelper::_staticPrint("\nReviewer: ".$reviewerSubmission->getReviewerFullName()." with Id: ".$reviewerSubmission->getReviewerId()."\n");
 
 		$submissionFilesIterator = Services::get('submissionFile')->getMany(
