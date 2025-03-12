@@ -60,18 +60,22 @@ class DevHelperHandler extends Handler
 	/**
 	 * reset/delete the RQC API-key and Id to test if the plugin responds correctly
 	 */
-	public function resetRQCAPIKeyAndId($args, $request) {
+	public function resetRQCAPIKeyAndId($args, $request)
+	{
 		// http://localhost:8000/index.php/test/rqcdevhelper/resetTestAPIKeyAndId/reset
 		if ($args[0] == "set") {
 			$this->setRQCAPIKeyAndId($request, $args[1], $args[2]);
 		} elseif ($args[0] == "delete") {
 			$this->setRQCAPIKeyAndId($request, "", "");
 		} else {
+			header("Content-Type: text/plain; charset=utf-8");
 			print("huh?");
 		}
 	}
 
-	public function setRQCAPIKeyAndId($request, String $rqcId, String $rqcAPIKey) {
+	public function setRQCAPIKeyAndId($request, String $rqcId, String $rqcAPIKey)
+	{
+		header("Content-Type: text/plain; charset=utf-8");
 		$contextId = $request->getContext()->getId();
 		$this->plugin->updateSetting($contextId, 'rqcJournalId', $rqcId, 'string');
 		$this->plugin->updateSetting($contextId, 'rqcJournalAPIKey', $rqcAPIKey, 'string');
@@ -96,6 +100,20 @@ class DevHelperHandler extends Handler
 		$ra->setDateCompleted(null);
 		$reviewAssignmentDao->updateObject($ra);
 		return("raReset $raId (submission $submissionId, reviewer $userId)\n");
+	}
+
+	/**
+	 * Make the reviewers rqcOptInStatus invalid so that it has to be set again
+	 */
+	public function rqcOptingStatusReset($args, $request)
+	{
+		header("Content-Type: text/plain; charset=utf-8");
+		$contextId = $request->getContext()->getId();
+		$user = $request->getUser();
+		$userId = $user->getId();
+		$user->updateSetting(ReviewerOpting::$datename, null, 'string', $contextId);
+		$user->updateSetting(ReviewerOpting::$statusname, null, 'int', $contextId);
+		return("rqcOptingStatusReset for reviewer $userId in journal $contextId");
 	}
 
 	/**
