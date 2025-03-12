@@ -74,7 +74,7 @@ class RqcData extends RqcDevHelper
 		//----- authors, editor assignments, reviews, decision:
         $data['author_set'] = $this->getAuthorSet($submission->getAuthors()); // TODO 3: getAuthors($onlyIncludeInBrowse=true) statt continue in for loop // TODO 3: but deprecated function. But no clue what to put in instead
         $data['edassgmt_set'] = $this->getEditorassignmentSet($submissionId);
-        $data['review_set'] = $this->getReviewSet($submissionId, $lastReviewRound);
+        $data['review_set'] = $this->getReviewSet($submissionId, $lastReviewRound, $contextId);
         $data['decision'] = $this->getDecision($lastReviewRound);
 
 		return $data;
@@ -223,7 +223,7 @@ class RqcData extends RqcDevHelper
 	 * case 2) default review data structure (using SubmissionComment).
 	 * See PKPReviewerReviewStep3Form::saveReviewForm() for details.
 	 */
-	protected function getReviewSet($submissionId, $reviewRound): array
+	protected function getReviewSet($submissionId, $reviewRound, $contextId): array
 	{
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
@@ -258,13 +258,24 @@ class RqcData extends RqcDevHelper
 			$rqcreview['attachment_set'] = $this->getAttachmentSet($reviewerSubmission);
 			$recommendation = $reviewAssignment->getRecommendation();
             $rqcreview['suggested_decision'] = $recommendation ? $this->rqcDecision("reviewer", $recommendation) : "";
+
 			//--- reviewer:
 			$reviewerobject = $userDao->getById($reviewAssignment->getReviewerId());
+			// rqcOptOut
+			$status = (new ReviewerOpting())->getStatus($contextId, $reviewerobject, !RQC_PRELIM_OPTING);
 			$rqcreviewer = array();
-			$rqcreviewer['email'] = $reviewerobject->getEmail();
-			$rqcreviewer['firstname'] = getNonlocalizedAttr($reviewerobject, "getGivenName");
-			$rqcreviewer['lastname'] = getNonlocalizedAttr($reviewerobject, "getFamilyName");
-			$rqcreviewer['orcid_id'] = getOrcidId($reviewerobject->getOrcid());
+			if ($status == RQC_OPTING_STATUS_IN) {
+				$rqcreviewer['email'] = $reviewerobject->getEmail();
+				$rqcreviewer['firstname'] = getNonlocalizedAttr($reviewerobject, "getGivenName");
+				$rqcreviewer['lastname'] = getNonlocalizedAttr($reviewerobject, "getFamilyName");
+				$rqcreviewer['orcid_id'] = getOrcidId($reviewerobject->getOrcid());
+			} else {
+				$rqcreviewer['email'] = generatePseudoEmail($contextId, $reviewerobject->getEmail());
+				$rqcreviewer['firstname'] = "";
+				$rqcreviewer['lastname'] = "";
+				$rqcreviewer['orcid_id'] = "";
+				$rqcreview['text'] = "";
+			}
 			$rqcreview['reviewer'] = $rqcreviewer;
 			$result[] = $rqcreview;  // append
 		}
@@ -497,4 +508,24 @@ function rqcifyDatetime($ojsDatetime): string
 	}
 	$result = str_replace(" ", "T", $ojsDatetime);
 	return $result . "Z";
+}
+
+
+/**
+ * Helper: generate the pseudo email address as described in the rqc API:
+ * It is not important whether you use SHA-1 or some other hash function;
+ * it is not important what your salt is or that it be kept super-secret.
+ * What is important is this
+ * - that the same emailaddress always maps to the same pseudo-address,
+ * - that all pseudo-addresses be different, and
+ * - that the pseudo-address ends with @example.edu, so that RQC can recognize it is a pseudo-address.
+ */
+function generatePseudoEmail($contextId, $reviewerEmail): string
+{
+	$salt = sha1($contextId);
+	// we need a value that is different for each MHS (but reproducible),
+	// and doesn't have to be secret (but is not shipped with in the RQC-call; it shouldn't be that easily accessible)
+	// TODO 3: Question @Prechelt: Ok like that?
+	$hash = sha1($reviewerEmail . $salt);
+	return $hash . "@example.edu";
 }

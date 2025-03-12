@@ -25,6 +25,10 @@ class RqccallHandler extends WorkflowHandler
         parent::__construct();
     }
 
+	/**
+	 * Confirm submission+redirection to RQC
+	 * Called by RqcEditorDecisionHandler
+	 */
     public function submit($args, $request)
     {
 		$this->plugin->_print("### RqccallHandler::submit() called");
@@ -71,6 +75,7 @@ class RqccallHandler extends WorkflowHandler
 		} else {  // hmm, something is very very wrong: Show the JSON response
 			header("Content-Type: application/json; charset=utf-8");
 			print(json_encode($jsonarray, JSON_PRETTY_PRINT));
+			// TODO 3: response that is better readable
 		}
     }
 
