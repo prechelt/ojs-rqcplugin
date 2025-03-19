@@ -54,19 +54,7 @@ define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
  */
 class RqcPlugin extends GenericPlugin
 {
-	public function __construct()
-	{
-		parent::__construct();
-		$this->stderr = fopen('php://stderr', 'w');  # print to php -S console stream
-	}
-
-	public function _print($msg)
-	{
-		# print to php -S console stream (during development only)
-		if (RqcPlugin::hasDeveloperFunctions()) {
-			fwrite($this->stderr, $msg);
-		}
-	}
+	use RqcDevHelper;
 
 	/**
 	 * @copydoc Plugin::register()

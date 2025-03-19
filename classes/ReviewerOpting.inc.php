@@ -42,8 +42,9 @@ define('RQC_PRELIM_OPTING',  true);  // for readability
  * The latter three hook into ReviewerReviewStep3Form.
  * TODO 3: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09.
  */
-class ReviewerOpting extends RqcDevHelper
+class ReviewerOpting
 {
+	use RqcDevHelper;
 	static string $datename = 'rqc_opting_date';
 	static string $statusname = 'rqc_opting_status';
 
@@ -70,7 +71,7 @@ class ReviewerOpting extends RqcDevHelper
 			'reviewerreviewstep3form::execute',
 			array($this, 'callbackStep3execute')
 		);
-		$this->_print(">>>>>>" . json_encode(array_keys(HookRegistry::getHooks())) . "<<<<<<\n");
+		//$this->_print(">>>>>>" . json_encode(array_keys(HookRegistry::getHooks())) . "<<<<<<\n");
 	}
 
 
@@ -87,7 +88,7 @@ class ReviewerOpting extends RqcDevHelper
 		$this->_print("##### rqcOptingRequired = '$optingRequired'\n");
 		$step3Form->setData('rqcOptingRequired', $optingRequired);
 		$step3Form->setData('rqcOptIn', '');
-		//RqcDevHelper::_staticPrint("\n####step3Form\n".print_r($step3Form, true));
+		//$this->_print("\n####step3Form\n".print_r($step3Form, true));
 
 		return false;
 	}

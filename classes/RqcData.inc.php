@@ -34,15 +34,11 @@ define("RQC_AllOWED_FILE_EXTENSIONS", array(
  * Builds the data object to be sent to the RQC server from the various pieces of the OJS data model:
  * submission, authors, editors, reviewers and reviews, active user, decision, etc.
  */
-class RqcData extends RqcDevHelper
+class RqcData
 {
+	use RqcDevHelper;
 
 	const CONFIDENTIAL_FIELD_REGEXP = '/[Cc]onfidential/';  // review form fields with such names are excluded
-
-	function __construct() {
-		// $this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
-		parent::__construct();
-	}
 
 	/**
 	 * Build PHP array with the data for an RQC call to be made.
@@ -86,7 +82,7 @@ class RqcData extends RqcDevHelper
 	protected static function getAttachmentSet($reviewerSubmission): array
 	{
 		$attachmentSet = array();
-		//RqcDevHelper::_staticPrint("\nReviewer: ".$reviewerSubmission->getReviewerFullName()." with Id: ".$reviewerSubmission->getReviewerId()."\n");
+		//RqcDevHelperStatic::_staticPrint("\nReviewer: ".$reviewerSubmission->getReviewerFullName()." with Id: ".$reviewerSubmission->getReviewerId()."\n");
 
 		$submissionFilesIterator = Services::get('submissionFile')->getMany(
 			[	'submissionIds' => [$reviewerSubmission->getId()],
@@ -101,11 +97,11 @@ class RqcData extends RqcDevHelper
 				continue;
 			}
 			$fileId = $submissionFile->getData('fileId'); // !! not the submissionFileId
-			//RqcDevHelper::_staticPrint("SubmissionFile: ".$submissionFileName." with FileId: ".$fileId."\n");
+			//RqcDevHelperStatic::_staticPrint("SubmissionFile: ".$submissionFileName." with FileId: ".$fileId."\n");
 			$fileService = Services::get('file');
 			$file = $fileService->get($fileId);
 			$fileContent = $fileService->fs->read($file->path);
-			//RqcDevHelper::_staticPrint("File: ".$file->id." ".$file->path." with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n".$fileContent."##EndOfFile##\n\n");
+			//RqcDevHelperStatic::_staticPrint("File: ".$file->id." ".$file->path." with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n".$fileContent."##EndOfFile##\n\n");
 
 			$attachment['filename'] = $submissionFileName;
 			$attachment['data'] = base64_encode($fileContent);

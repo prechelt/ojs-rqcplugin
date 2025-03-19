@@ -22,8 +22,9 @@ import('plugins.generic.rqc.pages.RqccallHandler');
 /**
  * ...
  */
-class EditorActions extends RqcDevHelper
+class EditorActions
 {
+	use RqcDevHelper;
 
     /**
      * Register callbacks. This is to be called from the plugin's register().
@@ -81,7 +82,7 @@ class EditorActions extends RqcDevHelper
 		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submission->getId());
 		//$this->_print("\n\n### Lastreviewroundstatus: ".$lastReviewRound->determineStatus()."\n\n");
 
-		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $lastReviewRound->determineStatus() != REVIEW_ROUND_STATUS_PENDING_REVIEWERS) { // stage 3 && at least one reviewer assigned // TODO 1: assigned and has agreed? => Question @Prechelt
+		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $lastReviewRound->determineStatus() != REVIEW_ROUND_STATUS_PENDING_REVIEWERS) { // stage 3 && at least one reviewer assigned // TODO 2: assigned and has agreed? => Question @Prechelt
             //----- add button for RQC grading:
             $decisionOpts[SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = [
                 'operation' => 'rqcGrade',
