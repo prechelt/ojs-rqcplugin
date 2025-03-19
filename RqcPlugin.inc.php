@@ -33,7 +33,7 @@ import('classes.core.Application');
 import('plugins.generic.rqc.RqcSettingsForm');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.classes.EditorActions');
-import('plugins.generic.rqc.classes.EditorActions');
+import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define('RQC_API_VERSION', '2023-09-06');  // the API documentation version last used during development
 define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
@@ -63,7 +63,6 @@ class RqcPlugin extends GenericPlugin
 	 */
 	public function register($category, $path, $mainContextId = null): bool
 	{
-		import('lib.pkp.classes.plugins.HookRegistry');
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success && $this->getEnabled()) {
 			if ($this->hasValidRqcIdKeyPair()) {

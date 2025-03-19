@@ -23,8 +23,10 @@ use PKP\form\validation\FormValidatorRegExp;
 */
 import('lib.pkp.classes.form.Form');
 import('plugins.generic.rqc.classes.RqcCall');
+import('plugins.generic.rqc.classes.RqcDevHelper');
 
 class RQCFormValidator extends FormValidator {
+	use RqcDevHelper;
 	function isValid(): bool {
 		$form = $this->_form;
 		$hostUrl = $form->_plugin->rqcServer();
@@ -32,6 +34,7 @@ class RQCFormValidator extends FormValidator {
 		$rqcJournalAPIKey = $form->getData('rqcJournalAPIKey');
 		$result = RqcCall::callMhsApikeycheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey,
 			!$form->_plugin->hasDeveloperFunctions());
+		//$this->_print("\n".print_r($result, true)."\n");
 		$status = $result['status'];
 		if ($status == 200) {
 			return true;  // all is fine

@@ -68,7 +68,7 @@ class RqcData
 		$data['submitted'] = rqcifyDatetime($alldata['dateSubmitted']);
 
 		//----- authors, editor assignments, reviews, decision:
-        $data['author_set'] = $this->getAuthorSet($submission->getAuthors()); // TODO 3: getAuthors($onlyIncludeInBrowse=true) statt continue in for loop // TODO 3: but deprecated function. But no clue what to put in instead
+        $data['author_set'] = $this->getAuthorSet($submission->getAuthors()); // TODO 3: but deprecated function. But no clue what to put in instead
         $data['edassgmt_set'] = $this->getEditorassignmentSet($submissionId);
         $data['review_set'] = $this->getReviewSet($submissionId, $lastReviewRound, $contextId);
         $data['decision'] = $this->getDecision($lastReviewRound);
@@ -104,9 +104,10 @@ class RqcData
 			//RqcDevHelperStatic::_staticPrint("File: ".$file->id." ".$file->path." with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n".$fileContent."##EndOfFile##\n\n");
 
 			$attachment['filename'] = $submissionFileName;
-			$attachment['data'] = base64_encode($fileContent);
+			$attachment['data'] = base64_encode($fileContent); // TODO 2: base64_encoded content gives me an error 500 from the server
 			$attachmentSet[] = $attachment;
 		}
+		//RqcDevHelperStatic::_staticPrint("\n".print_r($attachmentSet, true)."\n");
 		return $attachmentSet;
 	}
 
@@ -124,7 +125,8 @@ class RqcData
 			$rqcauthor['email'] = $authorobject->getEmail();
 			$rqcauthor['firstname'] = getNonlocalizedAttr($authorobject, "getGivenName");
 			$rqcauthor['lastname'] = getNonlocalizedAttr($authorobject, "getFamilyName");
-			$rqcauthor['order_number'] = (int)($authorobject->getSequence());
+			//RqcDevHelperStatic::_staticPrint("\n".print_r($authorobject, true)."\n");
+			$rqcauthor['order_number'] = (int)($authorobject->getSequence()); // TODO 2: doesn't work like it should (it's always 0 even if it isn't in the db)
 			$rqcauthor['orcid_id'] = getOrcidId($authorobject->getOrcid());
 			$result[] = $rqcauthor;
 		}
@@ -251,7 +253,7 @@ class RqcData
 			}
 			$rqcreview['text'] = $reviewtext;
 			$rqcreview['is_html'] = $isHtml;
-			$rqcreview['attachment_set'] = $this->getAttachmentSet($reviewerSubmission);
+			$rqcreview['attachment_set'] = array(); //  $this->getAttachmentSet($reviewerSubmission); // TODO 2: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
 			$recommendation = $reviewAssignment->getRecommendation();
             $rqcreview['suggested_decision'] = $recommendation ? $this->rqcDecision("reviewer", $recommendation) : "";
 

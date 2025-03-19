@@ -18,6 +18,7 @@ use PKP\plugins\Hook;
 */
 import('lib.pkp.classes.plugins.HookRegistry');
 import('plugins.generic.rqc.pages.RqccallHandler');
+import('plugins.generic.rqc.classes.RqcDevHelper');
 
 /**
  * ...
