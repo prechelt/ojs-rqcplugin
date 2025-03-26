@@ -1,0 +1,35 @@
+{
+	"title": "Delayed RQC call",
+	"description": "A call that has to be retried",
+	"type": "object",
+	"required": [
+		"contextId",
+		"lastTryTS",
+		"originalTryTS",
+		"retries",
+		"submissionId"
+	],
+	"properties": {
+		"id": {
+			"type": "integer",
+			"readOnly": true
+		},
+		"lastTryTS": {
+			"type": "integer"
+		},
+		"originalTryTS": {
+			"type": "integer"
+		},
+		"retries": {
+			"type": "integer",
+			"default": 0,
+			"validation": [
+				"nullable",
+				"min:0"
+			]
+		},
+		"submissionId": {
+			"type": "integer"
+		}
+	}
+}

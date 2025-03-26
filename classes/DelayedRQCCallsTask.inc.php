@@ -23,7 +23,8 @@ import('lib.pkp.classes.scheduledTask.ScheduledTask');
 
 define('RQCCALL_MAX_RETRIES', 10);
 
-class DelayedRQCCalls extends ScheduledTask {
+class DelayedRQCTask extends ScheduledTask {
+	use RqcDevHelper;
 
 	/**
 	 * @copydoc ScheduledTask::getName()
@@ -37,30 +38,32 @@ class DelayedRQCCalls extends ScheduledTask {
 	 * @copydoc ScheduledTask::executeActions()
 	 */
 	function executeActions() {
-		$delayedCallsDao = DAORegistry::getDAO('DelayedRQCCallsDAO');
-		$all_delayed_calls_to_be_retried_now = $delayedCallsDao->getCallsToRetry();
-		foreach ($all_delayed_calls_to_be_retried_now as $call) {
-			if ($call['retries'] >= RQCCALL_MAX_RETRIES) {  // throw away!
-				$delayedCallsDao->deleteById($call['call_id']);
+		$delayedCallDao = new DelayedRQCCallDAO(); // $delayedCallDao = DAORegistry::getDAO('DelayedRQCCallsDAO');
+		$allDelayedCallsToBeRetriedNow = $delayedCallDao->getCallsToRetry(); // grab all delayed calls that should be retried now
+		foreach ($allDelayedCallsToBeRetriedNow as $call) {
+			if ($call['retries'] > RQCCALL_MAX_RETRIES) {  // throw away!
+				$delayedCallDao->deleteById($call['call_id']);
 			}
 			else {  // try again:
-				// retry!!!
-				$delayedCallsDao->updateCall($call);
+				$callHandler = new RqccallHandler();
+				$resendSuccessful = $callHandler->resend($call['request'], $call['context_id'], $call['submission_id']);
+				switch ($resendSuccessful) {
+					case RQC_RESEND_CANCELED: // TODO Q: What should I do?
+						break;
+					case RQC_RESEND_BAD_REQUEST: // TODO Q: Is that right that way?
+						// TODO 2: log
+					case RQC_RESEND_SUCCESS:
+						$delayedCallDao->deleteById($call['call_id']);
+						break;
+					case RQC_RESEND_FAILURE:
+					default: // TODO Q: Or what should be the default?
+						$delayedCallDao->updateCall($call); // update retry-counter (and ts). If max-retries is reached: delete
+						break;
+
+				}
 			}
 		}
-		/* Pseudo code:
-		   grab all delayed calls;
-		   foreach delayed call:
-		       if more days old than retry counter suggests:
-		           retry
-		           if successful:
-		               delete;
-		           else:
-		               increase retry counter;
-		               store;
-		        else:
-		           skip;
-		*/
+		// TODO 1: is this needed anymore?
 		/**  Example code found somewhere:
 		  if ($submitReminderDays>=1 && $reviewAssignment->getDateDue() != null) {
 			$checkDate = strtotime($reviewAssignment->getDateDue());

@@ -49,7 +49,7 @@ class DevHelperHandler extends Handler
 			//----- produce output:
 			header("Content-Type: application/json; charset=utf-8");
 			//header("Content-Type: text/plain; charset=utf-8");
-			print(json_encode($data, JSON_PRETTY_PRINT));
+			//print(json_encode($data, JSON_PRETTY_PRINT));
 		} else {  //----- make an actual RQC call:
 			$handler = new RqccallHandler();
 			$rqcResult = $handler->sendToRqc($request, $journal->getId(), $submissionId);
@@ -82,7 +82,7 @@ class DevHelperHandler extends Handler
 
 		$hasId = $this->plugin->getSetting($contextId, 'rqcJournalId');
 		$hasKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
-		print("Id: ".$hasId."<br>Key: ".$hasKey."<br>Returns: ValidKeyPair ".(PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair() ? "true" : "false"));
+		print("Id: ".$hasId."\nKey: ".$hasKey."\nReturns: ValidKeyPair ".(PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair() ? "true" : "false"));
 	}
 
 	/**
@@ -128,6 +128,19 @@ class DevHelperHandler extends Handler
 		$result = $semver->satisfies($version, $versionspec);
 		print("Version: " . $version . ", Versionspec: " . $versionspec . "\n");
 		print(" satisifies: " . ($result ? "yes" : "no"));
+	}
+
+	/**
+	 * Enqueue a new delayedCall with a given submissionId (args[0])
+	 */
+	public function enqueue($args, $request)
+	{
+		$submissionId = $args[0];
+		$rqcCallHandler = new RqccallHandler();
+		$delayedRqcCallId = $rqcCallHandler->putCallIntoQueue($submissionId);
+		$delayedRQCCallDao = new DelayedRQCCallDAO(); //DAORegistry::getDAO('DelayedRQCCallsDAO');
+		$delayedRQCCallDao->getById($delayedRqcCallId);
+		print_r($delayedRQCCallDao);
 	}
 
 	/**
