@@ -3,10 +3,9 @@
 	"description": "A call that has to be retried",
 	"type": "object",
 	"required": [
-		"contextId",
 		"lastTryTS",
 		"originalTryTS",
-		"retries",
+		"remaining_retries",
 		"submissionId"
 	],
 	"properties": {
@@ -15,16 +14,20 @@
 			"readOnly": true
 		},
 		"lastTryTS": {
-			"type": "integer"
+			"type": "integer",
+			"validation": [
+				"date|Y-m-d H:i:s"
+			]
 		},
 		"originalTryTS": {
-			"type": "integer"
-		},
-		"retries": {
 			"type": "integer",
-			"default": 0,
 			"validation": [
-				"nullable",
+				"date|Y-m-d H:i:s"
+			]
+		},
+		"remaining_retries": {
+			"type": "integer",
+			"validation": [
 				"min:0"
 			]
 		},
