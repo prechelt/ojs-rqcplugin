@@ -259,4 +259,25 @@ class RqcPlugin extends GenericPlugin
 		//$this->_print("\nhasValidRqcIdKeyPair\nId: ".$hasId."\t\tKey: ".$hasKey."\nReturns: ValidkeyPair ".(($hasId and $hasKey) ? "True" : "False")."\n\n");
 		return ($hasId and $hasKey);
 	}
+
+	public function getSaltAndGenerateIfNotSet($contextId) : string
+	{
+		$saltLength = 32;
+		$salt = $this->getSetting($contextId, 'rqcJournalSalt');
+		//$this->_print("\nsalt? ".(bool)$salt."\n");
+		if (!$salt) {
+			try {
+				if (function_exists('random_bytes')) {
+					$bytes = random_bytes(floor($saltLength / 2));
+				} else {
+					$bytes = openssl_random_pseudo_bytes(floor($saltLength / 2));
+				}
+				$salt = bin2hex($bytes); // the string is likely unprintable => to hex so the string is printable (but twice as long)
+			} catch (\Random\RandomException $e) {
+				$salt = substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$saltLength); // https://stackoverflow.com/questions/4356289/php-random-string-generator
+			}
+			$this->updateSetting($contextId, 'rqcJournalSalt', $salt, 'string');
+		}
+		return $salt;
+	}
 }

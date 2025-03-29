@@ -38,7 +38,14 @@ class RqcData
 {
 	use RqcDevHelper;
 
+	private plugin|null $plugin;
+
 	const CONFIDENTIAL_FIELD_REGEXP = '/[Cc]onfidential/';  // review form fields with such names are excluded
+
+	function __construct()
+	{
+		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
+	}
 
 	/**
 	 * Build PHP array with the data for an RQC call to be made.
@@ -269,7 +276,7 @@ class RqcData
 				$rqcreviewer['lastname'] = getNonlocalizedAttr($reviewerobject, "getFamilyName");
 				$rqcreviewer['orcid_id'] = getOrcidId($reviewerobject->getOrcid());
 			} else {
-				$rqcreviewer['email'] = generatePseudoEmail($contextId, $reviewerobject->getEmail());
+				$rqcreviewer['email'] = generatePseudoEmail($reviewerobject->getEmail(), $this->plugin->getSaltAndGenerateIfNotSet($contextId));
 				$rqcreviewer['firstname'] = "";
 				$rqcreviewer['lastname'] = "";
 				$rqcreviewer['orcid_id'] = "";
@@ -519,12 +526,8 @@ function rqcifyDatetime($ojsDatetime): string
  * - that all pseudo-addresses be different, and
  * - that the pseudo-address ends with @example.edu, so that RQC can recognize it is a pseudo-address.
  */
-function generatePseudoEmail($contextId, $reviewerEmail): string
+function generatePseudoEmail($reviewerEmail, $salt): string
 {
-	$salt = sha1($contextId);
-	// we need a value that is different for each MHS (but reproducible),
-	// and doesn't have to be secret (but is not shipped with in the RQC-call; it shouldn't be that easily accessible)
-	// TODO 3: Question @Prechelt: Ok like that?
-	$hash = sha1($reviewerEmail . $salt);
+	$hash = sha1($reviewerEmail . $salt, false); // hex
 	return $hash . "@example.edu";
 }
