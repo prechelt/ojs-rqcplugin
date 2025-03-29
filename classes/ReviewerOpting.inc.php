@@ -26,8 +26,8 @@ import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define('RQC_OPTING_STATUS_IN',  36);  // internal, external
 define('RQC_OPTING_STATUS_OUT', 35);  // internal, external
-define('RQC_OPTING_STATUS_IN_PRELIM',  32);  // internal
-define('RQC_OPTING_STATUS_OUT_PRELIM', 31);  // internal
+define('RQC_OPTING_STATUS_IN_PRELIM',  32);  // internal (save for later; not submitted yet)
+define('RQC_OPTING_STATUS_OUT_PRELIM', 31);  // internal (save for later; not submitted yet)
 define('RQC_OPTING_STATUS_UNDEFINED',  30);  // external only
 define('RQC_PRELIM_OPTING',  true);  // for readability
 
@@ -40,7 +40,7 @@ define('RQC_PRELIM_OPTING',  true);  // for readability
  * callbackReadOptIn (for POST) moves the opting value from request to form.
  * callbackStep3execute (for POST) stores opting value into DB.
  * The latter three hook into ReviewerReviewStep3Form.
- * TODO 3: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09.
+ * TODO 3: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09. => is that even needed or should we discard the information then?
  */
 class ReviewerOpting
 {
