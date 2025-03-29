@@ -83,7 +83,22 @@ class EditorActions
 		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submission->getId());
 		//$this->_print("\n\n### Lastreviewroundstatus: ".$lastReviewRound->determineStatus()."\n\n");
 
-		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $lastReviewRound->determineStatus() != REVIEW_ROUND_STATUS_PENDING_REVIEWERS) { // stage 3 && at least one reviewer assigned // TODO 2: assigned and has agreed? => Question @Prechelt
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$assignments = $reviewAssignmentDao->getBySubmissionId($submission->getId(), $lastReviewRound->getId(), WORKFLOW_STAGE_ID_EXTERNAL_REVIEW); // TODO 3: I guess it's WORKFLOW_STAGE_ID_EXTERNAL_REVIEW or is another stageId?
+		$atLeastOneReviewSubmitted = false; // I don't use $lastReviewRound->getStatus() because for some status it's not sure if at least one review is submitted
+		foreach ($assignments as $reviewAssignment) {
+			$reviewAssignmentStatus = $reviewAssignment->getStatus();
+			switch ($reviewAssignmentStatus) { // TODO 3: I hope these Statuses are right?
+				case REVIEW_ASSIGNMENT_STATUS_RECEIVED:
+				case REVIEW_ASSIGNMENT_STATUS_COMPLETE:
+				case REVIEW_ASSIGNMENT_STATUS_THANKED:
+					$atLeastOneReviewSubmitted = true;
+					break 2; // break out of foreach
+				default: // review not submitted
+					break 1; // only break out of switch
+			}
+		}
+		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $atLeastOneReviewSubmitted) { // stage 3 && at least one review has been submitted
             //----- add button for RQC grading:
             $decisionOpts[SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = [
                 'operation' => 'rqcGrade',
