@@ -1,6 +1,6 @@
 <?php
 /*
- * NO LONGER NEEDED AND DOES NOT WORK. See DevHelperHandler instead.
+ * NO LONGER NEEDED AND DOES NOT WORK. See RqcDevHelperHandler instead.
  *
  * Helper for manual testing, to be called from the command line like this:
  * alias mrc='php -f plugins/rqc/tests/make_review_case.php --'

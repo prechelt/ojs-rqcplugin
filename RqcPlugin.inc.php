@@ -34,6 +34,8 @@ import('plugins.generic.rqc.RqcSettingsForm');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.classes.EditorActions');
 import('plugins.generic.rqc.classes.RqcDevHelper');
+import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
+import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
 
 define('RQC_API_VERSION', '2023-09-06');  // the API documentation version last used during development
 define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
@@ -65,18 +67,21 @@ class RqcPlugin extends GenericPlugin
 	{
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success && $this->getEnabled()) {
-			if ($this->hasValidRqcIdKeyPair()) {
+			if ($this->hasValidRqcIdKeyPair()) { // register only if the plugin is usable
 				HookRegistry::register(
 					'TemplateResource::getFilename',
 					array($this, '_overridePluginTemplates')
 				); // needed by ReviewerOpting (automatically override all the templates of ojs with templates set by this plugin. In this case: /reviewer/review/reviewerRecommendation.tpl)
 				(new ReviewerOpting())->register();
 				(new EditorActions())->register();
+				$delayedRqcCallDao = new DelayedRqcCallDAO();
+				$delayedRqcCallDao->register();
+				DAORegistry::registerDAO('DelayedRqcCallDAO', $delayedRqcCallDao);
 			}
-			if (RqcPlugin::hasDeveloperFunctions()) {
+			if (RqcPlugin::hasDeveloperFunctions()) {  // register the devFunctions independent of RQC-ID-Key-Pair
 				HookRegistry::register(
 					'LoadHandler',
-					array($this, 'callbackSetupDevHelperHandler')
+					array($this, 'callbackSetupRqcDevHelperHandler')
 				);
 			}
 		}
@@ -195,21 +200,29 @@ class RqcPlugin extends GenericPlugin
 		return parent::manage($args, $request);
 	}
 
+	/**
+	 * @copydoc Plugin::getInstallMigration()
+	 */
+	public function getInstallMigration() : DelayedRqcCallSchemaMigration
+	{
+		return new DelayedRqcCallSchemaMigration();
+	}
+
 	//========== Callbacks ==========
 
 	/**
 	 * Installs Handlers for ad-hoc utilities, used during development only.
-	 * => https://base.url/context/devhelperhandler/method1/arg0/arg1
-	 * => devhelperhandler is the router; method1 is the method to be called with the args
+	 * => https://base.url/context/rqcdevhelper/method1/arg0/arg1
+	 * => rqcdevhelperhandler is the router; method1 is the method to be called with the args
 	 */
-	public function callbackSetupDevHelperHandler($hookName, $params)
+	public function callbackSetupRqcDevHelperHandler($hookName, $params)
 	{
 		$page =& $params[0];
 		$op =& $params[1];
-		// $this->_print("### callbackSetupDevHelperHandler: page='$page' op='$op'\n");
+		// $this->_print("### callbackSetupRqcDevHelperHandler: page='$page' op='$op'\n");
 		if (self::hasDeveloperFunctions() && $page == 'rqcdevhelper') {
-			$this->import('pages/DevHelperHandler');
-			define('HANDLER_CLASS', 'DevHelperHandler');
+			$this->import('pages/RqcDevHelperHandler');
+			define('HANDLER_CLASS', 'RqcDevHelperHandler');
 			return true;  // this hook's handling is done
 		}
 		return false;  // continue calling hook functions for this hook

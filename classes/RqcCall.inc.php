@@ -14,13 +14,14 @@ define('RQC_MHS_SUBMISSION_URL', "%s/api/mhs_submission/%s/%s");  // host, rqcJo
 /**
  * Class RqcCall.
  * The technical parts of calls to the RQC server.
+ * @return array  "status" and "response" information
  */
 class RqcCall {
 	static function callMhsSubmission(string $rqcHostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
-										$request, $contextId, $submissionId, bool $strict = false): array
+										$request, $submissionId, bool $strict = false): array
 	{
 		$rqcdata = new RqcData();
-		$data = $rqcdata->rqcdataArray($request, $contextId, $submissionId);
+		$data = $rqcdata->rqcdataArray($request, $submissionId);
 		$url = sprintf(RQC_MHS_SUBMISSION_URL, $rqcHostUrl, $rqcJournalId, $submissionId);
 		return RqcCall::curlCall($url, $rqcJournalAPIKey, "POST", $data, $strict);
 	}
@@ -41,7 +42,7 @@ class RqcCall {
 	 * @param string $mode  "GET" or "POST"
 	 * @param string $postbody data to be sent in body (for POST mode only)
 	 * @param bool   $strict  whether to do proper SSL checking
-	 * @return array  status and error information
+	 * @return array  "status" and "response" information
 	 */
 	static function curlCall(string $url, string $rqcJournalAPIKey, string $mode, array $postdata,
 	                         bool $strict): array
@@ -80,24 +81,27 @@ class RqcCall {
 		}
 		//----- make call:
 		$body = curl_exec($cc);
+		//RqcDevHelperStatic::_staticPrint("\nbody: ".print_r($body, true)."\n");
 		$curl_error = curl_error($cc);
+		//RqcDevHelperStatic::_staticPrint("\ncurl_Error: ".print_r($curl_error, true)."\n");
 		$status = curl_getinfo($cc, CURLINFO_RESPONSE_CODE);
+		//RqcDevHelperStatic::_staticPrint("\nstatus:".print_r($status, true)."\n");
 		$content_type = curl_getinfo($cc, CURLINFO_CONTENT_TYPE);
+		//RqcDevHelperStatic::_staticPrint("\ncontent_type: ".print_r($content_type, true)."\n");
 		curl_close($cc);
 		//----- handle call errors:
+		$result['status'] = $status;
 		if ($curl_error) {
-			$result['status'] = 400;
 			$result['response'] = array('error' => $curl_error);
 			return $result;  // return prematurely
 		}
 		//----- create $result:
-		$result['status'] = $status;
 		if ($content_type == 'application/json') {  //----- handle expected JSON response:
 			$result['response'] = json_decode($body, true);
-		}
-		else {                                      //----- handle unexpected response:
+		} else {                                    //----- handle unexpected response:
 			error_log($body);  // TODO 1: make proper log message
-			$result['response'] = array('error' => "received an unexpected non-JSON response from RQC",
+			$result['response'] = array(
+				'error' => "received an unexpected non-JSON response from RQC",
 				'responsebody' => $body);
 		}
 		return $result;

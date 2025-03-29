@@ -44,14 +44,15 @@ class RqcData
 	 * Build PHP array with the data for an RQC call to be made.
 	 * if $request is null, interactive_user and mhs_submissionpage are transmitted as "".
 	 */
-	function rqcdataArray($request, $contextId, $submissionId): array
+	function rqcdataArray($request, $submissionId): array
 	{
 		$contextDao = Application::getContextDAO();
 		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
 		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		//----- prepare processing:
-		$journal = $contextDao->getById($contextId);
 		$submission = $submissionDao->getById($submissionId);
+		$contextId = $submission->getContextId();
+		$journal = $contextDao->getById($contextId);
 		$data = array();
 		//----- fundamentals:
 		$data['interactive_user'] = $request ? $this->getInteractiveUser($request) : "";
@@ -68,7 +69,7 @@ class RqcData
 		$data['submitted'] = rqcifyDatetime($alldata['dateSubmitted']);
 
 		//----- authors, editor assignments, reviews, decision:
-        $data['author_set'] = $this->getAuthorSet($submission->getAuthors()); // TODO 3: but deprecated function. But no clue what to put in instead
+        $data['author_set'] = $this->getAuthorSet($submission->getAuthors()); // TODO 3: but deprecated function. But no clue what to put in instead (see PKPAuthorDAO::deleteBySubmissionId())
         $data['edassgmt_set'] = $this->getEditorassignmentSet($submissionId);
         $data['review_set'] = $this->getReviewSet($submissionId, $lastReviewRound, $contextId);
         $data['decision'] = $this->getDecision($lastReviewRound);
@@ -104,7 +105,7 @@ class RqcData
 			//RqcDevHelperStatic::_staticPrint("File: ".$file->id." ".$file->path." with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n".$fileContent."##EndOfFile##\n\n");
 
 			$attachment['filename'] = $submissionFileName;
-			$attachment['data'] = base64_encode($fileContent); // TODO 2: base64_encoded content gives me an error 500 from the server
+			$attachment['data'] = base64_encode($fileContent);
 			$attachmentSet[] = $attachment;
 		}
 		//RqcDevHelperStatic::_staticPrint("\n".print_r($attachmentSet, true)."\n");
@@ -118,8 +119,8 @@ class RqcData
 	{
 		$result = array();
 		foreach ($authorsobjects as $authorobject) {
-			// TODO 3 if issue closed: https://github.com/pkp/pkp-lib/issues/6178
-			if (false) //!(bool)$authorobject->isCorrespondingAuthor()) is currently not available (primaryAuthor or includeInBrowse don't suffice/fulfill that role)
+			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/6178
+			if (false) // if (!(bool)$authorobject->isCorrespondingAuthor()) // currently not available AND (primaryAuthor or includeInBrowse don't suffice/fulfill that role!)
 				continue;  // skip non-corresponding authors
 			$rqcauthor = array();
 			$rqcauthor['email'] = $authorobject->getEmail();
@@ -229,7 +230,7 @@ class RqcData
 		$result = array();
 		$assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRound->getId());
 		foreach ($assignments as $reviewId => $reviewAssignment) {
-			// TODO 2: What if a reviewer has not submitted his review but some data is already there (something like save for later)? Questions @Prechelt
+			// TODO Q: What if a reviewer has not submitted his review but some data is already there (something like save for later)?
 			// => what data is min needed?
 			if ($reviewAssignment->getRound() != $reviewRound->getRound() ||
 				$reviewAssignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
@@ -246,7 +247,7 @@ class RqcData
 			$reviewFormId = $reviewAssignment->getReviewFormId();
 			if ($reviewFormId) {  // case 1
 				$reviewtext = $this->getReviewTextFromForm($reviewerSubmission, $reviewFormId);
-				$isHtml = false;  // TODO 2: is there really no way to get HTML here?
+				$isHtml = false;  // TODO 2: is there really no way to get HTML here? Is HTML better? Yes
 			} else {  // case 2
 				$reviewtext = $this->getReviewTextDefault($reviewAssignment);
 				$isHtml = true;
@@ -362,7 +363,7 @@ class RqcData
 			$journalname = $journal->getPath();
 			$submissionId = $submission->getId();
 			if ($forUrl) {
-				// TODO 3: beware: The following _could_ be non-unique and so not in fact a uid
+				// beware: The following _could_ be non-unique and so not in fact a uid (not likely)
 				$journalname = preg_replace('/[^a-z0-9-_.:()-]/i', '_', $journalname);
 			}
 			return sprintf($round == 1 ? "%s-%s" : "%s-%s.R%d",

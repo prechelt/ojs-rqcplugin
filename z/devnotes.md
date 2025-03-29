@@ -180,7 +180,7 @@ other typical identifiers for such objects):
 - Add hook to PKPReviewerReviewStep3Form::saveForLater() so that I can do
   ReviewerOpting::setStatus(..., RQC_PRELIM_OPTING), which currently is never used.
 - Setting `activate_developer_functions = On` in `config.inc.php`
-  enables helpers from DevHelperHandler:
+  enables helpers from RqcDevHelperHandler:
   - `http://localhost:8033/index.php/rqctest/rqcdevhelper/hello` shows some request information
   - `http://localhost:8033/index.php/rqctest/rqcdevhelper/rqccall/1/?viewonly=1` shows what would get sent to RQC
   - `http://localhost:8033/index.php/rqctest/rqcdevhelper/rqccall/1/?viewonly=0` makes an RQC call
@@ -206,7 +206,7 @@ other typical identifiers for such objects):
   Handler calls `$templateMgr->assign(array('attrname' => value))`,
   template uses `$attrname`.
 - OJS review rounds must create successive submission ids for RQC.
-- SpyHandler (now DevHelperHandler) gets 8 notices a la
+- SpyHandler (now RqcDevHelperHandler) gets 8 notices a la
   "Undefined index: first_name in /home/vagrant/ojs/lib/pkp/classes/submission/PKPAuthorDAO.inc.php on line 127"
 - Cronjob via PKPAcronPlugin?
 - Delayed-call storage via Plugin::updateSchema and my own DAO?

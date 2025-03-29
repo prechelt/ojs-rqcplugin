@@ -41,7 +41,6 @@ class RqcEditorDecisionHandler extends PKPHandler
     {
         //----- prepare processing:
         $requestArgs = $this->plugin->getQueryArray($request);
-        $context = $request->getContext();
         $submissionId = $requestArgs['submissionId'];
         $submission = DAORegistry::getDAO('SubmissionDAO')->getById($submissionId);
         //----- modal dialog:

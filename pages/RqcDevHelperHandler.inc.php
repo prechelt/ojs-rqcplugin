@@ -1,12 +1,12 @@
  <?php
 
 /**
- * @file plugins/generic/rqc/pages/DevHelperHandler.inc.php
+ * @file plugins/generic/rqc/pages/RqcDevHelperHandler.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class DevHelperHandler
+ * @class RqcDevHelperHandler
  * @ingroup plugins_generic_rqc
  *
  * @brief Handle requests to show what OJS-to-RQC requests will look like or make one "by hand".
@@ -20,7 +20,10 @@ use PKP\plugins\PluginRegistry;
 */
 use Composer\Semver\Semver;  // used by x()
 
-class DevHelperHandler extends Handler
+import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
+
+
+class RqcDevHelperHandler extends Handler
 {
 	var $plugin;
 
@@ -37,43 +40,41 @@ class DevHelperHandler extends Handler
 	function rqcCall($args, $request)
 	{
 		//----- prepare processing:
-		$router = $request->getRouter();
 		$requestArgs = $this->plugin->getQueryArray($request);
-		$journal = $router->getContext($request);
 		$submissionId = $args[0];
 		$viewOnly = array_key_exists('viewonly', $requestArgs) ? $requestArgs['viewonly'] : true;
 		if ($viewOnly) {
 			//----- get RQC data:
 			$rqcDataObj = new RqcData();
-			$data = $rqcDataObj->rqcdataArray($request, $journal->getId(), $submissionId);
+			$data = $rqcDataObj->rqcdataArray($request, $submissionId);
 			//----- produce output:
 			header("Content-Type: application/json; charset=utf-8");
 			//header("Content-Type: text/plain; charset=utf-8");
-			//print(json_encode($data, JSON_PRETTY_PRINT));
+			print(json_encode($data, JSON_PRETTY_PRINT));
 		} else {  //----- make an actual RQC call:
-			$handler = new RqccallHandler();
-			$rqcResult = $handler->sendToRqc($request, $journal->getId(), $submissionId);
+			$handler = new RqcCallHandler();
+			$rqcResult = $handler->sendToRqc($request, $submissionId);
 			$handler->processRqcResponse($rqcResult['status'], $rqcResult['response']);
 		}
 	}
 
 	/**
-	 * reset/delete the RQC API-key and Id to test if the plugin responds correctly
+	 * reset/delete the RQC API-key and ID to test if the plugin responds correctly
 	 */
-	public function resetRQCAPIKeyAndId($args, $request)
+	public function resetRqcAPIKeyAndId($args, $request): void
 	{
-		// http://localhost:8000/index.php/test/rqcdevhelper/resetTestAPIKeyAndId/reset
+		// http://localhost:8000/index.php/test/rqcdevhelper/resetRqcAPIKeyAndId/reset
 		if ($args[0] == "set") {
-			$this->setRQCAPIKeyAndId($request, $args[1], $args[2]);
+			$this->setRqcAPIKeyAndId($request, $args[1], $args[2]);
 		} elseif ($args[0] == "delete") {
-			$this->setRQCAPIKeyAndId($request, "", "");
+			$this->setRqcAPIKeyAndId($request, "", "");
 		} else {
 			header("Content-Type: text/plain; charset=utf-8");
 			print("huh?");
 		}
 	}
 
-	public function setRQCAPIKeyAndId($request, String $rqcId, String $rqcAPIKey)
+	public function setRqcAPIKeyAndId($request, String $rqcId, String $rqcAPIKey): void
 	{
 		header("Content-Type: text/plain; charset=utf-8");
 		$contextId = $request->getContext()->getId();
@@ -116,6 +117,25 @@ class DevHelperHandler extends Handler
 		return("rqcOptingStatusReset for reviewer $userId in journal $contextId");
 	}
 
+	 /**
+	  * to create/delete the table in the database (usually done after installation of the plugin)
+	  */
+	public function installRqcDelayedCallsTable($args, $request)
+	{
+		$migration = new DelayedRqcCallSchemaMigration();
+		$migration->up();
+		//$migration->down();
+	}
+
+	public function test($args, $request)
+	{
+		// set the default timezone to use.
+		//date_default_timezone_set('America/New_York');
+		print("\n".date('Y-m-d H:i:s')."\n");
+		//date_default_timezone_set("UTC");
+		//print("\n".date('Y-m-d H:i:s')."\n");
+	}
+
 	/**
 	 * Sandbox operation for trying this out.
 	 */
@@ -136,12 +156,36 @@ class DevHelperHandler extends Handler
 	public function enqueue($args, $request)
 	{
 		$submissionId = $args[0];
-		$rqcCallHandler = new RqccallHandler();
+		$rqcCallHandler = new RqcCallHandler();
 		$delayedRqcCallId = $rqcCallHandler->putCallIntoQueue($submissionId);
-		$delayedRQCCallDao = new DelayedRQCCallDAO(); //DAORegistry::getDAO('DelayedRQCCallsDAO');
-		$delayedRQCCallDao->getById($delayedRqcCallId);
-		print_r($delayedRQCCallDao);
+		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+		$delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
+		print_r($delayedRqcCall);
 	}
+
+	 /**
+	  * Update an delayedRqcCall with a given delayedRqcCallId (args[0])
+	  */
+	 public function updateDelayedRqcCallById($args, $request)
+	 {
+		 $delayedRqcCallId = $args[0];
+		 $delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+		 $delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
+		 $delayedRqcCallDao->updateCall($delayedRqcCall);
+		 print_r($delayedRqcCall);
+	 }
+
+	 /**
+	  * Delete an delayedRqcCall with a given delayedRqcCallId (args[0])
+	  */
+	 public function deleteDelayedCallById($args, $request)
+	 {
+		 $delayedRqcCallId = $args[0];
+		 $delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+		 $delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
+		 $delayedRqcCallDao->deleteById($delayedRqcCallId);
+		 print_r($delayedRqcCall);
+	 }
 
 	/**
 	  * Make review case (MRC) in the current journal.

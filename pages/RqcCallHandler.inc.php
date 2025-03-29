@@ -7,10 +7,10 @@ use PKP\plugins\PluginRegistry;
 */
 import('pages.workflow.WorkflowHandler');
 import('plugins.generic.rqc.classes.RqcCall');
-import('plugins.generic.rqc.classes.DelayedRQCCallDAO');
-//import('plugins.generic.rqc.classes.DelayedRQCCall');
+import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
+//import('plugins.generic.rqc.classes.DelayedRqcCall');
 
-define("RQC_STATUS_CODES_TO_RESEND", array(
+define("RQC_CALL_STATUS_CODES_TO_RESEND", array(
 	408, // "Request Timeout"
 	500, // "Internal Server Error"
 	501, // "Not Implemented"
@@ -19,8 +19,17 @@ define("RQC_STATUS_CODES_TO_RESEND", array(
 	504, // "Gateway Timeout"
 	505, // "HTTP Version Not Supported"
 	0 // Unabled to communicate with the server. Aka connection closed, ...
-)); // which status codes make the system put the call into the queue to retry later (as opposed to ignoring it because the call was invalidly build)
-define("RQC_STATUS_SUCESS", array(
+)); // which status codes make the system put the call into the queue to retry later (as opposed to ignoring it because the call was invalidly build) // TODO 2: review the codes
+define("RQC_CALL_SERVER_DOWN", array(
+	408, // "Request Timeout"
+	501, // "Not Implemented"
+	502, // "Bad Gateway"
+	503, // "Service Unavailable"
+	504, // "Gateway Timeout"
+	505, // "HTTP Version Not Supported"
+	0 // Unabled to communicate with the server. Aka connection closed, ...
+)); // TODO 2: review the codes
+define("RQC_CALL_STATUS_CODES_SUCESS", array(
 	200, // "OK"
 	201, // "Created"
 	202, // "Accepted"
@@ -29,21 +38,22 @@ define("RQC_STATUS_SUCESS", array(
 	205, // "Reset Content"
 	206, // "Partial Content"
 ));
-define("RQC_RESEND_CANCELED", -1);
-define("RQC_RESEND_SUCCESS", 0);
-define("RQC_RESEND_FAILURE", 1);
-define("RQC_RESEND_BAD_REQUEST", 2);
 
 
 /**
- * Class RqccallHandler.
+ * Class RqcCallHandler.
  * The core of the RQC plugin: Retrieve the reviewing data of one submission and send it to the RQC server
  * after the editor dialog has redirected to this page.
- * Making it a separate page helps testing.
+ * Making it a separate page helps with testing.
  */
-class RqccallHandler extends WorkflowHandler
+class RqcCallHandler extends WorkflowHandler
 {
 	use RqcDevHelper;
+
+	private Plugin|null $plugin;
+
+	private int $_maxRetriesToResend = 10; // arbitrary number
+
     public function __construct()
     {
         $this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
@@ -59,7 +69,7 @@ class RqccallHandler extends WorkflowHandler
 	 */
     public function submit($args, $request)
     {
-		$this->plugin->_print("### RqccallHandler::submit() called");
+		$this->_print("### RqcCallHandler::submit() called");
         $qargs = $this->plugin->getQueryArray($request);
         $stageId = $qargs['stageId'];
         if ($stageId != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
@@ -69,18 +79,17 @@ class RqccallHandler extends WorkflowHandler
             print("</body></html>");
             return;
         }
-        $user = $request->getUser();
-        $context = $request->getContext();
         $submissionId = $qargs['submissionId'];
-        $rqcResult = $this->sendToRqc($request, $context->getId(), $submissionId); // Explicit call
+        $rqcResult = $this->sendToRqc($request, $submissionId); // Explicit call
         $this->processRqcResponse($rqcResult['status'], $rqcResult['response']);
     }
 
     /**
      * The workhorse for actually sending one submission's reviewing data to RQC.
-     * TODO 1: Upon a network failure or non-response, puts call in queue.
+     * Upon a network failure or non-response, puts call in queue.
+	 * @return array  "status" and "response" information
      */
-    function sendToRqc($request, $contextId, $submissionId)
+    function sendToRqc($request, $submissionId) : array
     {
 		if (!$this->plugin->hasValidRqcIdKeyPair()) {
 			return array(
@@ -88,14 +97,16 @@ class RqccallHandler extends WorkflowHandler
 				"response" => "Didn't call RQC because the RQC ID key pair is not valid."
 			);
 		}
+		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
+		$submission = $submissionDao->getById($submissionId);
+		$contextId = $submission->getContextId();
         $rqcJournalId = $this->plugin->getSetting($contextId, 'rqcJournalId');
         $rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
 		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
-								            $request, $contextId, $submissionId,
-											!$this->plugin->hasDeveloperFunctions());
+								            $request, $submissionId, !$this->plugin->hasDeveloperFunctions());
 		//$this->_print("\n".print_r($rqcResult, true)."\n");
-		if (in_array($rqcResult['status'], RQC_STATUS_CODES_TO_RESEND)) {
-			$this->putCallIntoQueue($contextId, $submissionId);
+		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)) {
+			$this->putCallIntoQueue($submissionId); // TODO => is explicit call? => store interactive-user?
 		}
 		return $rqcResult;
     }
@@ -120,48 +131,37 @@ class RqccallHandler extends WorkflowHandler
 
     /**
      * Resend reviewing data for one submission to RQC after a previous call failed. (Delayed call to RQC)
-	 * Returns:
-	 * - RQC_RESEND_CANCELED
-	 * - RQC_RESEND_SUCCESS
-	 * - RQC_RESEND_FAILURE
-	 * - RQC_RESEND_BAD_REQUEST
-     * Called by DelayedRQCCallsTask.
-     * @param $journalId
-     * @param $submissionId
-     */
-    public function resend($request, $contextId, $submissionId) : int
+     * Called by DelayedRqcCallSender.
+	 * @return array  "status" and "response" information
+	 */
+    public function resend($submissionId) : array
     {
-		if (!$this->plugin->hasValidRqcIdKeyPair()) { // TODO Q: What should I do, if the call was queued and then the pair becomes invalid? Also when should I test if the pair is still valid? (because @Prechelt mentioned, that it could become invalid) Only here?
-			return RQC_RESEND_CANCELED; /*array(
-				"status" => "error",
-				"response" => "Didn't call RQC because the RQC ID key pair is not valid."
-			);*/
-		}
+		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
+		$submission = $submissionDao->getById($submissionId);
+		$contextId = $submission->getContextId();
 		$rqcJournalId = $this->plugin->getSetting($contextId, 'rqcJournalId');
 		$rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
 		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
-			null, $contextId, $submissionId,
-			!$this->plugin->hasDeveloperFunctions());
-		//$this->_print("\n".print_r($rqcResult, true)."\n");
-		if (in_array($rqcResult['status'], RQC_STATUS_SUCESS)) {
-			return RQC_RESEND_SUCCESS;
-		} else if (in_array($rqcResult['status'], RQC_STATUS_CODES_TO_RESEND)) {
-			return RQC_RESEND_FAILURE;
-		} else {
-			return RQC_RESEND_BAD_REQUEST;
-		}
+			null, $submissionId, !$this->plugin->hasDeveloperFunctions());
+		$this->_print("\n".print_r($rqcResult, true)."\n");
+		return $rqcResult;
     }
 
 
 	public function putCallIntoQueue(int $submissionId) : int
 	{
-		$delayedRQCCallDao = new DelayedRQCCallDAO(); //DAORegistry::getDAO('DelayedRQCCallsDAO');
-		$delayedRQCCall = $delayedRQCCallDao->newDataObject();
-		$delayedRQCCall->setSubmissionId($submissionId);
-		$delayedRQCCall->setOriginalTryTS(time());	// TODO Q: Timezonesafe?
-		$delayedRQCCall->setLastTryTS(null);	// TODO Q: Timezonesafe?
-		$delayedRQCCall->setRetries(0);
-		return $delayedRQCCallDao->insertObject($delayedRQCCall);
+		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+		// TODO Q: if there is already a call in the queue: What should we do then?
+		/*if ($delayedRqcCallDao->getById($submissionId) != null) {
+			$delayedRqcCallDao->deleteById($submissionId);
+		}*/
+		$delayedRqcCall = $delayedRqcCallDao->newDataObject();
+		$delayedRqcCall->setSubmissionId($submissionId);
+		$delayedRqcCall->setOriginalTryTs(date('Y-m-d H:i:s', time()));
+		$delayedRqcCall->setLastTryTs(null);
+		$delayedRqcCall->setRemainingRetries($this->_maxRetriesToResend);
+		//$this->_print("\n".print_r($delayedRqcCall, true)."\n");
+		return $delayedRqcCallDao->insertObject($delayedRqcCall);
 	}
 }
 

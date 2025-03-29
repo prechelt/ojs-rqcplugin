@@ -17,7 +17,7 @@ namespace APP\plugins\generic\rqc;
 use PKP\plugins\Hook;
 */
 import('lib.pkp.classes.plugins.HookRegistry');
-import('plugins.generic.rqc.pages.RqccallHandler');
+import('plugins.generic.rqc.pages.RqcCallHandler');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
 /**
@@ -42,7 +42,7 @@ class EditorActions
         );
         HookRegistry::register(
             'LoadHandler',
-            array($this, 'callbackPagehandlers')
+            array($this, 'callbackPageHandlers')
         );
         HookRegistry::register(
             'EditorAction::recordDecision',
@@ -91,8 +91,7 @@ class EditorActions
                 'title' => 'plugins.generic.rqc.editoraction.grade.button',
             ];
 			// $this->_print("### rqcGrade Button added");
-        }
-		else {
+        } else {
 			// $this->_print("### no rqcGrade Button added: wrong stage");
 		}
 		return false;  // proceed with other callbacks, if any
@@ -101,12 +100,12 @@ class EditorActions
     /**
      * Callback for installing page handlers.
      */
-    public function callbackPagehandlers($hookName, $params): bool
+    public function callbackPageHandlers($hookName, $params): bool
     {
         $page =& $params[0];
         $op =& $params[1];
         if ($page == 'rqccall') {
-            define('HANDLER_CLASS', 'RqccallHandler');
+            define('HANDLER_CLASS', 'RqcCallHandler');
             return true;
         }
         return false;
@@ -119,7 +118,7 @@ class EditorActions
 	 * in order to give the editors full control over when they want to visit RQC.
 	 * (Besides, redirection would be enormously difficult in the OJS control flow.)
      */
-    public function callbackRecordDecision($hookName, $args)
+    public function callbackRecordDecision($hookName, $args) : bool
     {
         import('plugins.generic.rqc.classes.RqcData');
         $GO_ON = false;  // false continues processing (default), true stops it (for testing during development).
@@ -136,8 +135,10 @@ class EditorActions
         }
         //--- act on decision:
         // $this->_print("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
-		$caller = new RqccallHandler();
-		$rqcResult = $caller->sendToRqc(null, $submission->getContextId(), $submission->getId());  // TODO 2: catch failures and queue
+		$caller = new RqcCallHandler();
+		$rqcResult = $caller->sendToRqc(null, $submission->getId()); // Implicit call
+		// TODO 2 logging
+		//$this->_print("\n".print_r($rqcResult, true)."\n");
 		return $GO_ON;
     }
 }

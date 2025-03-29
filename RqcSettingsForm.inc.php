@@ -25,7 +25,7 @@ import('lib.pkp.classes.form.Form');
 import('plugins.generic.rqc.classes.RqcCall');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
-class RQCFormValidator extends FormValidator {
+class RqcFormValidator extends FormValidator {
 	use RqcDevHelper;
 	function isValid(): bool {
 		$form = $this->_form;
@@ -86,7 +86,7 @@ class RqcSettingsForm extends Form {
 		$this->addCheck(new FormValidatorRegExp($this, 'rqcJournalAPIKey', 'required',
 								'plugins.generic.rqc.settingsform.rqcJournalAPIKeyInvalid',
 								'/^[0-9A-Za-z]+$/'));
-		$this->addCheck(new RQCFormValidator($this, null, 'required',""));
+		$this->addCheck(new RqcFormValidator($this, null, 'required',""));
 	}
 
 	/**
