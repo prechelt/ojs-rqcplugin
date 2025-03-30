@@ -1,6 +1,7 @@
 ## Development setup
 
 ### Windows with WSL Debian
+
 - starting point: This repo has been cloned into `/ws/gh/ojs34` on WSL Debian.
 - sudo apt-get install `cat z/apt-packages.txt`
 - add `/home/prechelt/.local/bin` to `$PATH`.
@@ -15,14 +16,15 @@
   https://docs.pkp.sfu.ca/dev/contributors/#before-you-begin
 
 ### Debian
+
 TODO 2: insert the .txt file contents??
 
-
-
 ### Fedora
+
 TODO 2: insert the .sh file contents
 
 my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/documentation/3.3/en/getting-started)
+
 - [general]:
 	- base_url = "http://localhost:8000"
 	- allowed_hosts = "[\"localhost\"]"
@@ -34,8 +36,8 @@ my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/document
 - [rqc]:
 	- activate_developer_functions = On
 
-
 ### generally used
+
 - set up OJS for development:
   see OJS developer installation for reference:
   https://docs.pkp.sfu.ca/dev/documentation/en/getting-started
@@ -55,37 +57,36 @@ my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/document
   Stop the DB container (see `fab --list`) and set it back to the desired port right after
   the config dialog has finished successfully. Restart `php -S`.
 - create initial data:
-  - create journal rqctest with path rqctest:
-  - create users editor1, author1, reviewer1, reviewer2;
-  - create a submission, 2 review assignments, 2 reviews;
-  - Settings->Website->Plugins turn on RQC plugin
+	- create journal rqctest with path rqctest:
+	- create users editor1, author1, reviewer1, reviewer2;
+	- create a submission, 2 review assignments, 2 reviews;
+	- Settings->Website->Plugins turn on RQC plugin
 - tests/backup.sh backup
   so you can quickly restore the review case during testing
 - http://localhost:<port>/index.php/rqctest/rqcdevhelper/1/?viewonly=1
 - Perhaps apply patches to OJS codebase from `ojspatches`.
 - For OJS to talk to RQC, start the Django dev server
 
-
 ## OJS knowledge
+
 ### General OJS knowledge
 
 - Overall PKP/OJS developer documentation: https://docs.pkp.sfu.ca/dev/
 - Templates:
-  - Smarty: https://smarty-php.github.io/smarty/designers/language-builtin-functions.html
-  - fbv: FormBuilderVocabulary
+	- Smarty: https://smarty-php.github.io/smarty/designers/language-builtin-functions.html
+	- fbv: FormBuilderVocabulary
 - Data:
-  - Accessing data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/html-smarty
-  - Injecting data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/advanced-custom-data.html
-  - DAO class names are in classes/core/Application.inc.php::getDAOmap())
+	- Accessing data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/html-smarty
+	- Injecting data: https://docs.pkp.sfu.ca/pkp-theming-guide/en/advanced-custom-data.html
+	- DAO class names are in classes/core/Application.inc.php::getDAOmap())
 - Forum:
-  - [create plugin and custom URL](https://forum.pkp.sfu.ca/t/ojs-3-0-3-0-1-browse-plugin-doesnt-show/26145/9?u=prechelt)
+	- [create plugin and custom URL](https://forum.pkp.sfu.ca/t/ojs-3-0-3-0-1-browse-plugin-doesnt-show/26145/9?u=prechelt)
 - Misc:
-  - see notes in 2018.3.txt of 2018-10-02
-  - Editor assignment:
-    "Can only recommend decision, authorized editor must record it."
-  - Maybe-helpful items from the code:
-    _callbackHandleCustomNavigationMenuItems
-
+	- see notes in 2018.3.txt of 2018-10-02
+	- Editor assignment:
+	  "Can only recommend decision, authorized editor must record it."
+	- Maybe-helpful items from the code:
+	  _callbackHandleCustomNavigationMenuItems
 
 ### OJS data model (the relevant parts)
 
@@ -96,6 +97,7 @@ Authors, Editors, and Reviewers are all Persons.
 
 This is how these concepts are represented in OJS (class names,
 other typical identifiers for such objects):
+
 - OJS speaks of four "stages": submission, review, copyediting, production.
   RQC is concerned with the review stage only.
 - A revised article in OJS is not a new submission but rather a new
@@ -130,11 +132,10 @@ other typical identifiers for such objects):
   objects.
   How to get it: `ReviewRoundDAO::getLastReviewRoundBySubmissionId`
   (`ReviewRoundDAO::getCurrentRoundBySubmissionId` gets the round number).
-  - Once the proper `ReviewRound` is known, get the `ReviewAssignments` by
-    `ReviewAssignmentDAO::getByReviewRoundId` (one could also use
-    `ReviewAssignmentDAO::getBySubmissionId`).
-    This returns an array. Its indices are the review IDs!.
-
+	- Once the proper `ReviewRound` is known, get the `ReviewAssignments` by
+	  `ReviewAssignmentDAO::getByReviewRoundId` (one could also use
+	  `ReviewAssignmentDAO::getBySubmissionId`).
+	  This returns an array. Its indices are the review IDs!.
 
 ### OJS 3.4
 
@@ -148,12 +149,10 @@ other typical identifiers for such objects):
   Hints regarding namespaces: https://github.com/pkp/pkp-lib/issues/6091
   in section "Additional details on plugins"
 
-
 ### phpunit and PKPTestCase/DatabaseTestCase
 
 - 3.3: Complete DB reset is available by returning `PKP_TEST_ENTIRE_DB`
   from `getAffectedTables`.
-
 
 ### Releasing a plugin
 
@@ -171,7 +170,6 @@ other typical identifiers for such objects):
 - When preparing the XML snippet for the plugin gallery, the
   OJS version for the `<version>` tag is found in `dbscripts/xml/version.xml`.
 
-
 ## RQC adapter
 
 - submit flag that RQC should emphasize the MHS page link,
@@ -181,27 +179,29 @@ other typical identifiers for such objects):
   ReviewerOpting::setStatus(..., RQC_PRELIM_OPTING), which currently is never used.
 - Setting `activate_developer_functions = On` in `config.inc.php`
   enables helpers from RqcDevHelperHandler:
-  - `http://localhost:8033/index.php/rqctest/rqcdevhelper/hello` shows some request information
-  - `http://localhost:8033/index.php/rqctest/rqcdevhelper/rqccall/1/?viewonly=1` shows what would get sent to RQC
-  - `http://localhost:8033/index.php/rqctest/rqcdevhelper/rqccall/1/?viewonly=0` makes an RQC call
+	- `http://localhost:8033/index.php/rqctest/rqcdevhelper/hello` shows some request information
+	- `http://localhost:8033/index.php/rqctest/rqcdevhelper/rqccall/1/?viewonly=1` shows what would get sent to RQC
+	- `http://localhost:8033/index.php/rqctest/rqcdevhelper/rqccall/1/?viewonly=0` makes an RQC call
 - See [my PKP forum thread](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/6)
-- In particular regarding [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
+- In particular
+  regarding [exploring the data model (qu. 5)](https://forum.pkp.sfu.ca/t/need-help-to-build-review-quality-collector-rqc-plugin/33186/9?u=prechelt)
 - Pieces that take part in review submission[superclasslevel]:
-    - ReviewerHandler[0] -> PKPReviewerHandler[1]
-        - submission()[1]: called for the overall form with tabs
-        - step()[1]: display one tab's contents  (has no hooks)
-            - getReviewForm()[0] -> ReviewerReviewStep3Form[0]
-        - saveStep()[1]: store data preliminarily  (has no hooks)
-            - getReviewForm()[0] -> ReviewerReviewStep3Form[0]
-    - Templates (overwriting levels: Plugin[0] -> OJS[1] -> PKP[2]; includes: [I1], [I2], [IName]): all in reviewer.review
-        - step3[1][IreviewerRecommendations[0]][Istep3[2]]
-        - reviewerRecommendations[0]: select:recommendation, select:rqc_opt_in
-    - ReviewerReviewStep3Form[0] -> PKPReviewerReviewStep3Form[1] -> ReviewerReviewForm[2] -> Form[3]
-        - Template assignment (to `$this->_template`)
-          via `parent::__construct(sprintf('reviewer/review/step%d.tpl', $step));`
-          in ReviewerReviewForm::__construct()
-        - Form[3] has many hooks, all accessible by downcased subclassname, e.g.:
-          ::Constructor, ::display (in fetch()), ::initData, ::validate, ::execute, ::readUserVars,
+	- ReviewerHandler[0] -> PKPReviewerHandler[1]
+		- submission()[1]: called for the overall form with tabs
+		- step()[1]: display one tab's contents  (has no hooks)
+			- getReviewForm()[0] -> ReviewerReviewStep3Form[0]
+		- saveStep()[1]: store data preliminarily  (has no hooks)
+			- getReviewForm()[0] -> ReviewerReviewStep3Form[0]
+	- Templates (overwriting levels: Plugin[0] -> OJS[1] -> PKP[2]; includes: [I1], [I2], [IName]): all in
+	  reviewer.review
+		- step3[1][IreviewerRecommendations[0]][Istep3[2]]
+		- reviewerRecommendations[0]: select:recommendation, select:rqc_opt_in
+	- ReviewerReviewStep3Form[0] -> PKPReviewerReviewStep3Form[1] -> ReviewerReviewForm[2] -> Form[3]
+		- Template assignment (to `$this->_template`)
+		  via `parent::__construct(sprintf('reviewer/review/step%d.tpl', $step));`
+		  in ReviewerReviewForm::__construct()
+		- Form[3] has many hooks, all accessible by downcased subclassname, e.g.:
+		  ::Constructor, ::display (in fetch()), ::initData, ::validate, ::execute, ::readUserVars,
 - How does data get to a template?
   Handler calls `$templateMgr->assign(array('attrname' => value))`,
   template uses `$attrname`.
@@ -211,15 +211,14 @@ other typical identifiers for such objects):
 - Cronjob via PKPAcronPlugin?
 - Delayed-call storage via Plugin::updateSchema and my own DAO?
 
-
 ### TO DO and status
 
 - settings: add the journal ID/key validation via an RQC call.
-  - Status: When an existing validation check fails (e.g. Journal ID = "a"),
-    the form submission hangs and the
-    `POST /index.php/rqctest/notification/fetchNotification` produces
-    `PHP Fatal error:  Uncaught Exception: Unhandled management action! in /ws/gh/ojs33/lib/pkp/classes/plugins/Plugin.inc.php:181`
-    from RQCPlugin line 219. The action is `'fetchNotification'` I guess.
+	- Status: When an existing validation check fails (e.g. Journal ID = "a"),
+	  the form submission hangs and the
+	  `POST /index.php/rqctest/notification/fetchNotification` produces
+	  `PHP Fatal error:  Uncaught Exception: Unhandled management action! in /ws/gh/ojs33/lib/pkp/classes/plugins/Plugin.inc.php:181`
+	  from RQCPlugin line 219. The action is `'fetchNotification'` I guess.
 - store opt-in response in review submission
   https://docs.pkp.sfu.ca/dev/plugin-guide/en/examples-custom-field
 - add all hooks and actual activity
@@ -230,7 +229,6 @@ other typical identifiers for such objects):
 - write automated tests
 - package the plugin, submit it for publication in OJS plugin gallery
 - Refactorings
-
 
 ## OJS versions
 
@@ -247,39 +245,47 @@ other typical identifiers for such objects):
 
 Number of journals using this version.
 Taken from the CSV file at
-https://dataverse.harvard.edu/file.xhtml?fileId=6708853&version=3.0&toolType=QUERY
+https://dataverse.harvard.edu/file.xhtml?fileId=10740907&version=5.0
 (which is updated yearly)
-via `sort /tmp/ojs-version-per-journal | sort -r |uniq -c`
+via `cut -d',' -f3 beacon.csv | cut -d'.' -f1-3 | sort -r | uniq -c`
 
 ```
-     31 3.4.0
-     51 3.3.1
-  35160 3.3.0
-  12840 3.2.1
-   1857 3.2.0
-  10414 3.1.2
-   6604 3.1.1
-   1614 3.1.0
-   1562 3.0.2
-    305 3.0.1
-    239 3.0.0
-      1 2.9.0
-  14857 2.4.8
-   1514 2.4.7
-    455 2.4.6
-    379 2.4.5
-     76 2.4.4
-     50 2.4.3
-    145 2.4.2
-      1 2.4.0
-      4 2.3.8
-     45 2.3.7
-    106 2.3.6
-     69 2.3.2
-     33 2.3.1
-      1 2.2.4
-     44 2.2.2
-      6 1.2.0
+   5271 3.4.0
+    491 3.3.9
+     48 3.3.1
+  33390 3.3.0
+   7136 3.2.1
+    833 3.2.0
+   5177 3.1.2
+   2933 3.1.1
+    814 3.1.0
+   1078 3.0.2
+    166 3.0.1
+     67 3.0.0
+   7856 2.4.8
+   1023 2.4.7
+    204 2.4.6
+    207 2.4.5
+     29 2.4.4
+     24 2.4.3
+    120 2.4.2
+      2 2.3.8
+     18 2.3.7
+     40 2.3.6
+     11 2.3.2
+     16 2.3.1
       1 1.1.1
-   1823 (no version indicated)
+      5  ([sub]version number is to high and doesn't make sense)
+    178  (no version indicated)
+```
+Minor Versions (without patches)
+```
+   5271 3.4
+  33929 3.3
+   7969 3.2
+   8924 3.1
+   1311 3.0
+   9463 2.4
+     87 2.3
+      1 1.1
 ```

@@ -1,15 +1,17 @@
 <?php
 
 /**
- * @file plugins/generic/rqc/classes/RqcDevHelper.php
+ * @file     plugins/generic/rqc/classes/RqcDevHelper.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @trait RqcDevHelper
- * @ingroup plugins_generic_rqc
+ * @trait    RqcDevHelper
+ * @class    RqcDevHelperStatic
+ * @ingroup  plugins_generic_rqc
  *
- * @brief trait providing a _print() method for ad-hoc manual tracing during development
+ * @brief    trait (non-static) providing a _print() method for ad-hoc manual tracing during development.
+ *           class providing _staticPrint() doing the same for static methods
  */
 
 // namespace APP\plugins\generic\rqc;

@@ -15,7 +15,6 @@ import('classes.journal.Journal');
 import('classes.journal.JournalDAO');
 
 
-
 //----- Initialize variables:
 
 $authors = array();
@@ -81,7 +80,7 @@ $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
 
 //----- Retrieve data objects:
 
-if(!isset($journal_id)) {
+if (!isset($journal_id)) {
 	$all_journals = $journalDao->getTitles();
 	printf("ERROR: journal_id (-j) missing. Available: \n%s\n", $all_journals);
 }

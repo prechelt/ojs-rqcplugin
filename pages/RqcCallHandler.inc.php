@@ -54,71 +54,71 @@ class RqcCallHandler extends WorkflowHandler
 
 	private int $_maxRetriesToResend = 10; // arbitrary number
 
-    public function __construct()
-    {
-        $this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
-        $this->addRoleAssignment(
-            array(ROLE_ID_SUB_EDITOR, ROLE_ID_MANAGER, ROLE_ID_ASSISTANT),
-            array('submit',));
-        parent::__construct();
-    }
+	public function __construct()
+	{
+		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
+		$this->addRoleAssignment(
+			array(ROLE_ID_SUB_EDITOR, ROLE_ID_MANAGER, ROLE_ID_ASSISTANT),
+			array('submit',));
+		parent::__construct();
+	}
 
 	/**
 	 * Confirm submission+redirection to RQC
 	 * Called by RqcEditorDecisionHandler
 	 */
-    public function submit($args, $request)
-    {
+	public function submit($args, $request)
+	{
 		$this->_print("### RqcCallHandler::submit() called");
-        $qargs = $this->plugin->getQueryArray($request);
-        $stageId = $qargs['stageId'];
-        if ($stageId != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
-            print("<html><body lang='en'>");
-            print("stageId is $stageId. ");
-            print("This call makes sense only for stageId " . WORKFLOW_STAGE_ID_EXTERNAL_REVIEW . ".");
-            print("</body></html>");
-            return;
-        }
-        $submissionId = $qargs['submissionId'];
-        $rqcResult = $this->sendToRqc($request, $submissionId); // Explicit call
-        $this->processRqcResponse($rqcResult['status'], $rqcResult['response']);
-    }
+		$qargs = $this->plugin->getQueryArray($request);
+		$stageId = $qargs['stageId'];
+		if ($stageId != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
+			print("<html><body lang='en'>");
+			print("stageId is $stageId. ");
+			print("This call makes sense only for stageId " . WORKFLOW_STAGE_ID_EXTERNAL_REVIEW . ".");
+			print("</body></html>");
+			return;
+		}
+		$submissionId = $qargs['submissionId'];
+		$rqcResult = $this->sendToRqc($request, $submissionId); // Explicit call
+		$this->processRqcResponse($rqcResult['status'], $rqcResult['response']);
+	}
 
-    /**
-     * The workhorse for actually sending one submission's reviewing data to RQC.
-     * Upon a network failure or non-response, puts call in queue.
+	/**
+	 * The workhorse for actually sending one submission's reviewing data to RQC.
+	 * Upon a network failure or non-response, puts call in queue.
 	 * @return array  "status" and "response" information
-     */
-    function sendToRqc($request, $submissionId) : array
-    {
+	 */
+	function sendToRqc($request, int $submissionId): array
+	{
 		if (!$this->plugin->hasValidRqcIdKeyPair()) {
 			return array(
-				"status" => "error",
+				"status"   => "error",
 				"response" => "Didn't call RQC because the RQC ID key pair is not valid."
 			);
 		}
 		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		$submission = $submissionDao->getById($submissionId);
 		$contextId = $submission->getContextId();
-        $rqcJournalId = $this->plugin->getSetting($contextId, 'rqcJournalId');
-        $rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
+		$rqcJournalId = $this->plugin->getSetting($contextId, 'rqcJournalId');
+		$rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
 		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
-								            $request, $submissionId, !$this->plugin->hasDeveloperFunctions());
+			$request, $submissionId, !$this->plugin->hasDeveloperFunctions());
 		//$this->_print("\n".print_r($rqcResult, true)."\n");
 		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)) {
 			$this->putCallIntoQueue($submissionId); // TODO => is explicit call? => store interactive-user?
 		}
 		return $rqcResult;
-    }
+	}
 
 
-    /**
-     * Analyze RQC response and react:
-     * Upon a successful call, redirects as indicated by RQC.
-     * Upon an unsuccessful call, shows a simple HTML page with the entire JSON response for diagnosis.
-     */
-    function processRqcResponse($statuscode, $jsonarray)
-    {
+	/**
+	 * Analyze RQC response and react:
+	 * Upon a successful call, redirects as indicated by RQC.
+	 * Upon an unsuccessful call, shows a simple HTML page with the entire JSON response for diagnosis.
+	 */
+	function processRqcResponse($statuscode, $jsonarray)
+	{
 		if ($statuscode == 303) {  // that's what we expect: redirect
 			header("HTTP/1.1 303 See Other");
 			header("Location: " . $jsonarray['redirect_target']);
@@ -127,15 +127,15 @@ class RqcCallHandler extends WorkflowHandler
 			print(json_encode($jsonarray, JSON_PRETTY_PRINT));
 			// TODO 3: response that is better readable
 		}
-    }
+	}
 
-    /**
-     * Resend reviewing data for one submission to RQC after a previous call failed. (Delayed call to RQC)
-     * Called by DelayedRqcCallSender.
+	/**
+	 * Resend reviewing data for one submission to RQC after a previous call failed. (Delayed call to RQC)
+	 * Called by DelayedRqcCallSender.
 	 * @return array  "status" and "response" information
 	 */
-    public function resend($submissionId) : array
-    {
+	public function resend($submissionId): array
+	{
 		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		$submission = $submissionDao->getById($submissionId);
 		$contextId = $submission->getContextId();
@@ -143,14 +143,14 @@ class RqcCallHandler extends WorkflowHandler
 		$rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
 		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
 			null, $submissionId, !$this->plugin->hasDeveloperFunctions());
-		$this->_print("\n".print_r($rqcResult, true)."\n");
+		$this->_print("\n" . print_r($rqcResult, true) . "\n");
 		return $rqcResult;
-    }
+	}
 
 
-	public function putCallIntoQueue(int $submissionId) : int
+	public function putCallIntoQueue(int $submissionId): int
 	{
-		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
 		// TODO Q: if there is already a call in the queue: What should we do then?
 		/*if ($delayedRqcCallDao->getById($submissionId) != null) {
 			$delayedRqcCallDao->deleteById($submissionId);

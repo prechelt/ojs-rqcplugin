@@ -1,15 +1,15 @@
 <?php
 
 /**
- * @file plugins/generic/rqc/components/editorDecision/RqcEditorDecisionHandler.inc.php
+ * @file    plugins/generic/rqc/components/editorDecision/RqcEditorDecisionHandler.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class RqcEditorDecisionHandler
+ * @class   RqcEditorDecisionHandler
  * @ingroup plugins_generic_rqc
  *
- * @brief Handle modal dialog before submitting and redirecting to RQC.
+ * @brief   Handle modal dialog before submitting and redirecting to RQC.
  */
 
 
@@ -27,31 +27,33 @@ import('classes.core.PageRouter');
 
 class RqcEditorDecisionHandler extends PKPHandler
 {
-    function __construct()
-    {
-        parent::__construct();
-        $this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
-    }
+	public Plugin|null $plugin;
 
-    /**
-     * Confirm submission+redirection to RQC.
+	function __construct()
+	{
+		parent::__construct();
+		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
+	}
+
+	/**
+	 * Confirm submission+redirection to RQC.
 	 * Called when an editor uses the "RQC-grade submission" button.
-     */
-    function rqcGrade($args, $request)
-    {
-        //----- prepare processing:
-        $requestArgs = $this->plugin->getQueryArray($request);
-        $submissionId = $requestArgs['submissionId'];
-        $submission = DAORegistry::getDAO('SubmissionDAO')->getById($submissionId);
-        //----- modal dialog:
-        $pageRouter = new PageRouter();
-        $pageRouter->setApplication(Application::get());  // so that url() will find context
-        $target = $pageRouter->url($request, null, 'rqccall', 'submit', null,
-            array('submissionId' => $submissionId, 'stageId' => $submission->getStageId()));
-        $okButton = "<a href='$target' class='pkp_button_primary submitFormButton'>" . __('common.ok') . '</a>';  // TODO: set focus
-        // $cancelButton = '<a href="#" class="pkp_button pkpModalCloseButton cancelButton">' . __('common.cancel') . '</a>';  // TODO: does not do anything
-        $content = __('plugins.generic.rqc.editoraction.grade.explanation');
-        $buttons = "<p>$okButton</p>";  // TODO: add a working cancel button, use PKP button bar layout
-        return new JSONMessage(true, "$content$buttons");
-    }
+	 */
+	function rqcGrade($args, $request)
+	{
+		//----- prepare processing:
+		$requestArgs = $this->plugin->getQueryArray($request);
+		$submissionId = $requestArgs['submissionId'];
+		$submission = DAORegistry::getDAO('SubmissionDAO')->getById($submissionId);
+		//----- modal dialog:
+		$pageRouter = new PageRouter();
+		$pageRouter->setApplication(Application::get());  // so that url() will find context
+		$target = $pageRouter->url($request, null, 'rqccall', 'submit', null,
+			array('submissionId' => $submissionId, 'stageId' => $submission->getStageId()));
+		$okButton = "<a href='$target' class='pkp_button_primary submitFormButton'>" . __('common.ok') . '</a>';  // TODO: set focus
+		// $cancelButton = '<a href="#" class="pkp_button pkpModalCloseButton cancelButton">' . __('common.cancel') . '</a>';  // TODO: does not do anything
+		$content = __('plugins.generic.rqc.editoraction.grade.explanation');
+		$buttons = "<p>$okButton</p>";  // TODO: add a working cancel button, use PKP button bar layout
+		return new JSONMessage(true, "$content$buttons");
+	}
 }

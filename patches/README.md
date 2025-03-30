@@ -34,6 +34,7 @@ I will simply patch my fork each time I update it.
 ## How to create a patch for PKPlib
 
 much like above, with the following changes:
+
 - `pd=$rd/patches/lib/pkp`
 - before the `diff`, do `cd lib/pkp`
 - change into the bare "pkp-lib" workdir, not the bare "ojs" workdir.

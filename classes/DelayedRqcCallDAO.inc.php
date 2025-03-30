@@ -1,15 +1,17 @@
 <?php
 
 /**
- * @file plugins/generic/rqc/classes/DelyedRqcCallsDAO.inc.php
+ * @file    plugins/generic/rqc/classes/DelayedRqcCallDAO.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class DelayedRqcCallDAO
- * @see DelayedRqcCallSender
+ * @class   DelayedRqcCallDAO
+ * @see     DelayedRqcCallSender
+ * @see     rqcDelayedCall.json
+ * @ingroup plugins_generic_rqc
  *
- * @brief Operations for retrieving and modifying DelayedRqcCall arrays/objects.
+ * @brief   Operations for retrieving and modifying DelayedRqcCall objects.
  */
 
 
@@ -49,7 +51,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 	/**
 	 * Create a new DataObject of the appropriate class
 	 */
-	public function newDataObject() : DelayedRqcCall
+	public function newDataObject(): DelayedRqcCall
 	{
 		return new DelayedRqcCall();
 	}
@@ -58,7 +60,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 	{
 		// used to inject the schema into the SchemaDAO
 		HookRegistry::register(
-			'Schema::get::'.$this->schemaName,
+			'Schema::get::' . $this->schemaName,
 			array($this, 'callbackInsertSchema')
 		);
 	}
@@ -68,12 +70,12 @@ class DelayedRqcCallDAO extends SchemaDAO
 	 * Add schema rqcDelayedCall into the service so that the database ops can be done.
 	 * This is needed because the schema is in the plugins folder. The service only searches at the two common places for the ojs schemas
 	 * (Needed for SchemaDAO-backed entities only.)
-	 * @see PKPSchemaService::get()
 	 * @param $hookName string `Schema::get::delayedRqcCall`
-	 * @param $params array
+	 * @param $params   array
 	 * @return bool
+	 * @see PKPSchemaService::get()
 	 */
-	public function callbackInsertSchema(string $hookName, array $params) : bool
+	public function callbackInsertSchema(string $hookName, array $params): bool
 	{
 		$schema =& $params[0]; // calculations affect the $schema variable in the service
 		$schemaFile = sprintf('%s/plugins/generic/rqc/schemas/%s.json', BASE_SYS_DIR, $this->schemaName);
@@ -86,17 +88,17 @@ class DelayedRqcCallDAO extends SchemaDAO
 	/**
 	 * Retrieve a reviewer submission by submission ID.
 	 * @param $journalId int  which calls to get, or 0 for all calls
-	 * @param $horizon int|null  unix timestamp. Get all calls not retried since this time.
-	 * 				Defaults to 23.8 hours ago (so that it's not always retried at the same time)
+	 * @param $horizon   int|null  unix timestamp. Get all calls not retried since this time.
+	 *                   Defaults to 23.8 hours ago (so that it's not always retried at the same time)
 	 * @return DAOResultFactory
 	 */
-	function getCallsToRetry(int $journalId = 0, int $horizon = null) : DAOResultFactory
+	function getCallsToRetry(int $journalId = 0, int $horizon = null): DAOResultFactory
 	{
 		if (is_null($horizon)) {
-			$horizon = time() - 23*3600 - 48*60;  // 23.8 hours ago
+			$horizon = time() - 23 * 3600 - 48 * 60;  // 23.8 hours ago
 		}
 		$result = $this->retrieve(
-			'SELECT	* FROM '.$this->tableName.
+			'SELECT	* FROM ' . $this->tableName .
 			' WHERE (journal_id = ? OR ? = 0) AND
 			      (last_try_ts < ?)
 		  	ORDER BY last_try_ts ASC', // this makes it a queue
@@ -113,14 +115,14 @@ class DelayedRqcCallDAO extends SchemaDAO
 	 *
 	 * @param $primaryRow array The result row from the primary table lookup
 	 */
-	function _fromRow($primaryRow) : DelayedRqcCall
+	function _fromRow($primaryRow): DelayedRqcCall
 	{
 		$delayedRqcCall = $this->newDataObject();
 		$delayedRqcCall->setId((int)$primaryRow['rqc_delayed_call_id']);
-		$delayedRqcCall->setSubmissionId((int) $primaryRow['submission_id']);
+		$delayedRqcCall->setSubmissionId((int)$primaryRow['submission_id']);
 		$delayedRqcCall->setLastTryTs($this->datetimeFromDB($primaryRow['last_try_ts']));
 		$delayedRqcCall->setOriginalTryTs($this->datetimeFromDB($primaryRow['original_try_ts']));
-		$delayedRqcCall->setRemainingRetries((int) $primaryRow['remaining_retries']);
+		$delayedRqcCall->setRemainingRetries((int)$primaryRow['remaining_retries']);
 		return $delayedRqcCall;
 	}
 

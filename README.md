@@ -1,9 +1,9 @@
 # Review Quality Collector (RQC) plugin for OJS
+
 created 2017-08-30, Lutz Prechelt
 
 Version 2023-09-12
 Status: **beta test, please ask if you want to participate**
-
 
 ## 1. What it is
 
@@ -23,7 +23,6 @@ reviews to the respective reviewers' receipts.
 
 Find the RQC API description at
 https://reviewqualitycollector.org/t/api.
-
 
 ## 2. How it works
 
@@ -46,7 +45,6 @@ https://reviewqualitycollector.org/t/api.
 - Should the RQC service be unavailable when data is submitted
   automatically at decision time, the request will be stored
   and will be repeated once a day for several days until it goes through.
-
 
 ## 3. How to use it
 
@@ -75,7 +73,6 @@ Target audience: OJS system administrators.
 - In OJS, go to Settings->Website->Plugins and activate the
   plugin "Review Quality Collector (RQC)" in category Generic Plugins.
 
-
 ### 3.2 Journal setup
 
 Target audience: OJS journal managers, RQC RQGuardians.
@@ -99,7 +96,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
   publisherpersons will tell you).
   To do this, you need to be journal manager for your journal in OJS.
 
-
 ### 3.3 Daily use
 
 - The best time to grade reviews in RQC is when you prepare
@@ -114,7 +110,6 @@ Target audience: OJS journal managers, RQC RQGuardians.
   reviewing data to RQC when the editorial decision is entered into OJS.
   RQC will then remind graders via email.
 
-
 ## 4. How OJS concepts are mapped to RQC concepts
 
 ### 4.1 Roles
@@ -124,7 +119,6 @@ are treated as level-1 editors in RQC.
 
 OJS's permanent _journal managers_
 are treated as level-3 editors in RQC.
-
 
 ### 4.2 Editorial decisions
 
@@ -138,12 +132,12 @@ implemented on the RQC side.)
 - an OJS "Accept Submission" becomes an RQC "ACCEPT"
 - an OJS "Decline Submission" becomes an RQC "REJECT"
 
-
 ## 5. Limitations
 
 The current version of the plugin has the following limitations:
 
 User-visible:
+
 - The RQC-submission confirmation dialog has no "Cancel" button.
   If you need to close it, use the "x" in the top right corner.
 - Attachments uploaded by reviewers are not yet transmitted to RQC.
@@ -151,6 +145,7 @@ User-visible:
   but has not yet been tested and may not work.
 
 Internal/technical:
+
 - Automatically repeating the submission to RQC after a failed
   request is not yet implemented.
 - No automated tests exist yet. (They are complicated with OJS.)

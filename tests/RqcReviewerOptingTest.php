@@ -1,15 +1,15 @@
 <?php
 
 /**
- * @file plugins/generic/rqc/tests/RqcReviewerOptingTest.php
+ * @file    plugins/generic/rqc/tests/RqcReviewerOptingTest.php
  *
  * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class RqcReviewerOptingTest
+ * @class   RqcReviewerOptingTest
  * @ingroup plugins_generic_rqc
  *
- * @brief Test reviewer opt-in/opt-out functionality.
+ * @brief   Test reviewer opt-in/opt-out functionality.
  */
 
 require_once('lib/pkp/tests/phpunit-bootstrap.php');
@@ -22,19 +22,23 @@ import('lib.pkp.classes.db.DAORegistry');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.tests.helpers');
 
-class RqcReviewerReviewerOptingTest extends DatabaseTestCase {
+class RqcReviewerReviewerOptingTest extends DatabaseTestCase
+{
 
-	protected function getAffectedTables() {
+	protected function getAffectedTables()
+	{
 		return array('users', 'user_settings');
 	}
 
-	protected function setUp(): void {
+	protected function setUp(): void
+	{
 		parent::setUp();
 		$this->reviewer11 = make_user("reviewer11");
 		$this->assertTrue($this->reviewer11->getId() > 0);  // ensure that make_user() writes to DB
 	}
 
-	public function testReviewerOpting() {
+	public function testReviewerOpting()
+	{
 		$context = 1;  // fictive, does not really exist
 		$user = $this->reviewer11;
 		$opting = new ReviewerOpting();
@@ -72,19 +76,23 @@ class RqcReviewerReviewerOptingTest extends DatabaseTestCase {
 }
 
 
-class RqcReviewerOptingFormTest extends DatabaseTestCase {
+class RqcReviewerOptingFormTest extends DatabaseTestCase
+{
 
-	protected function getAffectedTables() {
+	protected function getAffectedTables()
+	{
 		// complete DB reset is available by returning PKP_TEST_ENTIRE_DB
 		return array(
 			'authors',
 			'publications', 'publication_settings',
 			'review_assignments',
 			'submissions', 'submission_settings',
-			'users', 'user_settings');
+			'users', 'user_settings'
+		);
 	}
 
-	protected function setUp(): void {
+	protected function setUp(): void
+	{
 		parent::setUp();
 		$this->context = 1;  // fictive, does not really exist
 		$this->author11 = make_user("author11");
@@ -92,16 +100,18 @@ class RqcReviewerOptingFormTest extends DatabaseTestCase {
 		$this->reviewer12 = make_user("reviewer12");
 		$this->submission = make_reviewable_submission(
 			$this->context, [$this->author11],
-		    [$this->reviewer11, $this->reviewer12]);
+			[$this->reviewer11, $this->reviewer12]);
 	}
 
-	public function testOptingFormGET() {
+	public function testOptingFormGET()
+	{
 		// get Step3Form and look for opting question
 
 		// TODO
 	}
 
-	public function testOptingFormPOST() {
+	public function testOptingFormPOST()
+	{
 		// submit Step3Form and look for stored opting status
 	}
 
@@ -110,4 +120,5 @@ class RqcReviewerOptingFormTest extends DatabaseTestCase {
 		parent::tearDown();  // restore previous DB contents
 	}
 }
+
 ?>

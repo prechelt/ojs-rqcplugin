@@ -1,16 +1,16 @@
 <?php
 
 /**
- * @file plugins/generic/rqc/classes/DelayedRqcCallSender.inc.php
+ * @file    plugins/generic/rqc/classes/DelayedRqcCallSender.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class DelayedRqcCallSender
+ * @class   DelayedRqcCallSender
  * @ingroup tasks
  * @ingroup plugins_generic_rqc
  *
- * @brief Class to retry failed RQC calls as a scheduled task.
+ * @brief   Class to retry failed RQC calls as a scheduled task.
  */
 
 
@@ -24,7 +24,8 @@ import('lib.pkp.classes.db.DAORegistry');
 import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
 import('plugins.generic.rqc.classes.DelayedRqcCall');
 
-class DelayedRqcCallSender extends ScheduledTask {
+class DelayedRqcCallSender extends ScheduledTask
+{
 	use RqcDevHelper;
 
 	private int $_secSleepBetweenRetries = 3; // arbitrary number to sleep between retries in the queue
@@ -34,7 +35,7 @@ class DelayedRqcCallSender extends ScheduledTask {
 	/**
 	 * @copydoc ScheduledTask::getName()
 	 */
-	function getName() : string
+	function getName(): string
 	{
 		return __('admin.scheduledTask.delayedRqcCall');
 	}
@@ -43,11 +44,11 @@ class DelayedRqcCallSender extends ScheduledTask {
 	/**
 	 * @copydoc ScheduledTask::executeActions()
 	 */
-	function executeActions() : bool
+	function executeActions(): bool
 	{
 		$lastNRetriesFailed = 0;
 
-		$delayedCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedCallDao DelayedRqcCallDAO */
+		$delayedCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
 		$allDelayedCallsToBeRetriedNow = $delayedCallDao->getCallsToRetry(); // grab all delayed calls that should be retried now
 
 		foreach ($allDelayedCallsToBeRetriedNow as $call) { /** @var $call DelayedRqcCall */
@@ -74,20 +75,20 @@ class DelayedRqcCallSender extends ScheduledTask {
 				case (in_array($rqcResult['status'], RQC_CALL_SERVER_DOWN)): // no connection to server: abort trying the next calls in the queue
 					$delayedCallDao->updateCall($call);
 					$lastNRetriesFailed = $this->_NRetriesToAbort;
-					error_log("Delayed RQC call error: Tried to send data from submission ".$call->getSubmissionId()." originally send at ".$call->getOriginalTryTs()
-						." resulted in http status code ".$rqcResult['status']." with response ".$rqcResult['response']."\n");
+					error_log("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " originally send at " . $call->getOriginalTryTs()
+						. " resulted in http status code " . $rqcResult['status'] . " with response " . $rqcResult['response'] . "\n");
 					break;
 				case (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)): // other errors (probably not an implementation error)
 					$delayedCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
-					error_log("Delayed RQC call error: Tried to send data from submission ".$call->getSubmissionId()." originally send at ".$call->getOriginalTryTs()
-						." resulted in http status code ".$rqcResult['status']." with response ".$rqcResult['response']."\n");
+					error_log("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " originally send at " . $call->getOriginalTryTs()
+						. " resulted in http status code " . $rqcResult['status'] . " with response " . $rqcResult['response'] . "\n");
 					break;
-				default:	// something else went wrong (implementation error or else)
+				default:    // something else went wrong (implementation error or else)
 					$delayedCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
-					error_log("Delayed RQC call error: Tried to send (probably faulty) data from submission ".$call->getSubmissionId()." originally send at ".$call->getOriginalTryTs()
-						." resulted in http status code ".$rqcResult['status']." with response ".$rqcResult['response']."\n");
+					error_log("Delayed RQC call error: Tried to send (probably faulty) data from submission " . $call->getSubmissionId() . " originally send at " . $call->getOriginalTryTs()
+						. " resulted in http status code " . $rqcResult['status'] . " with response " . $rqcResult['response'] . "\n");
 					break;
 			}
 		}

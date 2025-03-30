@@ -1,12 +1,14 @@
 <?php
 
 /**
- * @file plugins/generic/rqc/tests/helpers.inc.php
+ * @file    plugins/generic/rqc/tests/helpers.inc.php
  *
  * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @brief Routines that help when writing tests, in particular for creating data
+ * @ingroup plugins_generic_rqc
+ *
+ * @brief   Routines that help when writing tests, in particular for creating data
  */
 
 import('lib.pkp.classes.user.User');
@@ -15,7 +17,8 @@ import('classes.submission.Submission');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.RqcPlugin');
 
-function make_reviewable_submission($context, $authors, $reviewers): Submission {
+function make_reviewable_submission($context, $authors, $reviewers): Submission
+{
 	$newSubmission = make_submission($context);
 	$newPublication = make_publication($newSubmission, $authors);
 	foreach ($reviewers as $user) {
@@ -29,10 +32,10 @@ function make_reviewAssignment($newSubmission, $user)
 	$reviewAssignmentDAO = DAORegistry::getDAO('ReviewAssignmentDAO');
 	$reviewAssignment = $reviewAssignmentDAO->newDataObject();
 	$reviewAssignment->_data = [
-		'submissionId' => $newSubmission->getId(),  // Huh? Not a publication?
-		'reviewerId' => $user->getId(),
+		'submissionId'  => $newSubmission->getId(),  // Huh? Not a publication?
+		'reviewerId'    => $user->getId(),
 		'reviewRoundId' => 1,
-		'stageId' => WORKFLOW_STAGE_ID_EXTERNAL_REVIEW,
+		'stageId'       => WORKFLOW_STAGE_ID_EXTERNAL_REVIEW,
 		// reviewFormId appears to be optional
 	];
 	$newreviewAssignment = $reviewAssignmentDAO->insertObject(
@@ -47,7 +50,7 @@ function make_publication($newSubmission, $authors)
 	$publication = DAORegistry::getDAO('PublicationDAO')->newDataObject();
 	$publication->_data = [
 		'submissionId' => $newSubmission->getId(),
-		'title' => 'made ' . strftime("%Y-%m-%d %H:%M:%S"),
+		'title'        => 'made ' . strftime("%Y-%m-%d %H:%M:%S"),
 	];
 	$newPublication = Services::get('publication')->add(
 		$publication,
@@ -56,7 +59,7 @@ function make_publication($newSubmission, $authors)
 	foreach ($authors as $user) {
 		$author = DAORegistry::getDAO('AuthorDAO')->newDataObject();
 		$author->_data = [
-			'email' => $user->getEmail(),
+			'email'         => $user->getEmail(),
 			'publicationId' => $newPublication->getId(),
 		];
 		$newAuthor = Services::get('author')->add(
@@ -71,9 +74,9 @@ function make_submission($context)
 {
 	$submission = DAORegistry::getDAO('SubmissionDAO')->newDataObject();
 	$submission->_data = [
-		'contextId' => $context,
-		'stageId' => WORKFLOW_STAGE_ID_EXTERNAL_REVIEW,
-		'status' => STATUS_QUEUED,  // as in manually created case
+		'contextId'          => $context,
+		'stageId'            => WORKFLOW_STAGE_ID_EXTERNAL_REVIEW,
+		'status'             => STATUS_QUEUED,  // as in manually created case
 		'submissionProgress' => 0  // as in manually created case
 	];
 	$newSubmission = Services::get('submission')->add(
@@ -83,7 +86,8 @@ function make_submission($context)
 	return $newSubmission;
 }
 
-function make_user($username): User {
+function make_user($username): User
+{
 	$userDao = DAORegistry::getDAO('UserDAO');
 	$user = $userDao->newDataObject();
 	$user->setUsername($username);
@@ -94,4 +98,3 @@ function make_user($username): User {
 	$userDao->insertObject($user);
 	return $user;
 }
-?>

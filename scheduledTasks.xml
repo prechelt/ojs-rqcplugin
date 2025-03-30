@@ -16,8 +16,8 @@
 <!DOCTYPE scheduled_tasks SYSTEM "../lib/pkp/dtd/scheduledTasks.dtd">
 
 <scheduled_tasks>
-    <task class="plugins.generic.rqc.classes.DelayedRqcCallSender">
-        <descr>Hourly retry calls to Review Quality Collector that previously failed.</descr>
-        <frequency hour="0-23"/>
-    </task>
+	<task class="plugins.generic.rqc.classes.DelayedRqcCallSender">
+		<descr>Hourly retry calls to Review Quality Collector that previously failed.</descr>
+		<frequency hour="0-23"/>
+	</task>
 </scheduled_tasks>

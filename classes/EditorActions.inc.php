@@ -1,15 +1,15 @@
 <?php
 
 /**
- * @file plugins/generic/rqc/classes/EditorActions.inc.php
+ * @file    plugins/generic/rqc/classes/EditorActions.inc.php
  *
  * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class EditorActions
+ * @class   EditorActions
  * @ingroup plugins_generic_rqc
  *
- * @brief RQC adapter parts revolving around editorial decisions.
+ * @brief   RQC adapter parts revolving around editorial decisions.
  */
 
 /* for OJS 3.4:
@@ -21,63 +21,63 @@ import('plugins.generic.rqc.pages.RqcCallHandler');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
 /**
- * ...
+ * RQC adapter parts revolving around editorial decisions using the hooking mechanism.
  */
 class EditorActions
 {
 	use RqcDevHelper;
 
-    /**
-     * Register callbacks. This is to be called from the plugin's register().
-     */
-    public function register(): void
-    {
-        HookRegistry::register(
-            'LoadComponentHandler',
-            array($this, 'callbackEditorActionRqcGrade')
-        );
-        HookRegistry::register(
-            'EditorAction::modifyDecisionOptions',
-            array($this, 'callbackModifyDecisionOptions')
-        );
-        HookRegistry::register(
-            'LoadHandler',
-            array($this, 'callbackPageHandlers')
-        );
-        HookRegistry::register(
-            'EditorAction::recordDecision',
-            array($this, 'callbackRecordDecision')
-        );
-    }
+	/**
+	 * Register callbacks. This is to be called from the plugin's register().
+	 */
+	public function register(): void
+	{
+		HookRegistry::register(
+			'LoadComponentHandler',
+			array($this, 'callbackEditorActionRqcGrade')
+		);
+		HookRegistry::register(
+			'EditorAction::modifyDecisionOptions',
+			array($this, 'callbackModifyDecisionOptions')
+		);
+		HookRegistry::register(
+			'LoadHandler',
+			array($this, 'callbackPageHandlers')
+		);
+		HookRegistry::register(
+			'EditorAction::recordDecision',
+			array($this, 'callbackRecordDecision')
+		);
+	}
 
-    /**
-     * Callback for LoadComponentHandler.
-     * Directs clicks of button "RQC-Grade the Reviews" to RqcEditorDecisionHandler.
-     */
-    public function callbackEditorActionRqcGrade($hookName, $args): bool
-    {
-        $component = &$args[0];
-        $op = &$args[1];
-        if ($component == 'modals.editorDecision.EditorDecisionHandler' &&
-            $op == 'rqcGrade') {
-            $component = 'plugins.generic.rqc.components.editorDecision.RqcEditorDecisionHandler';
-            return true;  // no more handling needed, RqcEditorDecisionHandler will do the work
-        }
-        return false;  // proceed with normal processing
-    }
+	/**
+	 * Callback for LoadComponentHandler.
+	 * Directs clicks of button "RQC-Grade the Reviews" to RqcEditorDecisionHandler.
+	 */
+	public function callbackEditorActionRqcGrade($hookName, $args): bool
+	{
+		$component = &$args[0];
+		$op = &$args[1];
+		if ($component == 'modals.editorDecision.EditorDecisionHandler' &&
+			$op == 'rqcGrade') {
+			$component = 'plugins.generic.rqc.components.editorDecision.RqcEditorDecisionHandler';
+			return true;  // no more handling needed, RqcEditorDecisionHandler will do the work
+		}
+		return false;  // proceed with normal processing
+	}
 
 
-    /**
-     * Callback for EditorAction::modifyDecisionOptions.
-     * Adds button "RQC-Grade the Reviews" to the Workflow page.
-     */
-    public function callbackModifyDecisionOptions($hookName, $args): bool
-    {
-        $context = $args[0];
-        $submission = $args[1];
-        $stageId = $args[2];
-        $makeDecision = &$args[3];
-        $decisionOpts = &$args[4];  // result
+	/**
+	 * Callback for EditorAction::modifyDecisionOptions.
+	 * Adds button "RQC-Grade the Reviews" to the Workflow page.
+	 */
+	public function callbackModifyDecisionOptions($hookName, $args): bool
+	{
+		$context = $args[0];
+		$submission = $args[1];
+		$stageId = $args[2];
+		$makeDecision = &$args[3];
+		$decisionOpts = &$args[4];  // result
 
 		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
 		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submission->getId());
@@ -99,61 +99,61 @@ class EditorActions
 			}
 		}
 		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $atLeastOneReviewSubmitted) { // stage 3 && at least one review has been submitted
-            //----- add button for RQC grading:
-            $decisionOpts[SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = [
-                'operation' => 'rqcGrade',
-                'name' => 'rqcGradeName',
-                'title' => 'plugins.generic.rqc.editoraction.grade.button',
-            ];
+			//----- add button for RQC grading:
+			$decisionOpts[SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = [
+				'operation' => 'rqcGrade',
+				'name'      => 'rqcGradeName',
+				'title'     => 'plugins.generic.rqc.editoraction.grade.button',
+			];
 			// $this->_print("### rqcGrade Button added");
-        } else {
+		} else {
 			// $this->_print("### no rqcGrade Button added: wrong stage");
 		}
 		return false;  // proceed with other callbacks, if any
-    }
+	}
 
-    /**
-     * Callback for installing page handlers.
-     */
-    public function callbackPageHandlers($hookName, $params): bool
-    {
-        $page =& $params[0];
-        $op =& $params[1];
-        if ($page == 'rqccall') {
-            define('HANDLER_CLASS', 'RqcCallHandler');
-            return true;
-        }
-        return false;
-    }
+	/**
+	 * Callback for installing page handlers.
+	 */
+	public function callbackPageHandlers($hookName, $params): bool
+	{
+		$page =& $params[0];
+		$op =& $params[1];
+		if ($page == 'rqccall') {
+			define('HANDLER_CLASS', 'RqcCallHandler');
+			return true;
+		}
+		return false;
+	}
 
-    /**
-     * Callback for EditorAction::recordDecision.
+	/**
+	 * Callback for EditorAction::recordDecision.
 	 * See lib.pkp.classes.EditorAction::recordDecision for the $args.
 	 * We send data to RQC like for a non-interactive call and no redirection is performed
 	 * in order to give the editors full control over when they want to visit RQC.
 	 * (Besides, redirection would be enormously difficult in the OJS control flow.)
-     */
-    public function callbackRecordDecision($hookName, $args) : bool
-    {
-        import('plugins.generic.rqc.classes.RqcData');
-        $GO_ON = false;  // false continues processing (default), true stops it (for testing during development).
-        $submission = &$args[0];
-        $decision = &$args[1];
-        $isRecommendation = &$args[3];
+	 */
+	public function callbackRecordDecision($hookName, $args): bool
+	{
+		import('plugins.generic.rqc.classes.RqcData');
+		$GO_ON = false;  // false continues processing (default), true stops it (for testing during development).
+		$submission = &$args[0];
+		$decision = &$args[1];
+		$isRecommendation = &$args[3];
 		// $this->_print("### callbackRecordDecision called\n");
 		$theDecision = $decision['decision'];
 		$theStatus = $isRecommendation ? 'is-rec-only' : 'is-decision';
 		//--- ignore non-decision:
-        if ($isRecommendation || !RqcOjsData::isDecision($theDecision)) {
+		if ($isRecommendation || !RqcOjsData::isDecision($theDecision)) {
 			// $this->_print("### callbackRecordDecision ignores the $theDecision|$theStatus call\n");
-            return $GO_ON;
-        }
-        //--- act on decision:
-        // $this->_print("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
+			return $GO_ON;
+		}
+		//--- act on decision:
+		// $this->_print("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
 		$caller = new RqcCallHandler();
 		$rqcResult = $caller->sendToRqc(null, $submission->getId()); // Implicit call
 		// TODO 2 logging
 		//$this->_print("\n".print_r($rqcResult, true)."\n");
 		return $GO_ON;
-    }
+	}
 }

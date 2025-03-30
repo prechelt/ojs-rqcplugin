@@ -1,15 +1,15 @@
 <?php
 
 /**
- * @file plugins/generic/rqc/RqcPlugin.inc.php
+ * @file    plugins/generic/rqc/RqcPlugin.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class RqcPlugin
+ * @class   RqcPlugin
  * @ingroup plugins_generic_rqc
  *
- * @brief Review Quality Collector (RQC) plugin class
+ * @brief   Review Quality Collector (RQC) plugin class
  */
 
 
@@ -27,6 +27,8 @@ use PKP\plugins\Hook;
 */
 
 // needed in OJS 3.3:
+use Random\RandomException;
+
 import('lib.pkp.classes.plugins.HookRegistry');
 import('lib.pkp.classes.plugins.GenericPlugin');
 import('classes.core.Application');
@@ -115,7 +117,7 @@ class RqcPlugin extends GenericPlugin
 	/**
 	 * Get a list of link actions for plugin management.
 	 *
-	 * @param $request PKPRequest
+	 * @param $request    PKPRequest
 	 * @param $actionArgs array The list of action args to be included in request URLs.
 	 *
 	 * @return array List of LinkActions
@@ -203,7 +205,7 @@ class RqcPlugin extends GenericPlugin
 	/**
 	 * @copydoc Plugin::getInstallMigration()
 	 */
-	public function getInstallMigration() : DelayedRqcCallSchemaMigration
+	public function getInstallMigration(): DelayedRqcCallSchemaMigration
 	{
 		return new DelayedRqcCallSchemaMigration();
 	}
@@ -260,7 +262,7 @@ class RqcPlugin extends GenericPlugin
 		return ($hasId and $hasKey);
 	}
 
-	public function getSaltAndGenerateIfNotSet($contextId) : string
+	public function getSaltAndGenerateIfNotSet($contextId): string
 	{
 		$saltLength = 32;
 		$salt = $this->getSetting($contextId, 'rqcJournalSalt');
@@ -273,8 +275,8 @@ class RqcPlugin extends GenericPlugin
 					$bytes = openssl_random_pseudo_bytes(floor($saltLength / 2));
 				}
 				$salt = bin2hex($bytes); // the string is likely unprintable => to hex so the string is printable (but twice as long)
-			} catch (\Random\RandomException $e) {
-				$salt = substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$saltLength); // https://stackoverflow.com/questions/4356289/php-random-string-generator
+			} catch (RandomException $e) {
+				$salt = substr(str_shuffle(str_repeat($x = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length / strlen($x)))), 1, $saltLength); // https://stackoverflow.com/questions/4356289/php-random-string-generator
 			}
 			$this->updateSetting($contextId, 'rqcJournalSalt', $salt, 'string');
 		}

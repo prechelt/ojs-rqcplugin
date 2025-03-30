@@ -1,15 +1,15 @@
 <?php
 
 /**
- * @file plugins/generic/rqc/classes/ReviewerOpting.inc.php
+ * @file     plugins/generic/rqc/classes/ReviewerOpting.inc.php
  *
  * Copyright (c) 2022-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class ReviewerOpting
- * @ingroup plugins_generic_rqc
+ * @class    ReviewerOpting
+ * @ingroup  plugins_generic_rqc
  *
- * @brief Store or query the opt-in/opt-out status of a user.
+ * @brief    Store or query the opt-in/opt-out status of a user.
  */
 
 
@@ -24,12 +24,12 @@ import('lib.pkp.classes.plugins.HookRegistry');
 import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
-define('RQC_OPTING_STATUS_IN',  36);  // internal, external
+define('RQC_OPTING_STATUS_IN', 36);  // internal, external
 define('RQC_OPTING_STATUS_OUT', 35);  // internal, external
-define('RQC_OPTING_STATUS_IN_PRELIM',  32);  // internal (save for later; not submitted yet)
+define('RQC_OPTING_STATUS_IN_PRELIM', 32);  // internal (save for later; not submitted yet)
 define('RQC_OPTING_STATUS_OUT_PRELIM', 31);  // internal (save for later; not submitted yet)
-define('RQC_OPTING_STATUS_UNDEFINED',  30);  // external only
-define('RQC_PRELIM_OPTING',  true);  // for readability
+define('RQC_OPTING_STATUS_UNDEFINED', 30);  // external only
+define('RQC_PRELIM_OPTING', true);  // for readability
 
 /**
  * Handle the opt-in/opt-out status of a user.
@@ -45,13 +45,14 @@ define('RQC_PRELIM_OPTING',  true);  // for readability
 class ReviewerOpting
 {
 	use RqcDevHelper;
-	static string $datename = 'rqc_opting_date';
-	static string $statusname = 'rqc_opting_status';
+
+	static string $dateName = 'rqc_opting_date';
+	static string $statusName = 'rqc_opting_status';
 
 	/**
 	 * Register callbacks. This is to be called from the plugin's register().
 	 */
-	public function register()
+	public function register(): void
 	{
 		// used for the building of the form
 		HookRegistry::register(
@@ -99,16 +100,16 @@ class ReviewerOpting
 	 */
 	public function callbackAddReviewerOptingField($hookName, $args): bool
 	{
-		$templateMgr =& $args[0];  /* @var $templateMgr TemplateManager */
+		$templateMgr =& $args[0]; /* @var $templateMgr TemplateManager */
 		$template =& $args[1];
 		if ($template == 'reviewer/review/step3.tpl') {
 			$templateMgr->assign(
 				['rqcReviewerOptingChoices' => [
-					'' => 'common.chooseOne',
-					RQC_OPTING_STATUS_IN => 'plugins.generic.rqc.reviewerOptIn.choice_yes',
+					''                    => 'common.chooseOne',
+					RQC_OPTING_STATUS_IN  => 'plugins.generic.rqc.reviewerOptIn.choice_yes',
 					RQC_OPTING_STATUS_OUT => 'plugins.generic.rqc.reviewerOptIn.choice_no',
 				],
-					'rqcDescription' => 'plugins.generic.rqc.reviewerOptIn.text'
+				 'rqcDescription'           => 'plugins.generic.rqc.reviewerOptIn.text'
 				]);
 		}
 		return false;  // proceed with normal processing
@@ -157,9 +158,9 @@ class ReviewerOpting
 	/**
 	 * Whether form should show opting field.
 	 * True iff opting is missing, outdated, or preliminary.
-	 * @param $context: context ID
-	 * @param $user:	user
-	 * @returns $status:  one of RQC_OPTING_STATUS_* except *_PRELIM
+	 * @param $contextId  int the ID of the context
+	 * @param $user       User the user to check (typically the logged-in user)
+	 * @returns $status: one of RQC_OPTING_STATUS_* except *_PRELIM
 	 */
 	public function optingRequired(int $contextId, User $user): bool
 	{
@@ -168,14 +169,14 @@ class ReviewerOpting
 
 	/**
 	 * Retrieve valid opting status or return RQC_OPTING_STATUS_UNDEFINED.
-	 * @param $context: context ID
-	 * @param $user:	typically the logged-in user
-	 * @param $preliminary:	whether to return preliminary statusses (else return ...UNKNOWN then)
-	 * @returns $status:  one of RQC_OPTING_STATUS_* except *_PRELIM
+	 * @param $contextId       int the ID of the context
+	 * @param $user            User the user to check (typically the logged-in user)
+	 * @param $preliminary     bool whether to return preliminary statuses (else return ...UNKNOWN then)
+	 * @returns $status: one of RQC_OPTING_STATUS_* except *_PRELIM
 	 */
-	public function getStatus(int $contextId, User $user, bool $preliminary=!RQC_PRELIM_OPTING): int
+	public function getStatus(int $contextId, User $user, bool $preliminary = !RQC_PRELIM_OPTING): int
 	{
-		$optingDate = $user->getSetting(self::$datename, $contextId);
+		$optingDate = $user->getSetting(self::$dateName, $contextId);
 		if ($optingDate == null) {
 			return RQC_OPTING_STATUS_UNDEFINED;  // no opting entry found at all
 		}
@@ -184,7 +185,7 @@ class ReviewerOpting
 		if ($currentyear > $statusyear) {
 			return RQC_OPTING_STATUS_UNDEFINED;  // opting entry is outdated
 		}
-		$optingStatus = $user->getSetting(self::$statusname, $contextId);  // one of ...IN/OUT/IN_PRELIM/OUT_PRELIM
+		$optingStatus = $user->getSetting(self::$statusName, $contextId);  // one of ...IN/OUT/IN_PRELIM/OUT_PRELIM
 		if ($optingStatus == RQC_OPTING_STATUS_OUT_PRELIM) {
 			return $preliminary ? RQC_OPTING_STATUS_OUT : RQC_OPTING_STATUS_UNDEFINED;
 		} else if ($optingStatus == RQC_OPTING_STATUS_IN_PRELIM) {
@@ -195,21 +196,20 @@ class ReviewerOpting
 
 	/**
 	 * Store timestamped opting status into the DB for this user and journal.
-	 * @param $context: context ID
-	 * @param $user:	user ID
-	 * @param $status:  RQC_OPTING_STATUS_(IN/OUT)
-	 * @param $preliminary:	whether to store status as _PRELIM
-
+	 * @param $contextId     int the ID of the context
+	 * @param $user          User the user to set the status (typically the logged-in user)
+	 * @param $status        int RQC_OPTING_STATUS_(IN/OUT)
+	 * @param $preliminary   bool whether to store status as _PRELIM
 	 */
-	public function setStatus(int $contextId, User $user, int $status, bool $preliminary=!RQC_PRELIM_OPTING)
+	public function setStatus(int $contextId, User $user, int $status, bool $preliminary = !RQC_PRELIM_OPTING): void
 	{
 		if ($status != RQC_OPTING_STATUS_IN and $status != RQC_OPTING_STATUS_OUT) {
 			trigger_error("Illegal opting status " . $status, E_USER_ERROR);
 		}
-		$user->updateSetting(self::$datename, gmdate("Y-m-d"), 'string', $contextId);
+		$user->updateSetting(self::$dateName, gmdate("Y-m-d"), 'string', $contextId);
 		if ($preliminary) {
 			$status = ($status == RQC_OPTING_STATUS_OUT) ? RQC_OPTING_STATUS_OUT_PRELIM : RQC_OPTING_STATUS_IN_PRELIM;
 		}
-		$user->updateSetting(self::$statusname, $status, 'int', $contextId);
+		$user->updateSetting(self::$statusName, $status, 'int', $contextId);
 	}
 }

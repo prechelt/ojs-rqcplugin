@@ -5,13 +5,13 @@
  */
 
 /**
- * @file plugins/generic/rqc/index.php
+ * @file    plugins/generic/rqc/index.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
  * @ingroup plugins_generic_rqc
- * @brief Wrapper for rqc plugin.
+ * @brief   Wrapper for rqc plugin.
  *
  */
 

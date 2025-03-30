@@ -16,9 +16,10 @@ define('RQC_MHS_SUBMISSION_URL', "%s/api/mhs_submission/%s/%s");  // host, rqcJo
  * The technical parts of calls to the RQC server.
  * @return array  "status" and "response" information
  */
-class RqcCall {
+class RqcCall
+{
 	static function callMhsSubmission(string $rqcHostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
-										$request, $submissionId, bool $strict = false): array
+											 $request, int $submissionId, bool $strict = false): array
 	{
 		$rqcdata = new RqcData();
 		$data = $rqcdata->rqcdataArray($request, $submissionId);
@@ -27,7 +28,7 @@ class RqcCall {
 	}
 
 	static function callMhsApikeycheck(string $hostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
-										 bool $strict = false): array
+									   bool   $strict = false): array
 	{
 		$url = sprintf(RQC_MHS_APIKEYCHECK_URL, $hostUrl, $rqcJournalId);
 		return RqcCall::curlCall($url, $rqcJournalAPIKey, "GET", array(), $strict);
@@ -37,18 +38,18 @@ class RqcCall {
 	 * Call curl for mhs_submission (POST) or mhs_apikeycheck (GET) and return an array
 	 * containing status and output, where output has key 'json' (decoded JSON) or
 	 * 'body' (HTML string or redirect URL string).
-	 * @param string $url  the complete URL to call
+	 * @param string $url      the complete URL to call
 	 * @param string $rqcJournalAPIKey
-	 * @param string $mode  "GET" or "POST"
-	 * @param string $postbody data to be sent in body (for POST mode only)
-	 * @param bool   $strict  whether to do proper SSL checking
+	 * @param string $mode     "GET" or "POST"
+	 * @param array  $postData data to be sent in body (for POST mode only)
+	 * @param bool   $strict   whether to do proper SSL checking
 	 * @return array  "status" and "response" information
 	 */
-	static function curlCall(string $url, string $rqcJournalAPIKey, string $mode, array $postdata,
-	                         bool $strict): array
+	static function curlCall(string $url, string $rqcJournalAPIKey, string $mode, array $postData,
+							 bool   $strict): array
 	{
 		assert($mode == "GET" || $mode == "POST");
-		assert($postdata || $mode == "GET");
+		assert($postData || $mode == "GET");
 		$result = array();
 		//----- prepare call:
 		$cc = curl_init($url);
@@ -63,18 +64,19 @@ class RqcCall {
 			$http_headers[] = 'Content-Type: application/json';
 		}
 		$curlopts = array(
-			CURLOPT_POST => ($mode == "POST"),
+			CURLOPT_POST           => ($mode == "POST"),
 			CURLOPT_RETURNTRANSFER => TRUE,
-			CURLOPT_HTTPHEADER => $http_headers);
+			CURLOPT_HTTPHEADER     => $http_headers
+		);
 		if ($mode == "POST") {
-			$curlopts[CURLOPT_POSTFIELDS] = json_encode($postdata, JSON_PRETTY_PRINT);
-			$result['request'] = $postdata;
+			$curlopts[CURLOPT_POSTFIELDS] = json_encode($postData, JSON_PRETTY_PRINT);
+			$result['request'] = $postData;
 		}
 		curl_setopt_array($cc, $curlopts);
 		if ($strict) {
 			curl_setopt($cc, CURLOPT_SSL_VERIFYPEER, true);
 			curl_setopt($cc, CURLOPT_SSL_VERIFYHOST, 2);  // 2:check host name against cert, 0:don't
-		} else  {
+		} else {
 			curl_setopt($cc, CURLOPT_SSL_VERIFYPEER, false);
 			curl_setopt($cc, CURLOPT_SSL_VERIFYHOST, 0);  // 2:check host name against cert, 0:don't
 
@@ -101,8 +103,9 @@ class RqcCall {
 		} else {                                    //----- handle unexpected response:
 			error_log($body);  // TODO 1: make proper log message
 			$result['response'] = array(
-				'error' => "received an unexpected non-JSON response from RQC",
-				'responsebody' => $body);
+				'error'        => "received an unexpected non-JSON response from RQC",
+				'responsebody' => $body
+			);
 		}
 		return $result;
 	}

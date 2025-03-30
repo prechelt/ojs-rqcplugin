@@ -3,29 +3,29 @@
 # compose-internal networking uses container ports, not mapped host ports.
 
 services:
-  db34:
-    # https://hub.docker.com/_/postgres
-    image: postgres:14-bullseye
-    restart: on-failure
-    hostname: db
-    container_name: ojs34-db
-    ports:
-      - "5034:5432"  # HOST:CONTAINER
-    environment:
-      POSTGRES_USER: ojs
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-    volumes:
-      - "/srv/ojs34/test/db/data:/var/lib/postgresql/data:rw"
-  db33:
-    # https://hub.docker.com/_/postgres
-    image: postgres:14-bullseye
-    restart: on-failure
-    hostname: db
-    container_name: ojs33-db
-    ports:
-      - "5033:5432"  # "5033:5432"  # HOST:CONTAINER
-    environment:
-      POSTGRES_USER: ojs
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-    volumes:
-      - "/srv/ojs33/test/db/data:/var/lib/postgresql/data:rw"
+    db34:
+        # https://hub.docker.com/_/postgres
+        image: postgres:14-bullseye
+        restart: on-failure
+        hostname: db
+        container_name: ojs34-db
+        ports:
+            - "5034:5432"  # HOST:CONTAINER
+        environment:
+            POSTGRES_USER: ojs
+            POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+        volumes:
+            - "/srv/ojs34/test/db/data:/var/lib/postgresql/data:rw"
+    db33:
+        # https://hub.docker.com/_/postgres
+        image: postgres:14-bullseye
+        restart: on-failure
+        hostname: db
+        container_name: ojs33-db
+        ports:
+            - "5033:5432"  # "5033:5432"  # HOST:CONTAINER
+        environment:
+            POSTGRES_USER: ojs
+            POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+        volumes:
+            - "/srv/ojs33/test/db/data:/var/lib/postgresql/data:rw"

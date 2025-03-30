@@ -4,22 +4,25 @@ class DelayedRqcCall extends DataObject
 {
 	/**
 	 * Set Unix timestamp of the latest retry of the call.
+	 * string should be of format Y-m-d H:i:s
 	 */
-	function setLastTryTs(string | null $lastTryTs): void
+	function setLastTryTs(string|null $lastTryTs): void
 	{
 		$this->setData('lastTryTs', $lastTryTs);
 	}
 
 	/**
-	 * Get Unix timestamp of the latest retry of the call.
+	 * Get Unix timestamp of the latest retry of the call
+	 * The given string should be of format Y-m-d H:i:s
 	 */
-	function getLastTryTs() : string | null
+	function getLastTryTs(): string|null
 	{
 		return $this->getData('lastTryTs');
 	}
 
 	/**
 	 * Set Unix timestamp of the original call.
+	 * string should be of format Y-m-d H:i:s
 	 */
 	function setOriginalTryTs(string $originalTryTs): void
 	{
@@ -28,40 +31,29 @@ class DelayedRqcCall extends DataObject
 
 	/**
 	 * Get Unix timestamp of the original call.
+	 * The given string should be of format Y-m-d H:i:s
 	 */
-	function getOriginalTryTs() : string
+	function getOriginalTryTs(): string
 	{
 		return $this->getData('originalTryTs');
 	}
 
-	/**
-	 * Set number of remaining retries.
-	 */
 	function setRemainingRetries(int $remainingRetries): void
 	{
 		$this->setData('remainingRetries', $remainingRetries);
 	}
 
-	/**
-	 * Get number of remaining retries.
-	 */
-	function getRemainingRetries() : int
+	function getRemainingRetries(): int
 	{
 		return $this->getData('remainingRetries');
 	}
 
-	/**
-	 * Set ID of submission
-	 */
 	function setSubmissionId(int $submissionId): void
 	{
 		$this->setData('submissionId', $submissionId);
 	}
 
-	/**
-	 * Get ID of submission
-	 */
-	function getSubmissionId() : int
+	function getSubmissionId(): int
 	{
 		return $this->getData('submissionId');
 	}

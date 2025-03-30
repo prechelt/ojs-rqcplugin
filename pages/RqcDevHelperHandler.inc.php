@@ -1,15 +1,15 @@
- <?php
+<?php
 
 /**
- * @file plugins/generic/rqc/pages/RqcDevHelperHandler.inc.php
+ * @file    plugins/generic/rqc/pages/RqcDevHelperHandler.inc.php
  *
  * Copyright (c) 2018-2023 Lutz Prechelt
  * Distributed under the GNU General Public License, Version 3.
  *
- * @class RqcDevHelperHandler
+ * @class   RqcDevHelperHandler
  * @ingroup plugins_generic_rqc
  *
- * @brief Handle requests to show what OJS-to-RQC requests will look like or make one "by hand".
+ * @brief   Handle requests to show what OJS-to-RQC requests will look like or make one "by hand".
  */
 
 /* for OJS 3.4:
@@ -18,14 +18,15 @@ use APP\handler\Handler;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
 */
-use Composer\Semver\Semver;  // used by x()
+
+use Composer\Semver\Semver; // used by x()
 
 import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
 
 
 class RqcDevHelperHandler extends Handler
 {
-	var $plugin;
+	var Plugin|null $plugin;
 
 	function __construct()
 	{
@@ -74,7 +75,7 @@ class RqcDevHelperHandler extends Handler
 		}
 	}
 
-	public function setRqcAPIKeyAndId($request, String $rqcId, String $rqcAPIKey): void
+	public function setRqcAPIKeyAndId($request, string $rqcId, string $rqcAPIKey): void
 	{
 		header("Content-Type: text/plain; charset=utf-8");
 		$contextId = $request->getContext()->getId();
@@ -83,7 +84,7 @@ class RqcDevHelperHandler extends Handler
 
 		$hasId = $this->plugin->getSetting($contextId, 'rqcJournalId');
 		$hasKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
-		print("Id: ".$hasId."\nKey: ".$hasKey."\nReturns: ValidKeyPair ".(PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair() ? "true" : "false"));
+		print("Id: " . $hasId . "\nKey: " . $hasKey . "\nReturns: ValidKeyPair " . (PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair() ? "true" : "false"));
 	}
 
 	/**
@@ -100,7 +101,7 @@ class RqcDevHelperHandler extends Handler
 		$ra->setRecommendation(null);
 		$ra->setDateCompleted(null);
 		$reviewAssignmentDao->updateObject($ra);
-		return("raReset $raId (submission $submissionId, reviewer $userId)\n");
+		return ("raReset $raId (submission $submissionId, reviewer $userId)\n");
 	}
 
 	/**
@@ -112,14 +113,14 @@ class RqcDevHelperHandler extends Handler
 		$contextId = $request->getContext()->getId();
 		$user = $request->getUser();
 		$userId = $user->getId();
-		$user->updateSetting(ReviewerOpting::$datename, null, 'string', $contextId);
-		$user->updateSetting(ReviewerOpting::$statusname, null, 'int', $contextId);
-		return("rqcOptingStatusReset for reviewer $userId in journal $contextId");
+		$user->updateSetting(ReviewerOpting::$dateName, null, 'string', $contextId);
+		$user->updateSetting(ReviewerOpting::$statusName, null, 'int', $contextId);
+		return ("rqcOptingStatusReset for reviewer $userId in journal $contextId");
 	}
 
-	 /**
-	  * to create/delete the table in the database (usually done after installation of the plugin)
-	  */
+	/**
+	 * to create/delete the table in the database (usually done after installation of the plugin)
+	 */
 	public function installRqcDelayedCallsTable($args, $request)
 	{
 		$migration = new DelayedRqcCallSchemaMigration();
@@ -131,7 +132,7 @@ class RqcDevHelperHandler extends Handler
 	{
 		// set the default timezone to use.
 		//date_default_timezone_set('America/New_York');
-		print("\n".date('Y-m-d H:i:s')."\n");
+		print("\n" . date('Y-m-d H:i:s') . "\n");
 		//date_default_timezone_set("UTC");
 		//print("\n".date('Y-m-d H:i:s')."\n");
 	}
@@ -158,39 +159,39 @@ class RqcDevHelperHandler extends Handler
 		$submissionId = $args[0];
 		$rqcCallHandler = new RqcCallHandler();
 		$delayedRqcCallId = $rqcCallHandler->putCallIntoQueue($submissionId);
-		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
 		$delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
 		print_r($delayedRqcCall);
 	}
 
-	 /**
-	  * Update an delayedRqcCall with a given delayedRqcCallId (args[0])
-	  */
-	 public function updateDelayedRqcCallById($args, $request)
-	 {
-		 $delayedRqcCallId = $args[0];
-		 $delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
-		 $delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
-		 $delayedRqcCallDao->updateCall($delayedRqcCall);
-		 print_r($delayedRqcCall);
-	 }
-
-	 /**
-	  * Delete an delayedRqcCall with a given delayedRqcCallId (args[0])
-	  */
-	 public function deleteDelayedCallById($args, $request)
-	 {
-		 $delayedRqcCallId = $args[0];
-		 $delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
-		 $delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
-		 $delayedRqcCallDao->deleteById($delayedRqcCallId);
-		 print_r($delayedRqcCall);
-	 }
+	/**
+	 * Update an delayedRqcCall with a given delayedRqcCallId (args[0])
+	 */
+	public function updateDelayedRqcCallById($args, $request)
+	{
+		$delayedRqcCallId = $args[0];
+		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
+		$delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
+		$delayedRqcCallDao->updateCall($delayedRqcCall);
+		print_r($delayedRqcCall);
+	}
 
 	/**
-	  * Make review case (MRC) in the current journal.
-	  * INCOMPLETE AND OUTDATED. TODO 1: remove or rewrite.
-	  */
+	 * Delete an delayedRqcCall with a given delayedRqcCallId (args[0])
+	 */
+	public function deleteDelayedCallById($args, $request)
+	{
+		$delayedRqcCallId = $args[0];
+		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
+		$delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
+		$delayedRqcCallDao->deleteById($delayedRqcCallId);
+		print_r($delayedRqcCall);
+	}
+
+	/**
+	 * Make review case (MRC) in the current journal.
+	 * INCOMPLETE AND OUTDATED. TODO 1: remove or rewrite.
+	 */
 	/*
 	function mrc($args, $request)
 	{
