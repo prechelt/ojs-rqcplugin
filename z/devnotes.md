@@ -241,7 +241,7 @@ other typical identifiers for such objects):
 - 3.4: 2023-06-09
 - 3.5: under development as of 2023-08
 
-### Which release is used how much (as of 2022-11)?
+### Which release is used how much (as of 2024-12)?
 
 Number of journals using this version.
 Taken from the CSV file at
