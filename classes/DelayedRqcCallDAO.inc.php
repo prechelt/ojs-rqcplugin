@@ -143,7 +143,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 				$now = time();
 			}
 			$call->setRemainingRetries($remainingRetries);
-			$call->setLastTryTs($now);
+			$call->setLastTryTs($this->datetimeFromDB($now));
 			parent::updateObject($call);
 		}
 	}
