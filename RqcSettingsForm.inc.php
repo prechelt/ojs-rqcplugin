@@ -68,10 +68,10 @@ class RqcSettingsForm extends Form
 {
 
 	/** @var int */
-	var int $_contextId;
+	public int $_contextId;
 
 	/** @var RqcPlugin */
-	var RqcPlugin $_plugin;
+	public RqcPlugin $_plugin;
 
 	/**
 	 * Constructor

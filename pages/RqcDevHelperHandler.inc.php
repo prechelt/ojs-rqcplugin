@@ -26,7 +26,7 @@ import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
 
 class RqcDevHelperHandler extends Handler
 {
-	var Plugin|null $plugin;
+	public Plugin|null $plugin;
 
 	function __construct()
 	{

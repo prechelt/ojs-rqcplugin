@@ -28,23 +28,23 @@ class DelayedRqcCallDAO extends SchemaDAO
 	use RqcDevHelper;
 
 	/** @copydoc SchemaDAO::$schemaName */
-	var $schemaName = 'rqcDelayedCall';
+	public $schemaName = 'rqcDelayedCall';
 
 	/** @copydoc SchemaDAO::$tableName */
-	var $tableName = 'rqc_delayed_calls';
+	public $tableName = 'rqc_delayed_calls';
 
 	/** @copydoc SchemaDAO::$settingsTableName */
-	var $settingsTableName = 'rqc_delayed_calls_settings';
+	public $settingsTableName = 'rqc_delayed_calls_settings';
 
 	/** @copydoc SchemaDAO::$primaryKeyColumn */
-	var $primaryKeyColumn = 'rqc_delayed_call_id';
+	public $primaryKeyColumn = 'rqc_delayed_call_id';
 
 	/** @var array Maps schema properties for the primary table to their column names */
-	var $primaryTableColumns = [
-		'id' => 'rqc_delayed_call_id',
-		'submissionId' => 'submission_id',
-		'lastTryTs' => 'last_try_ts',
-		'originalTryTs' => 'original_try_ts',
+	public $primaryTableColumns = [
+		'id'               => 'rqc_delayed_call_id',
+		'submissionId'     => 'submission_id',
+		'lastTryTs'        => 'last_try_ts',
+		'originalTryTs'    => 'original_try_ts',
 		'remainingRetries' => 'remaining_retries',
 	];
 
