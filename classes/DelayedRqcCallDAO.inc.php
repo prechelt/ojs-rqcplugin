@@ -22,6 +22,7 @@ use \PKP\db\DAOResultFactory;
 */
 import('lib.pkp.classes.db.DAO');
 import('plugins.generic.rqc.classes.DelayedRqcCall');
+import('lib.pkp.classes.db.SchemaDAO');
 
 class DelayedRqcCallDAO extends SchemaDAO
 {
@@ -43,6 +44,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 	public $primaryTableColumns = [
 		'id'               => 'rqc_delayed_call_id',
 		'submissionId'     => 'submission_id',
+		'contextId'        => 'context_id',
 		'lastTryTs'        => 'last_try_ts',
 		'originalTryTs'    => 'original_try_ts',
 		'remainingRetries' => 'remaining_retries',
@@ -87,24 +89,24 @@ class DelayedRqcCallDAO extends SchemaDAO
 
 	/**
 	 * Retrieve a reviewer submission by submission ID.
-	 * @param $journalId int  which calls to get, or 0 for all calls
+	 * @param $contextId int  which calls to get, or 0 for all calls
 	 * @param $horizon   int|null  unix timestamp. Get all calls not retried since this time.
 	 *                   Defaults to 23.8 hours ago (so that it's not always retried at the same time)
 	 * @return DAOResultFactory
 	 */
-	function getCallsToRetry(int $journalId = 0, int $horizon = null): DAOResultFactory
+	function getCallsToRetry(int $contextId = 0, int $horizon = null): DAOResultFactory
 	{
 		if (is_null($horizon)) {
 			$horizon = time() - 23 * 3600 - 48 * 60;  // 23.8 hours ago
 		}
 		$result = $this->retrieve(
 			'SELECT	* FROM ' . $this->tableName .
-			' WHERE (journal_id = ? OR ? = 0) AND
-			      (last_try_ts < ?)
+			' WHERE (context_id = ? OR ? = 0) AND
+			      (last_try_ts < ? OR last_try_ts IS NULL)
 		  	ORDER BY last_try_ts ASC', // this makes it a queue
 			array(
-				$journalId, $journalId,
-				$horizon
+				$contextId, $contextId,
+				$this->datetimeToDB($horizon)
 			)
 		);
 		return new DAOResultFactory($result, $this, '_fromRow');
@@ -120,6 +122,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 		$delayedRqcCall = $this->newDataObject();
 		$delayedRqcCall->setId((int)$primaryRow['rqc_delayed_call_id']);
 		$delayedRqcCall->setSubmissionId((int)$primaryRow['submission_id']);
+		$delayedRqcCall->setContextId((int)$primaryRow['context_id']);
 		$delayedRqcCall->setLastTryTs($this->datetimeFromDB($primaryRow['last_try_ts']));
 		$delayedRqcCall->setOriginalTryTs($this->datetimeFromDB($primaryRow['original_try_ts']));
 		$delayedRqcCall->setRemainingRetries((int)$primaryRow['remaining_retries']);
@@ -144,7 +147,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 			}
 			$call->setRemainingRetries($remainingRetries);
 			$call->setLastTryTs($this->datetimeFromDB($now));
-			parent::updateObject($call);
+			$this->updateObject($call);
 		}
 	}
 }

@@ -22,6 +22,7 @@ use PKP\plugins\PluginRegistry;
 use Composer\Semver\Semver; // used by x()
 
 import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
+import('plugins.generic.rqc.classes.DelayedRqcCallSender');
 
 
 class RqcDevHelperHandler extends Handler
@@ -121,11 +122,11 @@ class RqcDevHelperHandler extends Handler
 	/**
 	 * to create/delete the table in the database (usually done after installation of the plugin)
 	 */
-	public function installRqcDelayedCallsTable($args, $request)
+	public function updateRqcDelayedCallsTable($args, $request)
 	{
 		$migration = new DelayedRqcCallSchemaMigration();
+		$migration->down();
 		$migration->up();
-		//$migration->down();
 	}
 
 	public function test($args, $request)
@@ -142,13 +143,20 @@ class RqcDevHelperHandler extends Handler
 	 */
 	public function x($args, $request)
 	{
-		header("Content-Type: text/plain; charset=utf-8");
 		$version = $args[0];
 		$versionspec = $args[1];
 		$semver = new Semver();
 		$result = $semver->satisfies($version, $versionspec);
-		print("Version: " . $version . ", Versionspec: " . $versionspec . "\n");
-		print(" satisifies: " . ($result ? "yes" : "no"));
+		print("Version: $version, Versionspec: $versionspec<br> satisifies: " . ($result ? "yes" : "no"));
+	}
+
+	/**
+	 * simulate one execution called by the cronjob
+	 */
+	public function executeQueue($args, $request)
+	{
+		$sender = new DelayedRqcCallSender();
+		$sender->executeActions();
 	}
 
 	/**

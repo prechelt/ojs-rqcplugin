@@ -34,6 +34,7 @@ class DelayedRqcCallSchemaMigration extends Migration
 		Capsule::schema()->create('rqc_delayed_calls', function (Blueprint $table) {
 			$table->bigIncrements('rqc_delayed_call_id');
 			$table->bigInteger('submission_id');
+			$table->bigInteger('context_id');
 			$table->timestamp('last_try_ts')->nullable();
 			$table->timestamp('original_try_ts');
 			$table->tinyInteger('remaining_retries'); // does only need value between 10 and 0

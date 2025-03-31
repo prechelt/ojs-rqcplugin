@@ -150,13 +150,17 @@ class RqcCallHandler extends WorkflowHandler
 
 	public function putCallIntoQueue(int $submissionId): int
 	{
-		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
+		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
+		$submission = $submissionDao->getById($submissionId);
+		$contextId = $submission->getContextId();
 		// TODO Q: if there is already a call in the queue: What should we do then?
 		/*if ($delayedRqcCallDao->getById($submissionId) != null) {
 			$delayedRqcCallDao->deleteById($submissionId);
 		}*/
 		$delayedRqcCall = $delayedRqcCallDao->newDataObject();
 		$delayedRqcCall->setSubmissionId($submissionId);
+		$delayedRqcCall->setContextId($contextId);
 		$delayedRqcCall->setOriginalTryTs(date('Y-m-d H:i:s', time()));
 		$delayedRqcCall->setLastTryTs(null);
 		$delayedRqcCall->setRemainingRetries($this->_maxRetriesToResend);

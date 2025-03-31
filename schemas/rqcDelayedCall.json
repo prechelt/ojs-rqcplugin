@@ -32,6 +32,9 @@
 		},
 		"submissionId": {
 			"type": "integer"
+		},
+		"contextId": {
+			"type": "integer"
 		}
 	}
 }

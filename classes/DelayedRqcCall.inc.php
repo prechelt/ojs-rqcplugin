@@ -57,4 +57,14 @@ class DelayedRqcCall extends DataObject
 	{
 		return $this->getData('submissionId');
 	}
+
+	function setContextId(int $contextId): void
+	{
+		$this->setData('contextId', $contextId);
+	}
+
+	function getContextId(): int
+	{
+		return $this->getData('contextId');
+	}
 }
