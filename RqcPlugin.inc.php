@@ -76,9 +76,7 @@ class RqcPlugin extends GenericPlugin
 				); // needed by ReviewerOpting (automatically override all the templates of ojs with templates set by this plugin. In this case: /reviewer/review/reviewerRecommendation.tpl)
 				(new ReviewerOpting())->register();
 				(new EditorActions())->register();
-				$delayedRqcCallDao = new DelayedRqcCallDAO();
-				$delayedRqcCallDao->register();
-				DAORegistry::registerDAO('DelayedRqcCallDAO', $delayedRqcCallDao);
+				DAORegistry::registerDAO('DelayedRqcCallDAO', new DelayedRqcCallDAO());
 			}
 			if (RqcPlugin::hasDeveloperFunctions()) {  // register the devFunctions independent of RQC-ID-Key-Pair
 				HookRegistry::register(

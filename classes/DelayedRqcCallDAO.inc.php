@@ -58,13 +58,14 @@ class DelayedRqcCallDAO extends SchemaDAO
 		return new DelayedRqcCall();
 	}
 
-	public function register(): void
+	public function __construct()
 	{
 		// used to inject the schema into the SchemaDAO
 		HookRegistry::register(
 			'Schema::get::' . $this->schemaName,
 			array($this, 'callbackInsertSchema')
 		);
+		parent::__construct();
 	}
 
 	/**

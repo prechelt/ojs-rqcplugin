@@ -48,12 +48,11 @@ class DelayedRqcCallSender extends ScheduledTask
 	{
 		$lastNRetriesFailed = 0;
 
-		$delayedCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
-		$allDelayedCallsToBeRetriedNow = $delayedCallDao->getCallsToRetry(); // grab all delayed calls that should be retried now
-
-		foreach ($allDelayedCallsToBeRetriedNow as $call) { /** @var $call DelayedRqcCall */
+		$delayedRqcCallDao = new DelayedRqcCallDAO(); // not getting the DAORegistry to work TODO 3?
+		$allDelayedCallsToBeRetriedNow = $delayedRqcCallDao->getCallsToRetry()->toArray(); // grab all delayed calls that should be retried now
+		foreach ($allDelayedCallsToBeRetriedNow as $call) {
 			if ($call->getRemainingRetries() <= 0) {  // throw away!
-				$delayedCallDao->deleteById($call->getId());
+				$delayedRqcCallDao->deleteById($call->getId());
 				continue;
 			}
 
@@ -69,23 +68,23 @@ class DelayedRqcCallSender extends ScheduledTask
 
 			switch ($rqcResult) {
 				case in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS): // resend successfully
-					$delayedCallDao->deleteById($call->getId());
+					$delayedRqcCallDao->deleteById($call->getId());
 					$lastNRetriesFailed = 0; // reset counter
 					break;
 				case (in_array($rqcResult['status'], RQC_CALL_SERVER_DOWN)): // no connection to server: abort trying the next calls in the queue
-					$delayedCallDao->updateCall($call);
+					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed = $this->_NRetriesToAbort;
 					error_log("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " originally send at " . $call->getOriginalTryTs()
 						. " resulted in http status code " . $rqcResult['status'] . " with response " . $rqcResult['response'] . "\n");
 					break;
 				case (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)): // other errors (probably not an implementation error)
-					$delayedCallDao->updateCall($call);
+					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
 					error_log("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " originally send at " . $call->getOriginalTryTs()
 						. " resulted in http status code " . $rqcResult['status'] . " with response " . $rqcResult['response'] . "\n");
 					break;
 				default:    // something else went wrong (implementation error or else)
-					$delayedCallDao->updateCall($call);
+					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
 					error_log("Delayed RQC call error: Tried to send (probably faulty) data from submission " . $call->getSubmissionId() . " originally send at " . $call->getOriginalTryTs()
 						. " resulted in http status code " . $rqcResult['status'] . " with response " . $rqcResult['response'] . "\n");
