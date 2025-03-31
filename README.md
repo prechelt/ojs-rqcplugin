@@ -55,14 +55,19 @@ Target audience: OJS system administrators.
 - The RQC plugin requires PHP 7 and OJS 3.3.
 - In `config.inc.php`, set `scheduled_tasks = On`.
 - Install the plugin via the plugin gallery (in website settings).
-- THE FOLLOWING IS _NOT_ YET NEEDED:
-  Make sure there is an entry in your OJS server's crontab
+- Make sure there is an entry in your OJS server's crontab
   (see "Scheduled Tasks" in the OJS `docs/README`) and that it includes
   RQC's `scheduledTasks.xml` besides the default one from `registry`.
+  runScheduledTasks.php does only use the first argument. So runScheduledTasks.php needs to be called for every registry file that should do jobs.
   This could for instance look like this
   ```crontab
-  0 * * * *	(cd /path/to/ojs; php tools/runScheduledTasks.php registry/scheduledTasks.xml plugins/generic/reviewqualitycollector/scheduledTasks.xml)
+  0 * * * * your_user php path/to/ojs/tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml > "/home/bluecube/Documents/not shared/ojs/3.3/files/test.log" 2>&1
   ```
+  or without logging of the executed cronjobs
+  ```crontab
+  0 * * * * your_user php path/to/ojs/tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml >/dev/null 2>&1
+  ```
+  That maybe helpful: https://crontab-generator.org/
 - Later, perhaps update the RQC plugin from within OJS.
   This only applies if you know how to create the proper .tar.gz file,
   your server allows in-place plugin updates (or you drop the data

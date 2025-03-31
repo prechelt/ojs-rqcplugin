@@ -105,8 +105,8 @@ class RqcCallHandler extends WorkflowHandler
 		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
 			$request, $submissionId, !$this->plugin->hasDeveloperFunctions());
 		//$this->_print("\n".print_r($rqcResult, true)."\n");
-		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)) {
-			$this->putCallIntoQueue($submissionId); // TODO => is explicit call? => store interactive-user?
+		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)) { // queue when the error was not an implementation error
+			$this->putCallIntoQueue($submissionId);
 		}
 		return $rqcResult;
 	}
@@ -122,10 +122,10 @@ class RqcCallHandler extends WorkflowHandler
 		if ($statuscode == 303) {  // that's what we expect: redirect
 			header("HTTP/1.1 303 See Other");
 			header("Location: " . $jsonarray['redirect_target']);
-		} else {  // hmm, something is very very wrong: Show the JSON response
-			header("Content-Type: application/json; charset=utf-8");
-			print(json_encode($jsonarray, JSON_PRETTY_PRINT));
-			// TODO 3: response that is better readable
+		} else {  // hmm, something is very, very wrong: Print the json.
+			foreach ($jsonarray as $key => $value) {
+				print("<pre>$key: " . print_r($value, true) . "</pre><br>"); // <pre> to be \n-safe e.g.
+			}
 		}
 	}
 

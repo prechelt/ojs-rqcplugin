@@ -71,21 +71,19 @@ class RqcDevHelperHandler extends Handler
 		} elseif ($args[0] == "delete") {
 			$this->setRqcAPIKeyAndId($request, "", "");
 		} else {
-			header("Content-Type: text/plain; charset=utf-8");
 			print("huh?");
 		}
 	}
 
 	public function setRqcAPIKeyAndId($request, string $rqcId, string $rqcAPIKey): void
 	{
-		header("Content-Type: text/plain; charset=utf-8");
 		$contextId = $request->getContext()->getId();
 		$this->plugin->updateSetting($contextId, 'rqcJournalId', $rqcId, 'string');
 		$this->plugin->updateSetting($contextId, 'rqcJournalAPIKey', $rqcAPIKey, 'string');
 
 		$hasId = $this->plugin->getSetting($contextId, 'rqcJournalId');
 		$hasKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
-		print("Id: " . $hasId . "\nKey: " . $hasKey . "\nReturns: ValidKeyPair " . (PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair() ? "true" : "false"));
+		print("Id: $hasId <br>Key: $hasKey<br>Returns: ValidKeyPair " . (PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair() ? "true" : "false"));
 	}
 
 	/**
@@ -93,7 +91,6 @@ class RqcDevHelperHandler extends Handler
 	 */
 	public function raReset($args, $request)
 	{
-		header("Content-Type: text/plain; charset=utf-8");
 		$submissionId =& $args[0];
 		$userId = $request->getUser()->getId();
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
@@ -102,7 +99,7 @@ class RqcDevHelperHandler extends Handler
 		$ra->setRecommendation(null);
 		$ra->setDateCompleted(null);
 		$reviewAssignmentDao->updateObject($ra);
-		return ("raReset $raId (submission $submissionId, reviewer $userId)\n");
+		return ("raReset $raId (submission $submissionId, reviewer $userId)<br>");
 	}
 
 	/**
@@ -110,7 +107,6 @@ class RqcDevHelperHandler extends Handler
 	 */
 	public function rqcOptingStatusReset($args, $request)
 	{
-		header("Content-Type: text/plain; charset=utf-8");
 		$contextId = $request->getContext()->getId();
 		$user = $request->getUser();
 		$userId = $user->getId();
@@ -131,11 +127,7 @@ class RqcDevHelperHandler extends Handler
 
 	public function test($args, $request)
 	{
-		// set the default timezone to use.
-		//date_default_timezone_set('America/New_York');
 		print("\n" . date('Y-m-d H:i:s') . "\n");
-		//date_default_timezone_set("UTC");
-		//print("\n".date('Y-m-d H:i:s')."\n");
 	}
 
 	/**
@@ -162,8 +154,9 @@ class RqcDevHelperHandler extends Handler
 	/**
 	 * Enqueue a new delayedCall with a given submissionId (args[0])
 	 */
-	public function enqueue($args, $request)
+	public function enqueueDelayedRqcCall($args, $request)
 	{
+		header("Content-Type: text/plain; charset=utf-8");
 		$submissionId = $args[0];
 		$rqcCallHandler = new RqcCallHandler();
 		$delayedRqcCallId = $rqcCallHandler->putCallIntoQueue($submissionId);
@@ -177,6 +170,7 @@ class RqcDevHelperHandler extends Handler
 	 */
 	public function updateDelayedRqcCallById($args, $request)
 	{
+		header("Content-Type: text/plain; charset=utf-8");
 		$delayedRqcCallId = $args[0];
 		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
 		$delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
@@ -189,6 +183,7 @@ class RqcDevHelperHandler extends Handler
 	 */
 	public function deleteDelayedCallById($args, $request)
 	{
+		header("Content-Type: text/plain; charset=utf-8");
 		$delayedRqcCallId = $args[0];
 		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
 		$delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);

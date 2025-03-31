@@ -35,6 +35,8 @@ my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/document
 	- files_dir = "_your_path_to_files_folder"
 - [rqc]:
 	- activate_developer_functions = On
+- [scheduled_tasks]
+	- scheduled_tasks = On (currently doesn't work? TODO 3)
 
 ### generally used
 
