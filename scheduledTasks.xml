@@ -17,7 +17,6 @@
 
 <scheduled_tasks>
 	<task class="plugins.generic.rqc.classes.DelayedRqcCallSender">
-		<descr>Hourly retry calls to Review Quality Collector that previously failed.</descr>
-		<frequency hour="0-23"/>
+		<descr>Retry calls to Review Quality Collector that previously failed.</descr>
 	</task>
 </scheduled_tasks>
