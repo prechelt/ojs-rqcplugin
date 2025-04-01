@@ -23,16 +23,21 @@ use Composer\Semver\Semver; // used by x()
 
 import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
 import('plugins.generic.rqc.classes.DelayedRqcCallSender');
+import('plugins.generic.rqc.RqcPlugin');
+import('plugins.generic.rqc.classes.RqcLogger');
 
 
 class RqcDevHelperHandler extends Handler
 {
 	public Plugin|null $plugin;
 
+	public RqcLogger $logger;
+
 	function __construct()
 	{
 		parent::__construct();
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
+		$this->logger = new RqcLogger();
 	}
 
 	/**
@@ -127,7 +132,10 @@ class RqcDevHelperHandler extends Handler
 
 	public function test($args, $request)
 	{
-		print("\n" . date('Y-m-d H:i:s') . "\n");
+		//print("\n" . date('Y-m-d H:i:s') . "\n");
+		error_log("\ntest: error_log()\n");
+		$this->logger->logError("Test log");
+		//file_put_contents('php://stderr', "test: file_put_contents");
 	}
 
 	/**
