@@ -6,7 +6,7 @@ class RqcLogger
 	/**
 	 * @return string Path to a custom ORCID log file.
 	 */
-	public static function logFilePath(): string
+	protected static function logFilePath(): string
 	{
 		return Config::getVar('files', 'files_dir') . DIRECTORY_SEPARATOR . 'rqc.log';
 	}
@@ -17,9 +17,20 @@ class RqcLogger
 	 * @param  $message string Message to write
 	 * @return void
 	 */
-	public function logInfo($message)
+	public static function logInfo(string $message): void
 	{
 		self::writeLog($message, 'INFO');
+	}
+
+	/**
+	 * Write warn message to log.
+	 *
+	 * @param  $message string Message to write
+	 * @return void
+	 */
+	public static function logWarning($message)
+	{
+		self::writeLog($message, 'WARNING');
 	}
 
 	/**
@@ -28,7 +39,7 @@ class RqcLogger
 	 * @param  $message string Message to write
 	 * @return void
 	 */
-	public function logError($message)
+	public static function logError(string $message): void
 	{
 		self::writeLog($message, 'ERROR');
 	}
@@ -40,12 +51,13 @@ class RqcLogger
 	 * @param  $level   string Error level to add to message
 	 * @return void
 	 */
-	protected static function writeLog($message, $level)
+	protected static function writeLog(string $message, string $level): void
 	{
+		if (!$message) return;
 		if (!is_file(self::logFilePath())) {
 			touch(self::logFilePath());
 		}
 		$fineStamp = date('Y-m-d H:i:s', time());
-		error_log("$fineStamp $level $message\n", 3, self::logFilePath());
+		error_log("[$fineStamp]\t[$level]\t$message\n", 3, self::logFilePath());
 	}
 }

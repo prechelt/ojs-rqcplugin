@@ -6,6 +6,7 @@ use PKP\plugins\PluginRegistry;
 import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.RqcData');
 import('plugins.generic.rqc.classes.RqcDevHelper');
+import('plugins.generic.rqc.classes.RqcLogger');
 
 define('RQC_MHS_APIKEYCHECK_URL', "%s/api/mhs_apikeycheck/%s");  // host, rqcJournalId
 define('RQC_MHS_SUBMISSION_URL', "%s/api/mhs_submission/%s/%s");  // host, rqcJournalId, externalUid
@@ -101,7 +102,7 @@ class RqcCall
 		if ($content_type == 'application/json') {  //----- handle expected JSON response:
 			$result['response'] = json_decode($body, true);
 		} else {                                    //----- handle unexpected response:
-			error_log($body);  // TODO 1: make proper log message
+			RqcLogger::logError("Received an unexpected non-JSON response from RQC while making a $mode-request to $url. Resulted in http status code $status with response " . print_r($body, true));
 			$result['response'] = array(
 				'error'        => "received an unexpected non-JSON response from RQC",
 				'responsebody' => $body

@@ -50,7 +50,7 @@ class DelayedRqcCallSender extends ScheduledTask
 
 		$delayedRqcCallDao = new DelayedRqcCallDAO(); // not getting the DAORegistry to work TODO 3?
 		$allDelayedCallsToBeRetriedNow = $delayedRqcCallDao->getCallsToRetry()->toArray(); // grab all delayed calls that should be retried now
-		foreach ($allDelayedCallsToBeRetriedNow as $call) {
+		foreach ($allDelayedCallsToBeRetriedNow as $call) { /** @var $call DelayedRqcCall */
 			if ($call->getRemainingRetries() <= 0) {  // throw away!
 				$delayedRqcCallDao->deleteById($call->getId());
 				continue;
@@ -59,6 +59,8 @@ class DelayedRqcCallSender extends ScheduledTask
 			// If some calls in a row fail we assume that some unexpected error has occurred so that all calls fail (we expect that most of the calls do make it)
 			// If that assumption is false because we are "unlucky" we continue next time executeActions() is executed anyway. So no big problem
 			if ($lastNRetriesFailed >= $this->_NRetriesToAbort) {
+				$this->addExecutionLogEntry("Abort retrying the other delayedRqcCalls in the queue.",
+					SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
 				break;
 			}
 			sleep($this->_secSleepBetweenRetries);
@@ -70,24 +72,30 @@ class DelayedRqcCallSender extends ScheduledTask
 				case in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS): // resend successfully
 					$delayedRqcCallDao->deleteById($call->getId());
 					$lastNRetriesFailed = 0; // reset counter
+					$this->addExecutionLogEntry("Successfully send the delayed RQC call from from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
+						" ) originally send at " . $call->getOriginalTryTs() . " with http status code " . $rqcResult['status'] . " and response " . print_r($rqcResult['response'], true) . "\n",
+					SCHEDULED_TASK_MESSAGE_TYPE_NOTICE);
 					break;
 				case (in_array($rqcResult['status'], RQC_CALL_SERVER_DOWN)): // no connection to server: abort trying the next calls in the queue
 					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed = $this->_NRetriesToAbort;
-					error_log("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " originally send at " . $call->getOriginalTryTs()
-						. " resulted in http status code " . $rqcResult['status'] . " with response " . $rqcResult['response'] . "\n");
+					$this->addExecutionLogEntry("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
+						" ) originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response " . print_r($rqcResult['response'], true) . "\n",
+						SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
 					break;
 				case (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)): // other errors (probably not an implementation error)
 					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
-					error_log("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " originally send at " . $call->getOriginalTryTs()
-						. " resulted in http status code " . $rqcResult['status'] . " with response " . $rqcResult['response'] . "\n");
+					$this->addExecutionLogEntry("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
+						" ) originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response " . print_r($rqcResult['response'], true) . "\n",
+						SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
 					break;
 				default:    // something else went wrong (implementation error or else)
 					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
-					error_log("Delayed RQC call error: Tried to send (probably faulty) data from submission " . $call->getSubmissionId() . " originally send at " . $call->getOriginalTryTs()
-						. " resulted in http status code " . $rqcResult['status'] . " with response " . $rqcResult['response'] . "\n");
+					$this->addExecutionLogEntry("Delayed RQC call error: Tried to send (probably faulty) data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
+						" ) originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response " . print_r($rqcResult['response'], true) . "\n",
+						SCHEDULED_TASK_MESSAGE_TYPE_ERROR);
 					break;
 			}
 		}

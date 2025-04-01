@@ -31,13 +31,10 @@ class RqcDevHelperHandler extends Handler
 {
 	public Plugin|null $plugin;
 
-	public RqcLogger $logger;
-
 	function __construct()
 	{
 		parent::__construct();
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
-		$this->logger = new RqcLogger();
 	}
 
 	/**
@@ -132,10 +129,13 @@ class RqcDevHelperHandler extends Handler
 
 	public function test($args, $request)
 	{
-		//print("\n" . date('Y-m-d H:i:s') . "\n");
 		error_log("\ntest: error_log()\n");
-		$this->logger->logError("Test log");
-		//file_put_contents('php://stderr', "test: file_put_contents");
+		$rqcCall = new DelayedRqcCall();
+		$rqcCall->setSubmissionId(1);
+		$rqcCall->setContextId(9);
+		RqcLogger::logError(print_r($rqcCall, true));
+		RqcLogger::logInfo(print_r($rqcCall, true));
+		RqcLogger::logWarning(print_r($rqcCall, true));
 	}
 
 	/**
