@@ -134,6 +134,8 @@ class DelayedRqcCallDAO extends SchemaDAO
 	 * Update an existing review submission,
 	 * usually by decreasing remainingRetries and setting lastTryTs to current time.
 	 * @param $call DelayedRqcCall|DataObject one entry from rqc_delayed_calls
+	 * @param null $remainingRetries optional setting this value instead of decreasing by one
+	 * @param null $now optional setting this time instead of using time()
 	 */
 	function updateCall(DelayedRqcCall|DataObject $call, $remainingRetries = null, $now = null): void
 	{
@@ -147,7 +149,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 				$now = time();
 			}
 			$call->setRemainingRetries($remainingRetries);
-			$call->setLastTryTs($this->datetimeFromDB($now));
+			$call->setLastTryTs(Core::getCurrentDate($now));
 			$this->updateObject($call);
 		}
 	}
