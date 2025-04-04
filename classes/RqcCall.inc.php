@@ -27,7 +27,7 @@ class RqcCall
 	 * used by send/resend to give the request with all data to the curlCall method
 	 */
 	public static function callMhsSubmission(string $rqcHostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
-											 $request, int $submissionId, bool $strict = false): array
+													$request, int $submissionId, bool $strict = false): array
 	{
 		$rqcdata = new RqcData();
 		$data = $rqcdata->rqcDataArray($request, $submissionId);
@@ -39,7 +39,7 @@ class RqcCall
 	 * used by the isValid-check to give the request to the curlCall method
 	 */
 	public static function callMhsApikeyCheck(string $hostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
-									   bool   $strict = false): array
+											  bool   $strict = false): array
 	{
 		$url = sprintf(RQC_MHS_APIKEYCHECK_URL, $hostUrl, $rqcJournalId);
 		return RqcCall::curlCall($url, $rqcJournalAPIKey, "GET", array(), $strict);
@@ -57,7 +57,7 @@ class RqcCall
 	 * @return array  "status" and "response" information
 	 */
 	protected static function curlCall(string $url, string $rqcJournalAPIKey, string $mode, array $postData,
-							 bool   $strict): array
+									   bool   $strict): array
 	{
 		assert($mode == "GET" || $mode == "POST");
 		assert($postData || $mode == "GET");

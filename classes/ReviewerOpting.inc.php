@@ -30,7 +30,7 @@ define('RQC_PRELIM_OPTING', true);  // for readability
  *  - callbackReadOptIn() (for POST) moves the opting value from request to form.
  *  - callbackStep3execute() (for POST) stores opting value into DB.
  *
- * @see PKPReviewerReviewStep3Form
+ * @see      PKPReviewerReviewStep3Form
  * @ingroup  plugins_generic_rqc
  */
 class ReviewerOpting

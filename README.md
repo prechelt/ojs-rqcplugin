@@ -58,7 +58,8 @@ Target audience: OJS system administrators.
 - Make sure there is an entry in your OJS server's crontab
   (see "Scheduled Tasks" in the OJS `docs/README`) and that it includes
   RQC's `scheduledTasks.xml` besides the default one from `registry`.
-  runScheduledTasks.php does only use the first argument. So runScheduledTasks.php needs to be called for every registry file that should do jobs.
+  runScheduledTasks.php does only use the first argument. So runScheduledTasks.php needs to be called for every registry
+  file that should do jobs.
   This could for instance look like this
   ```crontab
   0 * * * * your_user php path/to/ojs/tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml > "/home/bluecube/Documents/not shared/ojs/3.3/files/test.log" 2>&1

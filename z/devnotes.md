@@ -281,7 +281,9 @@ via `cut -d',' -f3 beacon.csv | cut -d'.' -f1-3 | sort -r | uniq -c`
       5  ([sub]version number is to high and doesn't make sense)
     178  (no version indicated)
 ```
+
 Minor Versions (without patches)
+
 ```
    5271 3.4
   33929 3.3

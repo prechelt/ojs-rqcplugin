@@ -32,12 +32,12 @@ class RqcDevHelper // TODO 3: Is there a better variant?
 	 */
 	public static function writeObjectToConsole($object = null, string $msg = "", bool $printStackTrace = false): void
 	{
-		self::writeToConsole("\n$msg\n".print_r($object, true)."\n");
+		self::writeToConsole("\n$msg\n" . print_r($object, true) . "\n");
 		if ($printStackTrace) {
 			try {
 				throw new Exception("printStackTrace");
 			} catch (Exception $e) {
-				self::writeToConsole("\nStacktrace:".($e->getTraceAsString())."\n");
+				self::writeToConsole("\nStacktrace:" . ($e->getTraceAsString()) . "\n");
 			}
 		}
 	}
