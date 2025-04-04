@@ -55,9 +55,10 @@ class RqcData
 	{
 		$contextDao = Application::getContextDAO();
 		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
-		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
+		$submissionDao = DAORegistry::getDAO('SubmissionDAO'); /** @var $submissionDao PKPSubmissionDAO */
 		//----- prepare processing:
 		$submission = $submissionDao->getById($submissionId);
+		//RqcDevHelperStatic::_staticObjectPrint($submission, "submission", true);
 		$contextId = $submission->getContextId();
 		$journal = $contextDao->getById($contextId);
 		$data = array();
@@ -72,11 +73,10 @@ class RqcData
 		$data['visible_uid'] = $this->getUid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
 		$data['external_uid'] = $this->getUid($journal, $submission, $reviewroundN, true);  // URL-friendly version.
 		$data['title'] = $this->getTitle($submission->getTitle(null));
-		$alldata = $submission->getAllData();
-		$data['submitted'] = rqcifyDatetime($alldata['dateSubmitted']);
+		$data['submitted'] = rqcifyDatetime($submission->getData('dateSubmitted'));
 
 		//----- authors, editor assignments, reviews, decision:
-		$data['author_set'] = $this->getAuthorSet($submission->getAuthors()); // TODO 3: but deprecated function. But no clue what to put in instead (see PKPAuthorDAO::deleteBySubmissionId())
+		$data['author_set'] = $this->getAuthorSet($submission);
 		$data['edassgmt_set'] = $this->getEditorassignmentSet($submissionId);
 		$data['review_set'] = $this->getReviewSet($submissionId, $lastReviewRound, $contextId);
 		$data['decision'] = $this->getDecision($lastReviewRound);
@@ -122,21 +122,30 @@ class RqcData
 	/**
 	 * Return linear array of RQC-ish author objects.
 	 */
-	protected static function getAuthorSet($authorsobjects): array
+	protected static function getAuthorSet($submission): array
 	{
+		$authorDao = DAORegistry::getDAO('AuthorDAO'); /** @var $authorDao AuthorDAO */
+
+		$authorObjects = array(); // TODO Q: how does RQC handle multiple authors with the same order_number?
+		if ($submission) foreach ($submission->getData('publications') as $publication) {
+			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/7844 => the $submission object can be used again and the authors don't have to be query separately
+			$authors = $authorDao->getByPublicationId($publication->getId()); // querying the authors separately
+			$authorObjects = array_merge($authorObjects, $authors);
+		}
+
 		$result = array();
-		foreach ($authorsobjects as $authorobject) {
+		foreach ($authorObjects as $authorObject) { /** @var $authorObject PKPAuthor */
 			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/6178
-			if (false) // if (!(bool)$authorobject->isCorrespondingAuthor()) // currently not available AND (primaryAuthor or includeInBrowse don't suffice/fulfill that role!)
+			if (false) // if (!(bool)$authorObject->isCorrespondingAuthor()) // currently not available AND (primaryAuthor or includeInBrowse don't suffice/fulfill that role!)
 				continue;  // skip non-corresponding authors
-			$rqcauthor = array();
-			$rqcauthor['email'] = $authorobject->getEmail();
-			$rqcauthor['firstname'] = getNonlocalizedAttr($authorobject, "getGivenName");
-			$rqcauthor['lastname'] = getNonlocalizedAttr($authorobject, "getFamilyName");
-			//RqcDevHelperStatic::_staticPrint("\n".print_r($authorobject, true)."\n");
-			$rqcauthor['order_number'] = (int)($authorobject->getSequence()); // TODO 2: doesn't work like it should (it's always 0 even if it isn't in the db)
-			$rqcauthor['orcid_id'] = getOrcidId($authorobject->getOrcid());
-			$result[] = $rqcauthor;
+			//RqcDevHelperStatic::_staticObjectPrint($authorObject, "AuthorObject in getAuthorSet(): ");
+			$rqcAuthor = array();
+			$rqcAuthor['email'] = $authorObject->getEmail();
+			$rqcAuthor['firstname'] = getNonlocalizedAttr($authorObject, "getGivenName");
+			$rqcAuthor['lastname'] = getNonlocalizedAttr($authorObject, "getFamilyName");
+			$rqcAuthor['order_number'] = (int)($authorObject->getSequence());
+			$rqcAuthor['orcid_id'] = getOrcidId($authorObject->getOrcid());
+			$result[] = $rqcAuthor;
 		}
 		return $result;
 	}
