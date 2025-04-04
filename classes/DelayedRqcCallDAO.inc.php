@@ -1,33 +1,28 @@
 <?php
 
-/**
- * @file    plugins/generic/rqc/classes/DelayedRqcCallDAO.inc.php
- *
- * Copyright (c) 2018-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class   DelayedRqcCallDAO
- * @see     DelayedRqcCallSender
- * @see     rqcDelayedCall.json
- * @ingroup plugins_generic_rqc
- *
- * @brief   Operations for retrieving and modifying DelayedRqcCall objects.
- */
-
-
 /* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
 use \PKP\db\DAO;
 use \PKP\db\DAOResultFactory;
 */
-import('lib.pkp.classes.db.DAO');
-import('plugins.generic.rqc.classes.DelayedRqcCall');
-import('lib.pkp.classes.db.SchemaDAO');
 
+import('lib.pkp.classes.plugins.HookRegistry');
+import('lib.pkp.classes.db.SchemaDAO');
+import('lib.pkp.classes.db.DAOResultFactory');
+import('lib.pkp.classes.core.DataObject');
+
+import('plugins.generic.rqc.classes.DelayedRqcCall');
+import('plugins.generic.rqc.classes.RqcDevHelper');
+
+/**
+ * Operations for retrieving and modifying DelayedRqcCall objects.
+ *
+ * @see     DelayedRqcCallSender
+ * @see     rqcDelayedCall.json
+ * @ingroup plugins_generic_rqc
+ */
 class DelayedRqcCallDAO extends SchemaDAO
 {
-	use RqcDevHelper;
-
 	/** @copydoc SchemaDAO::$schemaName */
 	public $schemaName = 'rqcDelayedCall';
 
@@ -83,8 +78,8 @@ class DelayedRqcCallDAO extends SchemaDAO
 		$schema =& $params[0]; // calculations affect the $schema variable in the service
 		$schemaFile = sprintf('%s/plugins/generic/rqc/schemas/%s.json', BASE_SYS_DIR, $this->schemaName);
 		$schema = json_decode(file_get_contents($schemaFile));
-		//$this->_print("\nschemaFile ".print_r($schemaFile, true)."\n");
-		//$this->_print("\nschema ".print_r($schema, true)."\n");
+		// RqcDevHelper::writeObjectToConsole($schemaFile, "schemaFile ");
+		// RqcDevHelper::writeObjectToConsole($schema, "schema ");
 		return false;
 	}
 
@@ -95,7 +90,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 	 *                   Defaults to 23.8 hours ago (so that it's not always retried at the same time)
 	 * @return DAOResultFactory
 	 */
-	function getCallsToRetry(int $contextId = 0, int $horizon = null): DAOResultFactory
+	public function getCallsToRetry(int $contextId = 0, int $horizon = null): DAOResultFactory
 	{
 		if (is_null($horizon)) {
 			$horizon = time() - 23 * 3600 - 48 * 60;  // 23.8 hours ago
@@ -118,7 +113,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 	 *
 	 * @param $primaryRow array The result row from the primary table lookup
 	 */
-	function _fromRow($primaryRow): DelayedRqcCall
+	public function _fromRow($primaryRow): DelayedRqcCall
 	{
 		$delayedRqcCall = $this->newDataObject();
 		$delayedRqcCall->setId((int)$primaryRow['rqc_delayed_call_id']);
@@ -133,11 +128,11 @@ class DelayedRqcCallDAO extends SchemaDAO
 	/**
 	 * Update an existing review submission,
 	 * usually by decreasing remainingRetries and setting lastTryTs to current time.
-	 * @param $call DelayedRqcCall|DataObject one entry from rqc_delayed_calls
+	 * @param      $call             DelayedRqcCall|DataObject one entry from rqc_delayed_calls
 	 * @param null $remainingRetries optional setting this value instead of decreasing by one
-	 * @param null $now optional setting this time instead of using time()
+	 * @param null $now              optional setting this time instead of using time()
 	 */
-	function updateCall(DelayedRqcCall|DataObject $call, $remainingRetries = null, $now = null): void
+	public function updateCall(DelayedRqcCall|DataObject $call, $remainingRetries = null, $now = null): void
 	{
 		if (is_null($remainingRetries)) {
 			$remainingRetries = $call->getRemainingRetries() - 1;

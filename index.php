@@ -5,14 +5,9 @@
  */
 
 /**
- * @file    plugins/generic/rqc/index.php
- *
- * Copyright (c) 2018-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
+ * Wrapper for rqc plugin.
  *
  * @ingroup plugins_generic_rqc
- * @brief   Wrapper for rqc plugin.
- *
  */
 
 require_once('RqcPlugin.inc.php');

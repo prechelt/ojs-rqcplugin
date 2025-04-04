@@ -68,6 +68,7 @@ my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/document
 - http://localhost:<port>/index.php/rqctest/rqcdevhelper/1/?viewonly=1
 - Perhaps apply patches to OJS codebase from `ojspatches`.
 - For OJS to talk to RQC, start the Django dev server
+- used https://github.com/pkp/staticPages as a template for DelayedRqcSchemaMigration
 
 ## OJS knowledge
 

@@ -1,18 +1,5 @@
 <?php
 
-/**
- * @file    plugins/generic/rqc/RqcSettingsForm.inc.php
- *
- * Copyright (c) 2018-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class   RqcSettingsForm
- * @ingroup plugins_generic_rqc
- *
- * @brief   Form for journal managers to modify RQC plugin settings
- */
-
-
 /* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
 use APP\template\TemplateManager;
@@ -21,24 +8,32 @@ use PKP\form\validation\FormValidatorCSRF;
 use PKP\form\validation\FormValidatorPost;
 use PKP\form\validation\FormValidatorRegExp;
 */
+
 import('lib.pkp.classes.form.Form');
+import('lib.pkp.classes.form.validation.FormValidator');
+
+import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.RqcCall');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
+/**
+ * Form for journal managers to modify RQC plugin settings
+ *
+ * @ingroup plugins_generic_rqc
+ */
 class RqcFormValidator extends FormValidator
 {
-	use RqcDevHelper;
-
 	function isValid(): bool
 	{
 		$form = $this->_form;
 		$hostUrl = $form->_plugin->rqcServer();
 		$rqcJournalId = $form->getData('rqcJournalId');
 		$rqcJournalAPIKey = $form->getData('rqcJournalAPIKey');
-		$result = RqcCall::callMhsApikeycheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey,
+		$result = RqcCall::callMhsApikeyCheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey,
 			!$form->_plugin->hasDeveloperFunctions());
-		//$this->_print("\n".print_r($result, true)."\n");
+		//RqcDevHelper::writeObjectToConsole($result);
 		$status = $result['status'];
+		// TODO 1 logging
 		if ($status == 200) {
 			return true;  // all is fine
 		}
@@ -131,6 +126,7 @@ class RqcSettingsForm extends Form
 	{
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalId', trim($this->getData('rqcJournalId')), 'string');
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalAPIKey', trim($this->getData('rqcJournalAPIKey')), 'string');
+		// TODO 1 logging
 		return parent::execute();
 	}
 }

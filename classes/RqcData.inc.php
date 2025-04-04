@@ -1,18 +1,5 @@
 <?php
 
-/**
- * @file     plugins/generic/rqc/classes/RqcData.inc.php
- *
- * Copyright (c) 2018-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class    RqcData
- * @ingroup  plugins_generic_rqc
- *
- * @brief    Compute the JSON-like contents of a call to the RQC API.
- */
-
-
 /* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
 use PKP\db\DAORegistry;
@@ -20,9 +7,17 @@ use PKP\plugins\PluginRegistry;
 use PKP\security\Role;
 use PKP\site\VersionCheck;
 */
+
+// needed in OJS 3.3:
+use Random\RandomException;
+
 import('classes.workflow.EditorDecisionActionsManager');  // decision action constants
 import('lib.pkp.classes.core.PKPPageRouter');
 import('lib.pkp.classes.site.VersionCheck');
+import('lib.pkp.classes.submission.reviewRound.ReviewRoundDAO');
+import('classes.submission.SubmissionDAO');
+import('classes.core.Services');
+
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define("RQC_AllOWED_FILE_EXTENSIONS", array(
@@ -30,19 +25,18 @@ define("RQC_AllOWED_FILE_EXTENSIONS", array(
 )); // which files are allowed to be included in the review_set['attachment_set']
 
 /**
- * Class RqcData.
- * Builds the data object to be sent to the RQC server from the various pieces of the OJS data model:
+ * Builds the JSON-like data object to be sent to the RQC server from the various pieces of the OJS data model:
  * submission, authors, editors, reviewers and reviews, active user, decision, etc.
+ *
+ * @ingroup  plugins_generic_rqc
  */
 class RqcData
 {
-	use RqcDevHelper;
-
 	private Plugin|null $plugin;
 
-	const CONFIDENTIAL_FIELD_REGEXP = '/[Cc]onfidential/';  // review form fields with such names are excluded
+	public const string CONFIDENTIAL_FIELD_REGEXP = '/[Cc]onfidential/';  // review form fields with such names are excluded
 
-	function __construct()
+	public function __construct()
 	{
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
 	}
@@ -51,21 +45,20 @@ class RqcData
 	 * Build PHP array with the data for an RQC call to be made.
 	 * if $request is null, interactive_user and mhs_submissionpage are transmitted as "".
 	 */
-	function rqcdataArray($request, $submissionId): array
+	public function rqcDataArray($request, $submissionId): array
 	{
 		$contextDao = Application::getContextDAO();
 		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
-		$submissionDao = DAORegistry::getDAO('SubmissionDAO'); /** @var $submissionDao PKPSubmissionDAO */
+		$submissionDao = DAORegistry::getDAO('SubmissionDAO'); /** @var $submissionDao SubmissionDAO */
 		//----- prepare processing:
 		$submission = $submissionDao->getById($submissionId);
-		//RqcDevHelperStatic::_staticObjectPrint($submission, "submission", true);
+		//RqcDevHelper::writeObjectToConsole($submission, "submission", true);
 		$contextId = $submission->getContextId();
 		$journal = $contextDao->getById($contextId);
 		$data = array();
 		//----- fundamentals:
 		$data['interactive_user'] = $request ? $this->getInteractiveUser($request) : "";
-		$data['mhs_submissionpage'] = $request ? $this->getMhsSubmissionpage($request, $submissionId) : "";
-
+		$data['mhs_submissionpage'] = $request ? $this->getMhsSubmissionPage($request, $submissionId) : "";
 
 		//----- submission data:
 		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submissionId);
@@ -90,7 +83,7 @@ class RqcData
 	protected static function getAttachmentSet($reviewerSubmission): array
 	{
 		$attachmentSet = array();
-		//RqcDevHelperStatic::_staticPrint("\nReviewer: ".$reviewerSubmission->getReviewerFullName()." with Id: ".$reviewerSubmission->getReviewerId()."\n");
+		//RqcDevHelper::writeToConsole("\nReviewer: ".$reviewerSubmission->getReviewerFullName()." with Id: ".$reviewerSubmission->getReviewerId()."\n");
 
 		$submissionFilesIterator = Services::get('submissionFile')->getMany(
 			['submissionIds'   => [$reviewerSubmission->getId()],
@@ -105,17 +98,17 @@ class RqcData
 				continue;
 			}
 			$fileId = $submissionFile->getData('fileId'); // !! not the submissionFileId
-			//RqcDevHelperStatic::_staticPrint("SubmissionFile: ".$submissionFileName." with FileId: ".$fileId."\n");
+			//RqcDevHelper::writeToConsole("SubmissionFile: ".$submissionFileName." with FileId: ".$fileId."\n");
 			$fileService = Services::get('file');
 			$file = $fileService->get($fileId);
 			$fileContent = $fileService->fs->read($file->path);
-			//RqcDevHelperStatic::_staticPrint("File: ".$file->id." ".$file->path." with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n".$fileContent."##EndOfFile##\n\n");
+			//RqcDevHelper::writeToConsole("File: ".$file->id." ".$file->path." with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n".$fileContent."##EndOfFile##\n\n");
 
 			$attachment['filename'] = $submissionFileName;
 			$attachment['data'] = base64_encode($fileContent);
 			$attachmentSet[] = $attachment;
 		}
-		//RqcDevHelperStatic::_staticPrint("\n".print_r($attachmentSet, true)."\n");
+		//RqcDevHelper::writeToConsole("\n".print_r($attachmentSet, true)."\n");
 		return $attachmentSet;
 	}
 
@@ -138,7 +131,7 @@ class RqcData
 			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/6178
 			if (false) // if (!(bool)$authorObject->isCorrespondingAuthor()) // currently not available AND (primaryAuthor or includeInBrowse don't suffice/fulfill that role!)
 				continue;  // skip non-corresponding authors
-			//RqcDevHelperStatic::_staticObjectPrint($authorObject, "AuthorObject in getAuthorSet(): ");
+			//RqcDevHelper::writeObjectToConsole($authorObject, "AuthorObject in getAuthorSet(): ");
 			$rqcAuthor = array();
 			$rqcAuthor['email'] = $authorObject->getEmail();
 			$rqcAuthor['firstname'] = getNonlocalizedAttr($authorObject, "getGivenName");
@@ -225,7 +218,7 @@ class RqcData
 	/**
 	 * Return the URL to which RQC should redirect after grading.
 	 */
-	protected function getMhsSubmissionpage(PKPRequest $request, int $submissionId)
+	protected function getMhsSubmissionPage(PKPRequest $request, int $submissionId)
 	{
 		return $request->url(null, 'workflow', 'index',
 			array($submissionId, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)); // TODO 3: deprecated
@@ -286,7 +279,7 @@ class RqcData
 				$rqcreviewer['lastname'] = getNonlocalizedAttr($reviewerobject, "getFamilyName");
 				$rqcreviewer['orcid_id'] = getOrcidId($reviewerobject->getOrcid());
 			} else {
-				$rqcreviewer['email'] = generatePseudoEmail($reviewerobject->getEmail(), $this->plugin->getSaltAndGenerateIfNotSet($contextId));
+				$rqcreviewer['email'] = generatePseudoEmail($reviewerobject->getEmail(), $this->getSaltAndGenerateIfNotSet($contextId));
 				$rqcreviewer['firstname'] = "";
 				$rqcreviewer['lastname'] = "";
 				$rqcreviewer['orcid_id'] = "";
@@ -315,7 +308,7 @@ class RqcData
 		$reviewFormElements = $reviewFormElementDao->getByReviewFormId($reviewFormId);
 		$result = "";
 		while ($reviewFormElement = $reviewFormElements->next()) {
-			$this->_print("### reviewFormElement.elementType=" . $reviewFormElement->getElementType() .
+			RqcDevHelper::writeToConsole("### reviewFormElement.elementType=" . $reviewFormElement->getElementType() .
 				"  included='" . $reviewFormElement->getIncluded() . "'\n");
 			if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_TEXTAREA &&
 				$reviewFormElement->getIncluded()) {
@@ -434,6 +427,31 @@ class RqcData
 	{
 		return str_replace("\r", '', $text);  // may contain CR LF, we want only LF
 	}
+
+	/**
+	 * get the salt for the journal
+	 * if the salt was never generated: generate, store and return the new salt
+	 */
+	protected function getSaltAndGenerateIfNotSet($contextId): string
+	{
+		$saltLength = 32;
+		$salt = $this->plugin->getSetting($contextId, 'rqcJournalSalt');
+		// RqcDevHelper::writeToConsole("\nsalt? ".(bool)$salt."\n");
+		if (!$salt) {
+			try {
+				if (function_exists('random_bytes')) {
+					$bytes = random_bytes(floor($saltLength / 2));
+				} else {
+					$bytes = openssl_random_pseudo_bytes(floor($saltLength / 2));
+				}
+				$salt = bin2hex($bytes); // the string is likely unprintable => to hex so the string is printable (but twice as long)
+			} catch (RandomException $e) {
+				$salt = substr(str_shuffle(str_repeat($x = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length / strlen($x)))), 1, $saltLength); // https://stackoverflow.com/questions/4356289/php-random-string-generator
+			}
+			$this->plugin->updateSetting($contextId, 'rqcJournalSalt', $salt, 'string');
+		}
+		return $salt;
+	}
 }
 
 
@@ -444,15 +462,14 @@ class RqcOjsData
 	 */
 	public static function isDecision($ojsDecision): bool
 	{
-		switch ($ojsDecision) {
-			case SUBMISSION_EDITOR_DECISION_ACCEPT:
-			case SUBMISSION_EDITOR_DECISION_DECLINE:
-			case SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE:
-			case SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS:
-			case SUBMISSION_EDITOR_DECISION_RESUBMIT:
-				return true;
-		}
-		return false;  // everything else isn't
+		return match ($ojsDecision) {
+			SUBMISSION_EDITOR_DECISION_ACCEPT,
+			SUBMISSION_EDITOR_DECISION_DECLINE,
+			SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE,
+			SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS,
+			SUBMISSION_EDITOR_DECISION_RESUBMIT => true,
+			default => false, // everything else isn't
+		};
 	}
 }
 

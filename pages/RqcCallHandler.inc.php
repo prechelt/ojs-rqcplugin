@@ -5,10 +5,15 @@ namespace APP\plugins\generic\rqc;
 use APP\pages\workflow\WorkflowHandler;
 use PKP\plugins\PluginRegistry;
 */
+
 import('pages.workflow.WorkflowHandler');
+import('classes.submission.SubmissionDAO');
+
 import('plugins.generic.rqc.classes.RqcCall');
+import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
-//import('plugins.generic.rqc.classes.DelayedRqcCall');
+import('plugins.generic.rqc.classes.DelayedRqcCall');
+import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define("RQC_CALL_STATUS_CODES_TO_RESEND", array(
 	408, // "Request Timeout"
@@ -45,11 +50,11 @@ define("RQC_CALL_STATUS_CODES_SUCESS", array(
  * The core of the RQC plugin: Retrieve the reviewing data of one submission and send it to the RQC server
  * after the editor dialog has redirected to this page.
  * Making it a separate page helps with testing.
+ *
+ * @ingroup plugins_generic_rqc
  */
 class RqcCallHandler extends WorkflowHandler
 {
-	use RqcDevHelper;
-
 	private Plugin|null $plugin;
 
 	private int $_maxRetriesToResend = 10; // arbitrary number
@@ -69,7 +74,7 @@ class RqcCallHandler extends WorkflowHandler
 	 */
 	public function submit($args, $request)
 	{
-		$this->_print("### RqcCallHandler::submit() called");
+		RqcDevHelper::writeToConsole("### RqcCallHandler::submit() called");
 		$qargs = $this->plugin->getQueryArray($request);
 		$stageId = $qargs['stageId'];
 		if ($stageId != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
@@ -81,6 +86,7 @@ class RqcCallHandler extends WorkflowHandler
 		}
 		$submissionId = $qargs['submissionId'];
 		$rqcResult = $this->sendToRqc($request, $submissionId); // Explicit call
+		// TODO 1 logging
 		$this->processRqcResponse($rqcResult['status'], $rqcResult['response']);
 	}
 
@@ -104,7 +110,7 @@ class RqcCallHandler extends WorkflowHandler
 		$rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
 		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
 			$request, $submissionId, !$this->plugin->hasDeveloperFunctions());
-		//$this->_print("\n".print_r($rqcResult, true)."\n");
+		//RqcDevHelper::writeObjectToConsole($rqcResult);
 		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)) { // queue when the error was not an implementation error
 			$this->putCallIntoQueue($submissionId);
 		}
@@ -143,7 +149,7 @@ class RqcCallHandler extends WorkflowHandler
 		$rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
 		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
 			null, $submissionId, !$this->plugin->hasDeveloperFunctions());
-		$this->_print("\n" . print_r($rqcResult, true) . "\n");
+		RqcDevHelper::writeObjectToConsole($rqcResult);
 		return $rqcResult;
 	}
 
@@ -154,7 +160,7 @@ class RqcCallHandler extends WorkflowHandler
 		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		$submission = $submissionDao->getById($submissionId);
 		$contextId = $submission->getContextId();
-		// TODO Q: if there is already a call in the queue: What should we do then?
+		// TODO Q: if there is already a call in the queue: What should we do then? (also what to do with logging?
 		/*if ($delayedRqcCallDao->getById($submissionId) != null) {
 			$delayedRqcCallDao->deleteById($submissionId);
 		}*/
@@ -164,7 +170,8 @@ class RqcCallHandler extends WorkflowHandler
 		$delayedRqcCall->setOriginalTryTs(Core::getCurrentDate());
 		$delayedRqcCall->setLastTryTs(null);
 		$delayedRqcCall->setRemainingRetries($this->_maxRetriesToResend);
-		//$this->_print("\n".print_r($delayedRqcCall, true)."\n");
+		//RqcDevHelper::writeObjectToConsole($delayedRqcCall);
+		// TODO 1 logging
 		return $delayedRqcCallDao->insertObject($delayedRqcCall);
 	}
 }

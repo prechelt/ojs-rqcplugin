@@ -2,11 +2,6 @@
 <!DOCTYPE version SYSTEM "../../../lib/pkp/dtd/pluginVersion.dtd">
 
 <!--
-  * plugins/generic/rqc/version.xml
-  *
-  * Copyright (c) 2018-2023 Lutz Prechelt
-  * Distributed under the GNU General Public License, Version 3.
-  *
   * Plugin version information.
   -->
 <version>

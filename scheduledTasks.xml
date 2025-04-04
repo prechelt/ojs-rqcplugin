@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  * plugins/generic/rqc/scheduledTasks.xml
-  *
-  * Copyright (c) 2018-2019 Lutz Prechelt
-  * Distributed under the GNU General Public License, Version 3.
-  *
   * This file lists all scheduled tasks required to run by the RQC plugin.
   *
   * Note that this functionality requires scheduled task support to be enabled

@@ -1,15 +1,9 @@
 <?php
 
 /**
- * @file    plugins/generic/rqc/tests/RqcReviewerOptingTest.php
+ * Test reviewer opt-in/opt-out functionality.
  *
- * Copyright (c) 2022-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class   RqcReviewerOptingTest
  * @ingroup plugins_generic_rqc
- *
- * @brief   Test reviewer opt-in/opt-out functionality.
  */
 
 require_once('lib/pkp/tests/phpunit-bootstrap.php');

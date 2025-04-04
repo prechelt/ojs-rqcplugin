@@ -1,10 +1,20 @@
 <?php
 
+import('lib.pkp.classes.config.Config');
+
+/**
+ * class to unify logging within the RQC plugin
+ * logFilePath() specifies where the custom log files lies
+ * all the log methods use a unified logging message: [dateTime] [logLevel] message
+ * logLevel can be: INFO, WARNING, ERROR
+ *
+ * @ingroup plugins_generic_rqc
+ */
 class RqcLogger
 {
 
 	/**
-	 * @return string Path to a custom ORCID log file.
+	 * @return string Path to a custom RQC log file.
 	 */
 	protected static function logFilePath(): string
 	{
@@ -28,7 +38,7 @@ class RqcLogger
 	 * @param  $message string Message to write
 	 * @return void
 	 */
-	public static function logWarning($message)
+	public static function logWarning(string $message): void
 	{
 		self::writeLog($message, 'WARNING');
 	}

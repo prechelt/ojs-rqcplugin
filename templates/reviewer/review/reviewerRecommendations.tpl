@@ -1,9 +1,4 @@
 {**
- * templates/reviewer/review/reviewerRecommendations.tpl
- *
- * Copyright (c) 2022 Lutz Prechelt
- * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
- *
  * Last part of step3 of OJS review assignment responses:
  * - the reviewer's decision recommendation
  * - the RQC opt-in or opt-out if needed
@@ -12,11 +7,8 @@
  * because for some reason we could not get the required
  *   {include file="core:reviewer/review/step3.tpl"}
  * to work; it always ran into some infinite recursion.
-
- 			TODO 3: Is there another way? Maybe its the "HookRegistry::register(
-					'TemplateResource::getFilename',
-					array($this, '_overridePluginTemplates')
-				); // needed by ReviewerOpting (automatically override all the templates of ojs with templates set by this plugin. In this case: /reviewer/review/reviewerRecommendation.tpl)"
+ * TODO 3: Is there another way? Maybe its the "HookRegistry::register('TemplateResource::getFilename', array($this, '_overridePluginTemplates'));
+ * 			// needed by ReviewerOpting (automatically override all the templates of ojs with templates set by this plugin. In this case: /reviewer/review/reviewerRecommendation.tpl)"
  *}
 
 {fbvFormSection label="reviewer.article.recommendation" description=$description|default:"reviewer.article.selectRecommendation"}

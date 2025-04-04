@@ -1,8 +1,10 @@
 <?php
+
 /* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
 use PKP\plugins\PluginRegistry;
 */
+
 import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.RqcData');
 import('plugins.generic.rqc.classes.RqcDevHelper');
@@ -14,21 +16,29 @@ define('RQC_MHS_SUBMISSION_URL', "%s/api/mhs_submission/%s/%s");  // host, rqcJo
 
 /**
  * Class RqcCall.
- * The technical parts of calls to the RQC server.
+ * The technical parts to execute calls to the RQC server.
  * @return array  "status" and "response" information
+ *
+ * @ingroup  plugins_generic_rqc
  */
 class RqcCall
 {
-	static function callMhsSubmission(string $rqcHostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
+	/**
+	 * used by send/resend to give the request with all data to the curlCall method
+	 */
+	public static function callMhsSubmission(string $rqcHostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
 											 $request, int $submissionId, bool $strict = false): array
 	{
 		$rqcdata = new RqcData();
-		$data = $rqcdata->rqcdataArray($request, $submissionId);
+		$data = $rqcdata->rqcDataArray($request, $submissionId);
 		$url = sprintf(RQC_MHS_SUBMISSION_URL, $rqcHostUrl, $rqcJournalId, $submissionId);
 		return RqcCall::curlCall($url, $rqcJournalAPIKey, "POST", $data, $strict);
 	}
 
-	static function callMhsApikeycheck(string $hostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
+	/**
+	 * used by the isValid-check to give the request to the curlCall method
+	 */
+	public static function callMhsApikeyCheck(string $hostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
 									   bool   $strict = false): array
 	{
 		$url = sprintf(RQC_MHS_APIKEYCHECK_URL, $hostUrl, $rqcJournalId);
@@ -36,7 +46,7 @@ class RqcCall
 	}
 
 	/**
-	 * Call curl for mhs_submission (POST) or mhs_apikeycheck (GET) and return an array
+	 * Call curl for callMhsSubmission (POST) or callMhsApikeyCheck (GET) and return an array
 	 * containing status and output, where output has key 'json' (decoded JSON) or
 	 * 'body' (HTML string or redirect URL string).
 	 * @param string $url      the complete URL to call
@@ -46,7 +56,7 @@ class RqcCall
 	 * @param bool   $strict   whether to do proper SSL checking
 	 * @return array  "status" and "response" information
 	 */
-	static function curlCall(string $url, string $rqcJournalAPIKey, string $mode, array $postData,
+	protected static function curlCall(string $url, string $rqcJournalAPIKey, string $mode, array $postData,
 							 bool   $strict): array
 	{
 		assert($mode == "GET" || $mode == "POST");
@@ -84,13 +94,13 @@ class RqcCall
 		}
 		//----- make call:
 		$body = curl_exec($cc);
-		//RqcDevHelperStatic::_staticPrint("\nbody: ".print_r($body, true)."\n");
+		//RqcDevHelper::writeToConsole("\nbody: ".print_r($body, true)."\n");
 		$curl_error = curl_error($cc);
-		//RqcDevHelperStatic::_staticPrint("\ncurl_Error: ".print_r($curl_error, true)."\n");
+		//RqcDevHelper::writeToConsole("\ncurl_Error: ".print_r($curl_error, true)."\n");
 		$status = curl_getinfo($cc, CURLINFO_RESPONSE_CODE);
-		//RqcDevHelperStatic::_staticPrint("\nstatus:".print_r($status, true)."\n");
+		//RqcDevHelper::writeToConsole("\nstatus:".print_r($status, true)."\n");
 		$content_type = curl_getinfo($cc, CURLINFO_CONTENT_TYPE);
-		//RqcDevHelperStatic::_staticPrint("\ncontent_type: ".print_r($content_type, true)."\n");
+		//RqcDevHelper::writeToConsole("\ncontent_type: ".print_r($content_type, true)."\n");
 		curl_close($cc);
 		//----- handle call errors:
 		$result['status'] = $status;
@@ -105,7 +115,7 @@ class RqcCall
 			RqcLogger::logError("Received an unexpected non-JSON response from RQC while making a $mode-request to $url. Resulted in http status code $status with response " . print_r($body, true));
 			$result['response'] = array(
 				'error'        => "received an unexpected non-JSON response from RQC",
-				'responsebody' => $body
+				'responseBody' => $body
 			);
 		}
 		return $result;

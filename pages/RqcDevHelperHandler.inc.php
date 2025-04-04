@@ -1,17 +1,5 @@
 <?php
 
-/**
- * @file    plugins/generic/rqc/pages/RqcDevHelperHandler.inc.php
- *
- * Copyright (c) 2018-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class   RqcDevHelperHandler
- * @ingroup plugins_generic_rqc
- *
- * @brief   Handle requests to show what OJS-to-RQC requests will look like or make one "by hand".
- */
-
 /* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
 use APP\handler\Handler;
@@ -23,10 +11,20 @@ use Composer\Semver\Semver; // used by x()
 
 import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
 import('plugins.generic.rqc.classes.DelayedRqcCallSender');
-import('plugins.generic.rqc.RqcPlugin');
+import('plugins.generic.rqc.classes.DelayedRqcCall');
+import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
+import('plugins.generic.rqc.classes.RqcData');
+import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.classes.RqcLogger');
+import('plugins.generic.rqc.pages.RqcCallHandler');
+import('plugins.generic.rqc.RqcPlugin');
 
 
+/**
+ * Handle requests to show what OJS-to-RQC requests will look like or make one "by hand"
+ *
+ * @ingroup plugins_generic_rqc
+ */
 class RqcDevHelperHandler extends Handler
 {
 	public Plugin|null $plugin;
@@ -50,7 +48,7 @@ class RqcDevHelperHandler extends Handler
 		if ($viewOnly) {
 			//----- get RQC data:
 			$rqcDataObj = new RqcData();
-			$data = $rqcDataObj->rqcdataArray($request, $submissionId);
+			$data = $rqcDataObj->rqcDataArray($request, $submissionId);
 			//----- produce output:
 			header("Content-Type: application/json; charset=utf-8");
 			//header("Content-Type: text/plain; charset=utf-8");
@@ -130,12 +128,12 @@ class RqcDevHelperHandler extends Handler
 	public function test($args, $request)
 	{
 		error_log("\ntest: error_log()\n");
-		$rqcCall = new DelayedRqcCall();
-		$rqcCall->setSubmissionId(1);
-		$rqcCall->setContextId(9);
-		RqcLogger::logError(print_r($rqcCall, true));
-		RqcLogger::logInfo(print_r($rqcCall, true));
-		RqcLogger::logWarning(print_r($rqcCall, true));
+//		$rqcCall = new DelayedRqcCall();
+//		$rqcCall->setSubmissionId(1);
+//		$rqcCall->setContextId(9);
+//		RqcLogger::logError(print_r($rqcCall, true));
+//		RqcLogger::logInfo(print_r($rqcCall, true));
+//		RqcLogger::logWarning(print_r($rqcCall, true));
 	}
 
 	/**

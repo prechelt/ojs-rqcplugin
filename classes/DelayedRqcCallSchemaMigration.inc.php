@@ -1,31 +1,22 @@
 <?php
 
-/**
- * @file     plugins/generic/rqc/classes/DelayedRqcCallSchemaMigration.inc.php
- *
- * Copyright (c) 2025 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class    DelayedRqcCallSchemaMigration
- * @see      DelayedRqcCallDAO
- * @see      DelayedRqcCall
- * @see      rqcDelayedCall.json
- * @ingroup  plugins_generic_rqc
- *
- * @brief    Generate database table structures.
- */
-
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Builder;
 use Illuminate\Database\Schema\Blueprint;
 
-// used https://github.com/pkp/staticPages as a template
+import('plugins.generic.rqc.classes.RqcLogger');
+import('plugins.generic.rqc.classes.RqcDevHelper');
 
+/**
+ * Generate database table structures
+ *
+ * @see     DelayedRqcCallDAO
+ * @see     DelayedRqcCall
+ * @see     rqcDelayedCall.json
+ * @ingroup plugins_generic_rqc
+ */
 class DelayedRqcCallSchemaMigration extends Migration
 {
-	use RqcDevHelper;
-
 	/**
 	 * Run the migrations.
 	 */
@@ -46,6 +37,7 @@ class DelayedRqcCallSchemaMigration extends Migration
 		Capsule::schema()->create('rqc_delayed_calls_settings', function (Blueprint $table) {
 			$table->bigIncrements('rqc_delayed_call_id');
 		});
+		RqcLogger::logInfo("Created tables rqc_delayed_calls and rqc_delayed_calls_settings in the database");
 	}
 
 	/**
@@ -55,5 +47,6 @@ class DelayedRqcCallSchemaMigration extends Migration
 	{
 		Capsule::schema()->drop('rqc_delayed_calls');
 		Capsule::schema()->drop('rqc_delayed_calls_settings');
+		RqcLogger::logInfo("Dropped tables rqc_delayed_calls and rqc_delayed_calls_settings in the database");
 	}
 }

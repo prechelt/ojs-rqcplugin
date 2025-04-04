@@ -1,11 +1,5 @@
 {**
- * plugins/generic/rqc/settingsForm.tpl
- *
- * Copyright (c) 2018-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
  * RQC journal setup form: Journal ID, journal API key
- *
  *}
 <script>
 	$(function() {ldelim}

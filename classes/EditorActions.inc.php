@@ -1,32 +1,26 @@
 <?php
 
-/**
- * @file    plugins/generic/rqc/classes/EditorActions.inc.php
- *
- * Copyright (c) 2022-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class   EditorActions
- * @ingroup plugins_generic_rqc
- *
- * @brief   RQC adapter parts revolving around editorial decisions.
- */
-
 /* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
 use PKP\plugins\Hook;
 */
+
 import('lib.pkp.classes.plugins.HookRegistry');
+import('lib.pkp.classes.submission.reviewRound.ReviewRoundDAO');
+import('lib.pkp.classes.submission.reviewAssignment.ReviewAssignmentDAO');
+import('lib.pkp.classes.submission.reviewAssignment.ReviewAssignment');
+
 import('plugins.generic.rqc.pages.RqcCallHandler');
 import('plugins.generic.rqc.classes.RqcDevHelper');
+import('plugins.generic.rqc.classes.RqcData');
 
 /**
  * RQC adapter parts revolving around editorial decisions using the hooking mechanism.
+ *
+ * @ingroup plugins_generic_rqc
  */
 class EditorActions
 {
-	use RqcDevHelper;
-
 	/**
 	 * Register callbacks. This is to be called from the plugin's register().
 	 */
@@ -81,7 +75,7 @@ class EditorActions
 
 		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
 		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submission->getId());
-		//$this->_print("\n\n### Lastreviewroundstatus: ".$lastReviewRound->determineStatus()."\n\n");
+		//RqcDevHelper::writeObjectToConsole($lastReviewRound->determineStatus(), "### Lastreviewroundstatus: ");
 
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$assignments = $reviewAssignmentDao->getBySubmissionId($submission->getId(), $lastReviewRound->getId(), WORKFLOW_STAGE_ID_EXTERNAL_REVIEW); // TODO 3: I guess it's WORKFLOW_STAGE_ID_EXTERNAL_REVIEW or is another stageId?
@@ -105,9 +99,9 @@ class EditorActions
 				'name'      => 'rqcGradeName',
 				'title'     => 'plugins.generic.rqc.editoraction.grade.button',
 			];
-			// $this->_print("### rqcGrade Button added");
+			// RqcDevHelper::writeToConsole("### rqcGrade Button added");
 		} else {
-			// $this->_print("### no rqcGrade Button added: wrong stage");
+			// RqcDevHelper::writeToConsole("### no rqcGrade Button added: wrong stage");
 		}
 		return false;  // proceed with other callbacks, if any
 	}
@@ -135,25 +129,24 @@ class EditorActions
 	 */
 	public function callbackRecordDecision($hookName, $args): bool
 	{
-		import('plugins.generic.rqc.classes.RqcData');
 		$GO_ON = false;  // false continues processing (default), true stops it (for testing during development).
 		$submission = &$args[0];
 		$decision = &$args[1];
 		$isRecommendation = &$args[3];
-		// $this->_print("### callbackRecordDecision called\n");
+		// RqcDevHelper::writeToConsole("### callbackRecordDecision called\n");
 		$theDecision = $decision['decision'];
 		$theStatus = $isRecommendation ? 'is-rec-only' : 'is-decision';
 		//--- ignore non-decision:
 		if ($isRecommendation || !RqcOjsData::isDecision($theDecision)) {
-			// $this->_print("### callbackRecordDecision ignores the $theDecision|$theStatus call\n");
+			// RqcDevHelper::writeToConsole("### callbackRecordDecision ignores the $theDecision|$theStatus call\n");
 			return $GO_ON;
 		}
 		//--- act on decision:
-		// $this->_print("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
+		// RqcDevHelper::writeToConsole("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
 		$caller = new RqcCallHandler();
 		$rqcResult = $caller->sendToRqc(null, $submission->getId()); // Implicit call
-		// TODO 2 logging
-		//$this->_print("\n".print_r($rqcResult, true)."\n");
+		// TODO 1 logging
+		// RqcDevHelper::writeObjectToConsole($rqcResult);
 		return $GO_ON;
 	}
 }

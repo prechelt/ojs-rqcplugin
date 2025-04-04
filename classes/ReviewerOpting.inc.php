@@ -1,18 +1,5 @@
 <?php
 
-/**
- * @file     plugins/generic/rqc/classes/ReviewerOpting.inc.php
- *
- * Copyright (c) 2022-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class    ReviewerOpting
- * @ingroup  plugins_generic_rqc
- *
- * @brief    Store or query the opt-in/opt-out status of a user.
- */
-
-
 /* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
 use APP\core\Application;
@@ -20,7 +7,9 @@ use APP\template\TemplateManager;
 use PKP\plugins\Hook;
 use PKP\user\User;
 */
+
 import('lib.pkp.classes.plugins.HookRegistry');
+
 import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
@@ -32,22 +21,22 @@ define('RQC_OPTING_STATUS_UNDEFINED', 30);  // external only
 define('RQC_PRELIM_OPTING', true);  // for readability
 
 /**
- * Handle the opt-in/opt-out status of a user.
- * setStatus/getStatus/optingRequired manage the status in two user settings fields.
+ * Handle the opt-in/opt-out status of a user (via the step3Form)
+ * setStatus()/getStatus()/optingRequired() manage the status in two user settings fields.
  * reviewerRecommendations.tpl adds an opting selection field into ReviewerReviewStep3Form.
- * callbackAddReviewerOptingField injects the selection values.
- * callbackInitOptingData (for GET) injects the current opting value and a flag for showing/not showing the field.
- * callbackReadOptIn (for POST) moves the opting value from request to form.
- * callbackStep3execute (for POST) stores opting value into DB.
- * The latter three hook into ReviewerReviewStep3Form.
- * TODO 3: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09. => is that even needed or should we discard the information then?
+ * these methods are usually called in this order to get the values and then take them after a submit
+ *  - callbackInitOptingData() (for GET) injects the current opting value (null selected) and a flag for showing/not showing the field.
+ *  - callbackAddReviewerOptingField() injects the selection values.
+ *  - callbackReadOptIn() (for POST) moves the opting value from request to form.
+ *  - callbackStep3execute() (for POST) stores opting value into DB.
+ *
+ * @see PKPReviewerReviewStep3Form
+ * @ingroup  plugins_generic_rqc
  */
 class ReviewerOpting
 {
-	use RqcDevHelper;
-
-	static string $dateName = 'rqc_opting_date';
-	static string $statusName = 'rqc_opting_status';
+	public static string $dateName = 'rqc_opting_date';
+	public static string $statusName = 'rqc_opting_status';
 
 	/**
 	 * Register callbacks. This is to be called from the plugin's register().
@@ -72,7 +61,8 @@ class ReviewerOpting
 			'reviewerreviewstep3form::execute',
 			array($this, 'callbackStep3execute')
 		);
-		//$this->_print(">>>>>>" . json_encode(array_keys(HookRegistry::getHooks())) . "<<<<<<\n");
+		// TODO 3: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09. => is that even needed or should we discard the information then?
+		//RqcDevHelper::writeToConsole(">>>>>>" . json_encode(array_keys(HookRegistry::getHooks())) . "<<<<<<\n");
 	}
 
 
@@ -86,11 +76,10 @@ class ReviewerOpting
 		$user = $request->getUser();
 		$contextId = $request->getContext()->getId();
 		$optingRequired = $this->optingRequired($contextId, $user);
-		$this->_print("##### rqcOptingRequired = '$optingRequired'\n");
+		RqcDevHelper::writeToConsole("##### rqcOptingRequired = '$optingRequired'\n");
 		$step3Form->setData('rqcOptingRequired', $optingRequired);
 		$step3Form->setData('rqcOptIn', '');
-		//$this->_print("\n####step3Form\n".print_r($step3Form, true));
-
+		//RqcDevHelper::writeObjectToConsole($step3Form, "####step3Form");
 		return false;
 	}
 
@@ -125,7 +114,7 @@ class ReviewerOpting
 		$request = Application::get()->getRequest();
 		$rqcOptIn = $request->getUserVar('rqcOptIn');
 		$step3Form->setData('rqcOptIn', $rqcOptIn);
-		$this->_print("##### callbackReadOptIn read '$rqcOptIn'\n");
+		RqcDevHelper::writeToConsole("##### callbackReadOptIn read '$rqcOptIn'\n");
 		return false;
 	}
 
@@ -141,15 +130,16 @@ class ReviewerOpting
 		$user = $request->getUser();
 		$contextId = $request->getContext()->getId();
 		$optingRequired = $this->optingRequired($contextId, $user);
-		$this->_print("##### callbackStep3execute: optingRequired=$optingRequired\n");
+		RqcDevHelper::writeToConsole("##### callbackStep3execute: optingRequired=$optingRequired\n");
 		if (!$optingRequired)
 			return false;  // nothing to do because form field was not shown
 		$rqcOptIn = $step3Form->getData('rqcOptIn');
 		$previousRqcOptIn = $this->getStatus($contextId, $user);
-		$this->_print("##### callbackStep3execute: previous rqcOptIn=$previousRqcOptIn\n");
+		RqcDevHelper::writeToConsole("##### callbackStep3execute: previous rqcOptIn=$previousRqcOptIn\n");
 		if ($rqcOptIn) {
 			$this->setStatus($contextId, $user, $rqcOptIn);
-			$this->_print("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
+			// TODO 1 logging
+			RqcDevHelper::writeToConsole("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
 		}
 		return false;
 	}

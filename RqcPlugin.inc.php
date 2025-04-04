@@ -1,18 +1,5 @@
 <?php
 
-/**
- * @file    plugins/generic/rqc/RqcPlugin.inc.php
- *
- * Copyright (c) 2018-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
- *
- * @class   RqcPlugin
- * @ingroup plugins_generic_rqc
- *
- * @brief   Review Quality Collector (RQC) plugin class
- */
-
-
 /*  for OJS 3.4:
 namespace APP\plugins\generic\rqc;
 use APP\core\Application;
@@ -26,11 +13,10 @@ use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 */
 
-// needed in OJS 3.3:
-use Random\RandomException;
-
 import('lib.pkp.classes.plugins.HookRegistry');
 import('lib.pkp.classes.plugins.GenericPlugin');
+import('lib.pkp.classes.linkAction.LinkAction');
+import('lib.pkp.classes.linkAction.request.AjaxModal');
 import('classes.core.Application');
 import('plugins.generic.rqc.RqcSettingsForm');
 import('plugins.generic.rqc.classes.ReviewerOpting');
@@ -48,18 +34,18 @@ define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
 
 
 /**
- * Class RqcPlugin.
+ * Review Quality Collector (RQC) plugin class:
  * Provides a settings dialog (for RQC journal ID and Key);
- *  asks reviewers to opt in or out (once per year per journal) when submitting a review;
- *  adds an editor menu entry to send review data to RQC (to start the grading process manually);
- *  notifies RQC upon the submission acceptance decision (to start the
+ *  - asks reviewers to opt in or out (once per year per journal) when submitting a review;
+ *  - adds an editor menu entry to send review data to RQC (to start the grading process manually);
+ *  - notifies RQC upon the submission acceptance decision (to start the
  *  grading process automatically or extend it with additional reviews, if any);
- *  if sending reviewing data fails, repeats it via cron and a queue.
+ *  - if sending reviewing data fails, repeats it via cron and a queue.
+ *
+ * @ingroup plugins_generic_rqc
  */
 class RqcPlugin extends GenericPlugin
 {
-	use RqcDevHelper;
-
 	/**
 	 * @copydoc Plugin::register()
 	 *
@@ -129,8 +115,6 @@ class RqcPlugin extends GenericPlugin
 		}
 		//----- add settings dialog:
 		$router = $request->getRouter();
-		import('lib.pkp.classes.linkAction.LinkAction');
-		import('lib.pkp.classes.linkAction.request.AjaxModal');
 		$additions = [];
 		$additions[] = new LinkAction(
 			'settings',
@@ -219,7 +203,7 @@ class RqcPlugin extends GenericPlugin
 	{
 		$page =& $params[0];
 		$op =& $params[1];
-		// $this->_print("### callbackSetupRqcDevHelperHandler: page='$page' op='$op'\n");
+		// RqcDevHelper::writeToConsole("### callbackSetupRqcDevHelperHandler: page='$page' op='$op'\n");
 		if (self::hasDeveloperFunctions() && $page == 'rqcdevhelper') {
 			$this->import('pages/RqcDevHelperHandler');
 			define('HANDLER_CLASS', 'RqcDevHelperHandler');
@@ -256,28 +240,7 @@ class RqcPlugin extends GenericPlugin
 		$contextId = $request->getContext()->getId();
 		$hasId = $this->getSetting($contextId, 'rqcJournalId');
 		$hasKey = $this->getSetting($contextId, 'rqcJournalAPIKey');
-		//$this->_print("\nhasValidRqcIdKeyPair\nId: ".$hasId."\t\tKey: ".$hasKey."\nReturns: ValidkeyPair ".(($hasId and $hasKey) ? "True" : "False")."\n\n");
+		// RqcDevHelper::writeToConsole("\nhasValidRqcIdKeyPair\nId: ".$hasId."\t\tKey: ".$hasKey."\nReturns: ValidkeyPair ".(($hasId and $hasKey) ? "True" : "False")."\n\n");
 		return ($hasId and $hasKey);
-	}
-
-	public function getSaltAndGenerateIfNotSet($contextId): string
-	{
-		$saltLength = 32;
-		$salt = $this->getSetting($contextId, 'rqcJournalSalt');
-		//$this->_print("\nsalt? ".(bool)$salt."\n");
-		if (!$salt) {
-			try {
-				if (function_exists('random_bytes')) {
-					$bytes = random_bytes(floor($saltLength / 2));
-				} else {
-					$bytes = openssl_random_pseudo_bytes(floor($saltLength / 2));
-				}
-				$salt = bin2hex($bytes); // the string is likely unprintable => to hex so the string is printable (but twice as long)
-			} catch (RandomException $e) {
-				$salt = substr(str_shuffle(str_repeat($x = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length / strlen($x)))), 1, $saltLength); // https://stackoverflow.com/questions/4356289/php-random-string-generator
-			}
-			$this->updateSetting($contextId, 'rqcJournalSalt', $salt, 'string');
-		}
-		return $salt;
 	}
 }

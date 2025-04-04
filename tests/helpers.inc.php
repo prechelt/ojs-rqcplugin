@@ -1,14 +1,9 @@
 <?php
 
 /**
- * @file    plugins/generic/rqc/tests/helpers.inc.php
- *
- * Copyright (c) 2022-2023 Lutz Prechelt
- * Distributed under the GNU General Public License, Version 3.
+ * Routines that help when writing tests, in particular for creating data
  *
  * @ingroup plugins_generic_rqc
- *
- * @brief   Routines that help when writing tests, in particular for creating data
  */
 
 import('lib.pkp.classes.user.User');
