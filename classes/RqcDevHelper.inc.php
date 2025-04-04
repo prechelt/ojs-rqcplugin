@@ -11,10 +11,11 @@
  * @ingroup  plugins_generic_rqc
  *
  * @brief    trait (non-static) providing a _print() method for ad-hoc manual tracing during development.
- *           class providing _staticPrint() doing the same for static methods
+ *           class providing _staticPrint() and _staticObjectPrint() doing the same for static methods
  */
 
 // namespace APP\plugins\generic\rqc;
+import('plugins.generic.rqc.RqcPlugin');
 
 trait RqcDevHelper
 {
@@ -31,9 +32,9 @@ trait RqcDevHelper
 	}
 }
 
-class RqcDevHelperStatic
+class RqcDevHelperStatic // TODO 3: Is there a better variant?
 {
-	public static function _staticPrint($msg): void // TODO 3: Is there a better variant?
+	public static function _staticPrint($msg): void
 	{
 		# print to php -S console stream (during development only)
 		if (RqcPlugin::hasDeveloperFunctions()) {
@@ -43,4 +44,15 @@ class RqcDevHelperStatic
 		}
 	}
 
+	public static function _staticObjectPrint($object = null, string $msg = "", bool $printStackTrace = false): void
+	{
+		self::_staticPrint("\n$msg\n".print_r($object, true)."\n");
+		if ($printStackTrace) {
+			try {
+				throw new Exception("printStackTrace");
+			} catch (Exception $e) {
+				self::_staticPrint("\nStacktrace:".($e->getTraceAsString())."\n");
+			}
+		}
+	}
 }
