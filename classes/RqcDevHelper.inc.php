@@ -28,9 +28,9 @@ class RqcDevHelper // TODO 3: Is there a better variant?
 	 * RqcDevHelper::writeObjectToConsole // for easy copying
 	 * the object will be written with print_r to the console
 	 * if $msg is given it is put in front of print_r($object)
-	 * if $printStackTrace = true is given: write the stacktrace where this method is called in a newline java-style
+	 * if $printStackTrace = true: write the stacktrace from where this method is called in a newline in java-style
 	 */
-	public static function writeObjectToConsole($object = null, string $msg = "", bool $printStackTrace = false): void
+	public static function writeObjectToConsole($object, string $msg = "", bool $printStackTrace = false): void
 	{
 		self::writeToConsole("\n$msg\n" . print_r($object, true) . "\n");
 		if ($printStackTrace) {

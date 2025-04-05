@@ -6,7 +6,7 @@ import('lib.pkp.classes.config.Config');
  * class to unify logging within the RQC plugin
  * logFilePath() specifies where the custom log files lies
  * all the log methods use a unified logging message: [dateTime] [logLevel] message
- * logLevel can be: INFO, WARNING, ERROR
+ * logLevel can be: INFO, WARN, ERROR
  *
  * @ingroup plugins_generic_rqc
  */
@@ -40,7 +40,7 @@ class RqcLogger
 	 */
 	public static function logWarning(string $message): void
 	{
-		self::writeLog($message, 'WARNING');
+		self::writeLog($message, 'WARN');
 	}
 
 	/**
@@ -64,10 +64,11 @@ class RqcLogger
 	protected static function writeLog(string $message, string $level): void
 	{
 		if (!$message) return;
+		if (!in_array($level, array('DEBUG', 'INFO', 'WARN', 'ERROR'))) return; // TODO Q: build in DEBUG?
 		if (!is_file(self::logFilePath())) {
 			touch(self::logFilePath());
 		}
 		$fineStamp = date('Y-m-d H:i:s', time());
-		error_log("[$fineStamp]\t[$level]\t$message\n", 3, self::logFilePath());
+		error_log("[$fineStamp]\t[$level]\t$message\n\n", 3, self::logFilePath());
 	}
 }

@@ -15,6 +15,7 @@ import('lib.pkp.classes.form.validation.FormValidator');
 import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.RqcCall');
 import('plugins.generic.rqc.classes.RqcDevHelper');
+import('plugins.generic.rqc.classes.RqcLogger');
 
 /**
  * Form for journal managers to modify RQC plugin settings
@@ -27,13 +28,13 @@ class RqcFormValidator extends FormValidator
 	{
 		$form = $this->_form;
 		$hostUrl = $form->_plugin->rqcServer();
+		$contextId = $form->_contextId;
 		$rqcJournalId = $form->getData('rqcJournalId');
 		$rqcJournalAPIKey = $form->getData('rqcJournalAPIKey');
 		$result = RqcCall::callMhsApikeyCheck($hostUrl, $rqcJournalId, $rqcJournalAPIKey,
 			!$form->_plugin->hasDeveloperFunctions());
 		//RqcDevHelper::writeObjectToConsole($result);
 		$status = $result['status'];
-		// TODO 1 logging
 		if ($status == 200) {
 			return true;  // all is fine
 		}
@@ -41,6 +42,7 @@ class RqcFormValidator extends FormValidator
 			$msg = array_key_exists('response', $result) ? $result['response']['error']
 				: "something went wrong with the RQC request";
 			$form->addError('rqcJournalId', $msg);
+			RqcLogger::logError("API Key check went wrong: Didn't save the new credentials for the context $contextId. Status $status with response " . json_encode($result['response'])); // TODO Q: or remove this error logging because of visual feedback?
 			// $form->addError('rqcJournalId', print_r($result, true));  // debug
 			return true;  // suppress the message configured at the FormValidator level
 		}
@@ -48,13 +50,15 @@ class RqcFormValidator extends FormValidator
 			$msg = array_key_exists('response', $result) ? $result['response']['error']
 				: "something went horribly wrong with the RQC request";
 			$form->addError('rqcJournalAPIKey', $msg);
+			RqcLogger::logError("API Key check went wrong: Didn't save the new credentials for the context $contextId. Status $status with response " . json_encode($result['response'])); // TODO Q: or remove this error logging because of visual feedback?
 			// $form->addError('rqcJournalAPI', print_r($result, true));  // debug
 			return true;  // suppress the message configured at the FormValidator level
 		}
 		if ($status >= 500) {
-			$form->addError('rqcJournalId', "Internal server error at RQC with status " . $status);
+			RqcLogger::logError("API Key check went wrong: Didn't save the new credentials for the context $contextId. Status $status with response " . json_encode($result['response'])); // TODO Q: or remove this error logging because of visual feedback?
 			return true;  // suppress the message configured at the FormValidator level
 		}
+		// TODO 3: other status codes? Default? Or are there some missing?
 		return true;  // suppress the message configured at the FormValidator level
 	}
 }
@@ -126,7 +130,7 @@ class RqcSettingsForm extends Form
 	{
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalId', trim($this->getData('rqcJournalId')), 'string');
 		$this->_plugin->updateSetting($this->_contextId, 'rqcJournalAPIKey', trim($this->getData('rqcJournalAPIKey')), 'string');
-		// TODO 1 logging
+		RqcLogger::logInfo("API Key check successful: Saving the credentials rqcJournalId (" . trim($this->getData('rqcJournalId')) . ") and rqcJournalAPIKey for the context " . $this->_contextId);
 		return parent::execute();
 	}
 }

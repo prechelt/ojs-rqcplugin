@@ -12,6 +12,7 @@ import('lib.pkp.classes.plugins.HookRegistry');
 
 import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.RqcDevHelper');
+import('plugins.generic.rqc.classes.RqcLogger');
 
 define('RQC_OPTING_STATUS_IN', 36);  // internal, external
 define('RQC_OPTING_STATUS_OUT', 35);  // internal, external
@@ -138,12 +139,26 @@ class ReviewerOpting
 		RqcDevHelper::writeToConsole("##### callbackStep3execute: previous rqcOptIn=$previousRqcOptIn\n");
 		if ($rqcOptIn) {
 			$this->setStatus($contextId, $user, $rqcOptIn);
-			// TODO 1 logging
-			RqcDevHelper::writeToConsole("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
+			RqcLogger::logInfo("Stored a new RQC opting status for user with ID " . $user->getId() .  " for context $contextId: rqcOptIn=" . $this->statusEnumToString($rqcOptIn) . " (representation: $rqcOptIn) previous rqcOptIn=" . $this->statusEnumToString($previousRqcOptIn));
+			//RqcDevHelper::writeToConsole("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
 		}
 		return false;
 	}
 
+	/**
+	 * @param bool $optingStatus enum for the opting status to be converted into a readable message
+	 * @param bool $prelimOpting if false the status is "undefined" else its "preliminary opted in/out"
+	 */
+	public function statusEnumToString(int $optingStatus, bool $prelimOpting = !RQC_PRELIM_OPTING): string
+	{
+		return match ($optingStatus) {
+			RQC_OPTING_STATUS_IN => "Opted in",
+			RQC_OPTING_STATUS_OUT => "Opted out",
+			RQC_OPTING_STATUS_IN_PRELIM => (!$prelimOpting) ? "Undefined status" : "Preliminary opted in",
+			RQC_OPTING_STATUS_OUT_PRELIM => (!$prelimOpting) ? "Undefined status" : "Preliminary opted out",
+			default => "Undefined status",
+		};
+	}
 
 	/**
 	 * Whether form should show opting field.

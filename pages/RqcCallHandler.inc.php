@@ -13,6 +13,7 @@ import('plugins.generic.rqc.classes.RqcCall');
 import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
 import('plugins.generic.rqc.classes.DelayedRqcCall');
+import('plugins.generic.rqc.classes.RqcLogger');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define("RQC_CALL_STATUS_CODES_TO_RESEND", array(
@@ -86,23 +87,25 @@ class RqcCallHandler extends WorkflowHandler
 		}
 		$submissionId = $qargs['submissionId'];
 		$rqcResult = $this->sendToRqc($request, $submissionId); // Explicit call
-		// TODO 1 logging
+		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS)) {
+			RqcLogger::logInfo("Explicit call to RQC for submission $submissionId successful");
+		} else {
+			if ($rqcResult['enqueuedCall']) {
+				RqcLogger::logWarning("Explicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "Inserted it into the db to be retried later as a delayed rqc call.");
+			} else {
+				RqcLogger::logError("Explicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . ": The call was probably faulty (and wasn't put into the queue to retry later).");
+			}
+		}
 		$this->processRqcResponse($rqcResult['status'], $rqcResult['response']);
 	}
 
 	/**
 	 * The workhorse for actually sending one submission's reviewing data to RQC.
-	 * Upon a network failure or non-response, puts call in queue.
-	 * @return array  "status" and "response" information
+	 * Upon a network failure or non-response, puts call in queue (if "status" is in RQC_CALL_STATUS_CODES_TO_RESEND)
+	 * @return array  "status" and "response" information together with "enqueuedCall" (true/false)
 	 */
 	function sendToRqc($request, int $submissionId): array
 	{
-		if (!$this->plugin->hasValidRqcIdKeyPair()) {
-			return array(
-				"status"   => "error",
-				"response" => "Didn't call RQC because the RQC ID key pair is not valid."
-			);
-		}
 		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		$submission = $submissionDao->getById($submissionId);
 		$contextId = $submission->getContextId();
@@ -111,8 +114,10 @@ class RqcCallHandler extends WorkflowHandler
 		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
 			$request, $submissionId, !$this->plugin->hasDeveloperFunctions());
 		//RqcDevHelper::writeObjectToConsole($rqcResult);
+		$rqcResult['enqueuedCall'] = false;
 		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)) { // queue when the error was not an implementation error
 			$this->putCallIntoQueue($submissionId);
+			$rqcResult['enqueuedCall'] = true; // for logging/response
 		}
 		return $rqcResult;
 	}
@@ -149,7 +154,7 @@ class RqcCallHandler extends WorkflowHandler
 		$rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
 		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
 			null, $submissionId, !$this->plugin->hasDeveloperFunctions());
-		RqcDevHelper::writeObjectToConsole($rqcResult);
+		//RqcDevHelper::writeObjectToConsole($rqcResult);
 		return $rqcResult;
 	}
 
@@ -171,7 +176,6 @@ class RqcCallHandler extends WorkflowHandler
 		$delayedRqcCall->setLastTryTs(null);
 		$delayedRqcCall->setRemainingRetries($this->_maxRetriesToResend);
 		//RqcDevHelper::writeObjectToConsole($delayedRqcCall);
-		// TODO 1 logging
 		return $delayedRqcCallDao->insertObject($delayedRqcCall);
 	}
 }

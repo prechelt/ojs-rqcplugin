@@ -32,12 +32,13 @@ class DelayedRqcCallSchemaMigration extends Migration
 			$table->index(['last_try_ts'], 'rqc_delayed_calls_last_try_ts'); // for querying the queue ORDER BY
 			$table->foreign('submission_id')->references('submission_id')->on('submissions');
 		});
+		RqcLogger::logInfo("Created table 'rqc_delayed_calls' in the database");
 
 		// I have to do this: TODO 3: make pull-request so that one can have a custom table without settings via SchemaDAO
 		Capsule::schema()->create('rqc_delayed_calls_settings', function (Blueprint $table) {
 			$table->bigIncrements('rqc_delayed_call_id');
 		});
-		RqcLogger::logInfo("Created tables rqc_delayed_calls and rqc_delayed_calls_settings in the database");
+		RqcLogger::logInfo("Created table 'rqc_delayed_calls_settings' in the database");
 	}
 
 	/**
@@ -47,6 +48,6 @@ class DelayedRqcCallSchemaMigration extends Migration
 	{
 		Capsule::schema()->drop('rqc_delayed_calls');
 		Capsule::schema()->drop('rqc_delayed_calls_settings');
-		RqcLogger::logInfo("Dropped tables rqc_delayed_calls and rqc_delayed_calls_settings in the database");
+		RqcLogger::logInfo("Dropped tables 'rqc_delayed_calls' and 'rqc_delayed_calls_settings' in the database");
 	}
 }

@@ -11,8 +11,9 @@ import('lib.pkp.classes.submission.reviewAssignment.ReviewAssignmentDAO');
 import('lib.pkp.classes.submission.reviewAssignment.ReviewAssignment');
 
 import('plugins.generic.rqc.pages.RqcCallHandler');
-import('plugins.generic.rqc.classes.RqcDevHelper');
 import('plugins.generic.rqc.classes.RqcData');
+import('plugins.generic.rqc.classes.RqcDevHelper');
+import('plugins.generic.rqc.classes.RqcLogger');
 
 /**
  * RQC adapter parts revolving around editorial decisions using the hooking mechanism.
@@ -131,6 +132,7 @@ class EditorActions
 	{
 		$GO_ON = false;  // false continues processing (default), true stops it (for testing during development).
 		$submission = &$args[0];
+		$submissionId = $submission->getId();
 		$decision = &$args[1];
 		$isRecommendation = &$args[3];
 		// RqcDevHelper::writeToConsole("### callbackRecordDecision called\n");
@@ -144,8 +146,16 @@ class EditorActions
 		//--- act on decision:
 		// RqcDevHelper::writeToConsole("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
 		$caller = new RqcCallHandler();
-		$rqcResult = $caller->sendToRqc(null, $submission->getId()); // Implicit call
-		// TODO 1 logging
+		$rqcResult = $caller->sendToRqc(null, $submissionId); // Implicit call
+		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS)) {
+			RqcLogger::logInfo("Implicit call to RQC for submission $submissionId successful");
+		} else {
+			if ($rqcResult['enqueuedCall']) {
+				RqcLogger::logWarning("Implicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "Inserted it into the db to be retried later as a delayed rqc call.");
+			} else {
+				RqcLogger::logError("Implicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . ": The call was probably faulty (and wasn't put into the queue to retry later).");
+			}
+		}
 		// RqcDevHelper::writeObjectToConsole($rqcResult);
 		return $GO_ON;
 	}

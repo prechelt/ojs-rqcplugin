@@ -81,7 +81,7 @@ class RqcCall
 		);
 		if ($mode == "POST") {
 			$curlopts[CURLOPT_POSTFIELDS] = json_encode($postData, JSON_PRETTY_PRINT);
-			$result['request'] = $postData;
+			$result['request'] = $postData; // TODO Q: should I use that for logging as well?
 		}
 		curl_setopt_array($cc, $curlopts);
 		if ($strict) {
@@ -94,13 +94,13 @@ class RqcCall
 		}
 		//----- make call:
 		$body = curl_exec($cc);
-		//RqcDevHelper::writeToConsole("\nbody: ".print_r($body, true)."\n");
+		//RqcDevHelper::writeObjectToConsole($body, "body: ");
 		$curl_error = curl_error($cc);
-		//RqcDevHelper::writeToConsole("\ncurl_Error: ".print_r($curl_error, true)."\n");
+		//RqcDevHelper::writeObjectToConsole($curl_error, "curl_Error: ");
 		$status = curl_getinfo($cc, CURLINFO_RESPONSE_CODE);
-		//RqcDevHelper::writeToConsole("\nstatus:".print_r($status, true)."\n");
+		//RqcDevHelper::writeObjectToConsole($status, "status: ");
 		$content_type = curl_getinfo($cc, CURLINFO_CONTENT_TYPE);
-		//RqcDevHelper::writeToConsole("\ncontent_type: ".print_r($content_type, true)."\n");
+		//RqcDevHelper::writeObjectToConsole($content_type, "content_type: ");
 		curl_close($cc);
 		//----- handle call errors:
 		$result['status'] = $status;
@@ -112,7 +112,7 @@ class RqcCall
 		if ($content_type == 'application/json') {  //----- handle expected JSON response:
 			$result['response'] = json_decode($body, true);
 		} else {                                    //----- handle unexpected response:
-			RqcLogger::logError("Received an unexpected non-JSON response from RQC while making a $mode-request to $url. Resulted in http status code $status with response " . print_r($body, true));
+			RqcLogger::logError("Received an unexpected non-JSON response from RQC while making a $mode-request to $url. Resulted in http status code $status with response " . json_encode($body));
 			$result['response'] = array(
 				'error'        => "received an unexpected non-JSON response from RQC",
 				'responseBody' => $body
