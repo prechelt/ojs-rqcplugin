@@ -48,10 +48,10 @@ class RqcEditorDecisionHandler extends PKPHandler
 		$pageRouter->setApplication(Application::get());  // so that url() will find context
 		$target = $pageRouter->url($request, null, 'rqccall', 'submit', null,
 			array('submissionId' => $submissionId, 'stageId' => $submission->getStageId()));
-		$okButton = "<a href='$target' class='pkp_button_primary submitFormButton'>" . __('common.ok') . '</a>';  // TODO 3: set focus
-		// $cancelButton = '<a href="#" class="pkp_button pkpModalCloseButton cancelButton">' . __('common.cancel') . '</a>';  // TODO 3: does not do anything
+		$okButton = "<a href='$target' class='pkp_button_primary submitFormButton'>" . __('common.ok') . '</a>';  // TODO 1: set focus
+		// $cancelButton = '<a href="#" class="pkp_button pkpModalCloseButton cancelButton">' . __('common.cancel') . '</a>';  // TODO 1: does not do anything
 		$content = __('plugins.generic.rqc.editoraction.grade.explanation');
-		$buttons = "<p>$okButton</p>";  // TODO: add a working cancel button, use PKP button bar layout
+		$buttons = "<p>$okButton</p>";  // TODO 1: add a working cancel button, use PKP button bar layout
 		return new JSONMessage(true, "$content$buttons");
 	}
 }

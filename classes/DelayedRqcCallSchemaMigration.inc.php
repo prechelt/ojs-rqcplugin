@@ -34,7 +34,7 @@ class DelayedRqcCallSchemaMigration extends Migration
 		});
 		RqcLogger::logInfo("Created table 'rqc_delayed_calls' in the database");
 
-		// I have to do this: TODO 3: make pull-request so that one can have a custom table without settings via SchemaDAO
+		// there has to be a _settings table in the db (if not there are errors with some SchemaDAO-methods) TODO 3: make pull-request so that one can have a custom table without settings via SchemaDAO
 		Capsule::schema()->create('rqc_delayed_calls_settings', function (Blueprint $table) {
 			$table->bigIncrements('rqc_delayed_call_id');
 		});

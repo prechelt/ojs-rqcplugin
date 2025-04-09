@@ -62,7 +62,7 @@ class ReviewerOpting
 			'reviewerreviewstep3form::execute',
 			array($this, 'callbackStep3execute')
 		);
-		// TODO 3: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09. => is that even needed or should we discard the information then?
+		// TODO 1: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09. => is that even needed or should we discard the information then?
 		//RqcDevHelper::writeToConsole(">>>>>>" . json_encode(array_keys(HookRegistry::getHooks())) . "<<<<<<\n");
 	}
 

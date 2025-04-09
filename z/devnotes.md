@@ -110,12 +110,13 @@ other typical identifiers for such objects):
   via the primary key, called the `id`:
 - Journal: `Journal`;
   the journal is often called the `context`.
-- Submission: `Article`
-  (there is a `Submission` class as well: the PKP library's superclass).
+- Submission: `Submission`
+  (there is a `PKPSubmission` class as well: the PKP library's superclass).
 - Person: `User` (extends `Identity`).
 - Author: `Author` (but the term is oddly also used for the 'author' of
   a Review: the Reviewer).
   Inheritance: `Author<--PKPAuthor<--Identity<--DataObject`.
+  The author submits the submission. What is which the other co-authors. Are they identities?
 - Editor: `User`(?)
   The handling editor is called Section Editor in OJS.
 - Decision constants see `EditorDecisionActionsManager`.
@@ -209,10 +210,9 @@ other typical identifiers for such objects):
   Handler calls `$templateMgr->assign(array('attrname' => value))`,
   template uses `$attrname`.
 - OJS review rounds must create successive submission ids for RQC.
-- SpyHandler (now RqcDevHelperHandler) gets 8 notices a la
-  "Undefined index: first_name in /home/vagrant/ojs/lib/pkp/classes/submission/PKPAuthorDAO.inc.php on line 127"
-- Cronjob via PKPAcronPlugin?
-- Delayed-call storage via Plugin::updateSchema and my own DAO?
+- Cronjob via an own crontab
+  - test what the cronjob does with php tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml
+- Delayed-call storage via Migration and own DAO that extends SchemaDAO?
 
 ### TO DO and status
 

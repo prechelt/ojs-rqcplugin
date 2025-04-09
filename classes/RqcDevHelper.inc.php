@@ -9,7 +9,7 @@ import('plugins.generic.rqc.RqcPlugin');
  *
  * @ingroup  plugins_generic_rqc
  */
-class RqcDevHelper // TODO 3: Is there a better variant?
+class RqcDevHelper
 {
 	/**
 	 * RqcDevHelper::writeToConsole // for easy copying
