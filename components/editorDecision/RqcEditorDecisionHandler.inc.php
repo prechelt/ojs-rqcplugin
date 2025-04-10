@@ -48,10 +48,10 @@ class RqcEditorDecisionHandler extends PKPHandler
 		$pageRouter->setApplication(Application::get());  // so that url() will find context
 		$target = $pageRouter->url($request, null, 'rqccall', 'submit', null,
 			array('submissionId' => $submissionId, 'stageId' => $submission->getStageId()));
-		$okButton = "<a href='$target' class='pkp_button_primary submitFormButton'>" . __('common.ok') . '</a>';  // TODO 1: set focus
-		// $cancelButton = '<a href="#" class="pkp_button pkpModalCloseButton cancelButton">' . __('common.cancel') . '</a>';  // TODO 1: does not do anything
+		$okButton = "<a href='$target' class='pkp_button_primary submitFormButton'>" . __('common.ok') . '</a>';  // TODO 3: set focus
+		// $cancelButton = '<a href="#" class="pkp_button pkpModalCloseButton cancelButton">' . __('common.cancel') . '</a>';
 		$content = __('plugins.generic.rqc.editoraction.grade.explanation');
-		$buttons = "<p>$okButton</p>";  // TODO 1: add a working cancel button, use PKP button bar layout
+		$buttons = "<p>$okButton</p>";  // TODO 3: add a working cancel button: Using the templateMrg->fetchJson(some.tpl) that includes the {fbvFormButtons} didn't work either. So I guess the problem is before this function maybe? Something missing that has to be set. Or maybe is the structure wrong for that kind of modal form?
 		return new JSONMessage(true, "$content$buttons");
 	}
 }

@@ -119,9 +119,9 @@ class RqcData
 	{
 		$authorDao = DAORegistry::getDAO('AuthorDAO'); /** @var $authorDao AuthorDAO */
 
-		$authorObjects = array(); // TODO Q: how does RQC handle multiple authors with the same order_number?
+		$authorObjects = array(); // TODO 2: how does RQC handle multiple authors with the same order_number? // its ok if no author is duplicated (filter that) (if two sets with multiple authors order with interleaving) // or maybe is the publication 2 an update of publication 1?
 		if ($submission) foreach ($submission->getData('publications') as $publication) {
-			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/7844 => the $submission object can be used again and the authors don't have to be query separately
+			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/7844 => the $submission object can be used again and the authors don't have to be queried separately
 			$authors = $authorDao->getByPublicationId($publication->getId()); // querying the authors separately
 			$authorObjects = array_merge($authorObjects, $authors);
 		}
@@ -159,7 +159,7 @@ class RqcData
 			$rr->getSubmissionId(), $rr->getStageId(), $rr->getRound());
 		foreach ($editorDecisions as $decision) {
 			$result = $this->rqcDecision("editor", $decision['decision']);
-			if ($result) {  // use the first non-undefined decision TODO 3: understand it better (maybe its generally better to use the last decision?)
+			if ($result) {  // use the first non-undefined decision TODO 2: understand it better (maybe its generally better to use the last decision?)
 				return $result;
 			}
 		}
@@ -200,7 +200,7 @@ class RqcData
 		}
 		if (!$level1N && count($result)) {
 			// there must be at least one level-1 editor:
-			$result[0]['level'] = 1;
+			$result[0]['level'] = 1; // TODO Q: better mechanism? (and what do they even mean in RQC?)
 		}
 		return $result;
 	}
@@ -221,7 +221,7 @@ class RqcData
 	protected function getMhsSubmissionPage(PKPRequest $request, int $submissionId)
 	{
 		return $request->url(null, 'workflow', 'index',
-			array($submissionId, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)); // TODO 3: deprecated
+			array($submissionId, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)); // TODO 2: deprecated
 	}
 
 	/**
@@ -436,7 +436,6 @@ class RqcData
 	{
 		$saltLength = 32;
 		$salt = $this->plugin->getSetting($contextId, 'rqcJournalSalt');
-		// RqcDevHelper::writeToConsole("\nsalt? ".(bool)$salt."\n");
 		if (!$salt) {
 			try {
 				if (function_exists('random_bytes')) {
@@ -449,6 +448,7 @@ class RqcData
 				$salt = substr(str_shuffle(str_repeat($x = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length / strlen($x)))), 1, $saltLength); // https://stackoverflow.com/questions/4356289/php-random-string-generator
 			}
 			$this->plugin->updateSetting($contextId, 'rqcJournalSalt', $salt, 'string');
+			RqcLogger::logInfo("A new value for the rqcJournalSalt was set as a plugin_setting for the journal $contextId");
 		}
 		return $salt;
 	}

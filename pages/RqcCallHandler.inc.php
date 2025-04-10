@@ -75,7 +75,7 @@ class RqcCallHandler extends WorkflowHandler
 	 */
 	public function submit($args, $request)
 	{
-		RqcDevHelper::writeToConsole("### RqcCallHandler::submit() called");
+		// TODO Q By Julius: Should we have a x Sec lock on the button to not spam calls if the system is lagging?
 		$qargs = $this->plugin->getQueryArray($request);
 		$stageId = $qargs['stageId'];
 		if ($stageId != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
@@ -165,10 +165,10 @@ class RqcCallHandler extends WorkflowHandler
 		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		$submission = $submissionDao->getById($submissionId);
 		$contextId = $submission->getContextId();
-		// TODO Q: if there is already a call in the queue: What should we do then? (also what to do with logging?
-		/*if ($delayedRqcCallDao->getById($submissionId) != null) {
+		if ($delayedRqcCallDao->getById($submissionId) != null) { // if there is already a call in the queue for this submission: Delete to not have multiple delayed calls for the same submission
 			$delayedRqcCallDao->deleteById($submissionId);
-		}*/
+			RqcLogger::logWarning("A delayed rqc call for submission $submissionId was already in the db. Deleted that delayed call in the queue.");
+		}
 		$delayedRqcCall = $delayedRqcCallDao->newDataObject();
 		$delayedRqcCall->setSubmissionId($submissionId);
 		$delayedRqcCall->setContextId($contextId);

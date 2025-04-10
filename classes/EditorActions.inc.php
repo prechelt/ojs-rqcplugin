@@ -79,11 +79,11 @@ class EditorActions
 		//RqcDevHelper::writeObjectToConsole($lastReviewRound->determineStatus(), "### Lastreviewroundstatus: ");
 
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-		$assignments = $reviewAssignmentDao->getBySubmissionId($submission->getId(), $lastReviewRound->getId(), WORKFLOW_STAGE_ID_EXTERNAL_REVIEW); // TODO 3: I guess it's WORKFLOW_STAGE_ID_EXTERNAL_REVIEW or is another stageId?
+		$assignments = $reviewAssignmentDao->getBySubmissionId($submission->getId(), $lastReviewRound->getId(), WORKFLOW_STAGE_ID_EXTERNAL_REVIEW); // TODO 2: I guess it's WORKFLOW_STAGE_ID_EXTERNAL_REVIEW or is another stageId?
 		$atLeastOneReviewSubmitted = false; // I don't use $lastReviewRound->getStatus() because for some status it's not sure if at least one review is submitted
 		foreach ($assignments as $reviewAssignment) {
 			$reviewAssignmentStatus = $reviewAssignment->getStatus();
-			switch ($reviewAssignmentStatus) { // TODO 3: I hope these Statuses are right?
+			switch ($reviewAssignmentStatus) { // TODO 2: I hope these Statuses are right?
 				case REVIEW_ASSIGNMENT_STATUS_RECEIVED:
 				case REVIEW_ASSIGNMENT_STATUS_COMPLETE:
 				case REVIEW_ASSIGNMENT_STATUS_THANKED:

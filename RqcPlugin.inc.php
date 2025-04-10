@@ -172,14 +172,12 @@ class RqcPlugin extends GenericPlugin
 					$form->readInputData();
 					if ($form->validate()) {
 						$form->execute();
-						$result = new JSONMessage(true);
-						return $result;
+						return new JSONMessage(true);
 					}
 				} else {
 					$form->initData();
 				}
-				$result = new JSONMessage(true, $form->fetch($request));
-				return $result;
+				return new JSONMessage(true, $form->fetch($request));
 		}
 		return parent::manage($args, $request);
 	}

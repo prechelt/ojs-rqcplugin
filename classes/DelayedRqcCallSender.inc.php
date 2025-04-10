@@ -43,8 +43,9 @@ class DelayedRqcCallSender extends ScheduledTask
 	{
 		$lastNRetriesFailed = 0;
 
-		$delayedRqcCallDao = new DelayedRqcCallDAO(); // not getting the DAORegistry to work TODO 3?
+		$delayedRqcCallDao = new DelayedRqcCallDAO(); // not getting the DAORegistry to work TODO 2?
 		$allDelayedCallsToBeRetriedNow = $delayedRqcCallDao->getCallsToRetry()->toArray(); // grab all delayed calls that should be retried now
+		//RqcDevHelper::writeObjectToConsole($allDelayedCallsToBeRetriedNow, "all delayed calls"); // TODO 1: null in front of the queue?
 		foreach ($allDelayedCallsToBeRetriedNow as $call) { /** @var $call DelayedRqcCall */
 			if ($call->getRemainingRetries() <= 0) {  // throw away!
 				$delayedRqcCallDao->deleteById($call->getId());
@@ -54,8 +55,9 @@ class DelayedRqcCallSender extends ScheduledTask
 			// If some calls in a row fail we assume that some unexpected error has occurred so that all calls fail (we expect that most of the calls do make it)
 			// If that assumption is false because we are "unlucky" we continue next time executeActions() is executed anyway. So no big problem
 			if ($lastNRetriesFailed >= $this->_NRetriesToAbort) {
-				$this->addExecutionLogEntry("Abort retrying other delayed RQC call in the queue for now",
-					SCHEDULED_TASK_MESSAGE_TYPE_WARNING);  // TODO Q: Or use the normal RQC-logger?
+				$logMessage = "Abort retrying other delayed RQC call in the queue for now";
+				$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
+				RqcLogger::logWarning($logMessage);
 				break;
 			}
 			sleep($this->_secSleepBetweenRetries);
@@ -67,30 +69,34 @@ class DelayedRqcCallSender extends ScheduledTask
 				case in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS): // resend successfully
 					$delayedRqcCallDao->deleteById($call->getId());
 					$lastNRetriesFailed = 0; // reset counter
-					$this->addExecutionLogEntry("Successfully send the delayed RQC call from from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
-						") originally send at " . $call->getOriginalTryTs() . " with http status code " . $rqcResult['status'] . " and response body " . json_encode($rqcResult['response']) . "\n",
-						SCHEDULED_TASK_MESSAGE_TYPE_NOTICE);
+					$logMessage = "Successfully send the delayed RQC call from from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
+						") originally send at " . $call->getOriginalTryTs() . " with http status code " . $rqcResult['status'] . " and response body " . json_encode($rqcResult['response']) . "\n";
+					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_NOTICE);
+					RqcLogger::logInfo($logMessage);
 					break;
 				case (in_array($rqcResult['status'], RQC_CALL_SERVER_DOWN)): // no connection to server: abort trying the next calls in the queue // TODO Q: Ok like that or should I delete that case (subclass of RQC_CALL_STATUS_CODES_TO_RESEND)?
 					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed = $this->_NRetriesToAbort;
-					$this->addExecutionLogEntry("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
-						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\n",
-						SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
+					$logMessage = "Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
+						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\n";
+					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
+					RqcLogger::logWarning($logMessage);
 					break;
 				case (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)): // other errors (probably not an implementation error)
 					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
-					$this->addExecutionLogEntry("Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
-						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\n",
-						SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
+					$logMessage = "Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
+						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\n";
+					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
+					RqcLogger::logWarning($logMessage);
 					break;
 				default:    // something else went wrong (implementation error or else)
 					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
-					$this->addExecutionLogEntry("Delayed RQC call error: Tried to send (probably faulty) data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
-						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\n",
-						SCHEDULED_TASK_MESSAGE_TYPE_ERROR);
+					$logMessage = "Delayed RQC call error: Tried to send (probably faulty) data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
+						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\n";
+					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_ERROR);
+					RqcLogger::logError($logMessage);
 					break;
 			}
 		}

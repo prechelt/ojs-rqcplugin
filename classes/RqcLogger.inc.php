@@ -64,7 +64,7 @@ class RqcLogger
 	protected static function writeLog(string $message, string $level): void
 	{
 		if (!$message) return;
-		if (!in_array($level, array('DEBUG', 'INFO', 'WARN', 'ERROR'))) return; // TODO Q: build in DEBUG?
+		if (!in_array($level, array('INFO', 'WARN', 'ERROR'))) return;
 		if (!is_file(self::logFilePath())) {
 			touch(self::logFilePath());
 		}

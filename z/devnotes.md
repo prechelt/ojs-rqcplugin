@@ -36,7 +36,7 @@ my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/document
 - [rqc]:
 	- activate_developer_functions = On
 - [scheduled_tasks]
-	- scheduled_tasks = On (currently doesn't work? TODO 3)
+	- scheduled_tasks = On (currently doesn't work? TODO 2)
 
 ### generally used
 
