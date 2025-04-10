@@ -231,7 +231,7 @@ class RqcPlugin extends GenericPlugin
 	 * returns true if the RQC-Key and ID are set in the db
 	 * these should only be set if the check for the id-key pair was successfully done in the past (else the entry shouldn't be there or empty)
 	 */
-	public function hasValidRqcIdKeyPair(): bool
+	public function hasValidRqcIdKeyPair(): bool // TODO 2: find all the places where this should be added
 	{
 		// PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair()
 		$request = Application::get()->getRequest();

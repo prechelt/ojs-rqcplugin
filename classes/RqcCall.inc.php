@@ -81,7 +81,7 @@ class RqcCall
 		);
 		if ($mode == "POST") {
 			$curlopts[CURLOPT_POSTFIELDS] = json_encode($postData, JSON_PRETTY_PRINT);
-			$result['request'] = $postData; // TODO 1: use that for logging as well
+			$result['request'] = $postData; // TODO 2: use that for logging as well
 		}
 		curl_setopt_array($cc, $curlopts);
 		if ($strict) {

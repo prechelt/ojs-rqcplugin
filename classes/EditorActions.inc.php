@@ -147,6 +147,7 @@ class EditorActions
 		// RqcDevHelper::writeToConsole("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
 		$caller = new RqcCallHandler();
 		$rqcResult = $caller->sendToRqc(null, $submissionId); // Implicit call
+		// TODO Q: if check for redirect is there: make the software do that redirect // TODO Q: 303 if grading didn't happen yet. Else 200? Would make sense and would make the potential "grading happend" check (as a call) irrelevant (less logic)
 		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS)) {
 			RqcLogger::logInfo("Implicit call to RQC for submission $submissionId successful");
 		} else {

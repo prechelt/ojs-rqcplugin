@@ -216,12 +216,6 @@ other typical identifiers for such objects):
 
 ### TO DO and status
 
-- settings: add the journal ID/key validation via an RQC call.
-	- Status: When an existing validation check fails (e.g. Journal ID = "a"),
-	  the form submission hangs and the
-	  `POST /index.php/rqctest/notification/fetchNotification` produces
-	  `PHP Fatal error:  Uncaught Exception: Unhandled management action! in /ws/gh/ojs33/lib/pkp/classes/plugins/Plugin.inc.php:181`
-	  from RQCPlugin line 219. The action is `'fetchNotification'` I guess.
 - store opt-in response in review submission
   https://docs.pkp.sfu.ca/dev/plugin-guide/en/examples-custom-field
 - add all hooks and actual activity
@@ -230,8 +224,33 @@ other typical identifiers for such objects):
   (and RQC's ends 2019-03-27!)
 - elaborate on "ask your publisher" in locale.po
 - write automated tests
+  - also for RqcApiIdKeyPair
+- testing
+  - every year the demojournals at RQC are deleted (so add a remark somewhere)
+  - which states can OJs be in in which RQC doesn't work?
 - package the plugin, submit it for publication in OJS plugin gallery
-- Refactorings
+- document typical problems
+  - same email is needed for both services (RQC login and OJS user) (that is the "id" that identifies the people)
+- rewrite some things here in the devnodes (some are old and I don't know what they mean)
+- better response if the APIIdKeyPair is not valid anymore? Or does the response body of rqc suffice?
+  - maybe if implicit calls also throw errors with pop ups then yeah I guess
+- size limits of
+  - texts
+  - arrays
+  - attachments
+- if attachment sets are supported by the server: uncomment the place where its called
+- which patches are applied, which aren't
+- go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??; go through the whole OJS data model) if there are some logical errors there)
+- opting ranges (they go from e.g. 01.2025 til (incl.) 02.2026 because decisions can take a while; after that you have to redo the opting) TODO Q
+  - if not redone the opting then: use the opting status from the last year
+- set up the Issue tracker for the future (after my bachelors thesis is finished)
+
+- TODOs in the files
+  - TODO 1, 2, 3
+  - TODO Q (Question @prechelt)
+  - TODO Forum (ask in the Forum and wait for an answer)
+  - TODO if issue is closed: issue xy
+
 
 ## OJS versions
 
