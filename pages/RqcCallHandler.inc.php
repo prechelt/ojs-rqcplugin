@@ -173,7 +173,7 @@ class RqcCallHandler extends WorkflowHandler
 		$delayedRqcCall->setSubmissionId($submissionId);
 		$delayedRqcCall->setContextId($contextId);
 		$delayedRqcCall->setOriginalTryTs(Core::getCurrentDate());
-		$delayedRqcCall->setLastTryTs(null);
+		$delayedRqcCall->setLastTryTs(Core::getCurrentDate());
 		$delayedRqcCall->setRemainingRetries($this->_maxRetriesToResend);
 		//RqcDevHelper::writeObjectToConsole($delayedRqcCall);
 		return $delayedRqcCallDao->insertObject($delayedRqcCall);
