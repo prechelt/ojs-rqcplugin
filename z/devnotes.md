@@ -211,7 +211,7 @@ other typical identifiers for such objects):
   template uses `$attrname`.
 - OJS review rounds must create successive submission ids for RQC.
 - Cronjob via an own crontab
-  - test what the cronjob does with php tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml
+	- test what the cronjob does with php tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml
 - Delayed-call storage via Migration and own DAO that extends SchemaDAO?
 
 ### TO DO and status

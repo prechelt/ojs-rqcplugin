@@ -117,7 +117,8 @@ class RqcData
 	 */
 	protected static function getAuthorSet($submission): array
 	{
-		$authorDao = DAORegistry::getDAO('AuthorDAO'); /** @var $authorDao AuthorDAO */
+		$authorDao = DAORegistry::getDAO('AuthorDAO');
+		/** @var $authorDao AuthorDAO */
 
 		$authorObjects = array(); // TODO 2: how does RQC handle multiple authors with the same order_number? // its ok if no author is duplicated (filter that) (if two sets with multiple authors order with interleaving) // or maybe is the publication 2 an update of publication 1?
 		if ($submission) foreach ($submission->getData('publications') as $publication) {
@@ -256,7 +257,7 @@ class RqcData
 			//--- review text:
 			$reviewFormId = $reviewAssignment->getReviewFormId();
 			$reviewText = ($reviewFormId) ?
-				$this->getReviewTextFromForm($reviewerSubmission, $reviewFormId): // case 1
+				$this->getReviewTextFromForm($reviewerSubmission, $reviewFormId) : // case 1
 				$this->getReviewTextDefault($reviewAssignment); // case 2
 			$rqcreview['text'] = $reviewText;
 			$rqcreview['is_html'] = true;
@@ -318,18 +319,20 @@ class RqcData
 		while ($reviewFormElement = $reviewFormElements->next()) {
 			RqcDevHelper::writeToConsole("### reviewFormElement.elementType=" . $reviewFormElement->getElementType() .
 				"  included='" . $reviewFormElement->getIncluded() . "'\n");
-			if (in_array($reviewFormElement->getElementType(), array(REVIEW_FORM_ELEMENT_TYPE_SMALL_TEXT_FIELD, REVIEW_FORM_ELEMENT_TYPE_TEXT_FIELD, REVIEW_FORM_ELEMENT_TYPE_TEXTAREA)) &&
+			if (in_array($reviewFormElement->getElementType(), array(REVIEW_FORM_ELEMENT_TYPE_SMALL_TEXT_FIELD,
+					REVIEW_FORM_ELEMENT_TYPE_TEXT_FIELD, REVIEW_FORM_ELEMENT_TYPE_TEXTAREA
+				)) &&
 				$reviewFormElement->getIncluded()) {
 				$reviewFormElementId = $reviewFormElement->getId();
 
 				$elementTitle = getNonlocalizedAttr($reviewFormElement, "getQuestion"); //use englishest to be safe // is in HTML-format (in <p> tags)
 				$elementTitle = $elementTitle ? "<h3>" . $elementTitle . "</h3>" : "";
 				$elementDescription = getNonlocalizedAttr($reviewFormElement, "getDescription"); //use englishest to be safe // is in HTML-format (in <p> tags)
-				$elementDescription = $elementDescription ? "<p>Description: <i>". $elementDescription . "</i></p>" : "";
+				$elementDescription = $elementDescription ? "<p>Description: <i>" . $elementDescription . "</i></p>" : "";
 
 				$responseElement = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElementId);
 				$responseText = htmlspecialchars($this->cleanPlaintextTextarea($responseElement->getValue())); // encode the special chars (that would be interpreted as html structure in some way)
-				$responseText = $responseText ? "<p>Answer: <br>" . $responseText  . "</p>" : "";
+				$responseText = $responseText ? "<p>Answer: <br>" . $responseText . "</p>" : "";
 
 				if (!preg_match(self::CONFIDENTIAL_FIELD_REGEXP, $elementTitle)) {
 					$result .= "<div>$elementTitle$elementDescription$responseText</div>";  // format the element in the structure described above

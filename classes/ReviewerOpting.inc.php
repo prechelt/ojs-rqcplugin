@@ -139,7 +139,7 @@ class ReviewerOpting
 		RqcDevHelper::writeToConsole("##### callbackStep3execute: previous rqcOptIn=$previousRqcOptIn\n");
 		if ($rqcOptIn) {
 			$this->setStatus($contextId, $user, $rqcOptIn);
-			RqcLogger::logInfo("Stored a new RQC opting status for user with ID " . $user->getId() .  " for context $contextId: rqcOptIn=" . $this->statusEnumToString($rqcOptIn) . " (representation: $rqcOptIn) previous rqcOptIn=" . $this->statusEnumToString($previousRqcOptIn));
+			RqcLogger::logInfo("Stored a new RQC opting status for user with ID " . $user->getId() . " for context $contextId: rqcOptIn=" . $this->statusEnumToString($rqcOptIn) . " (representation: $rqcOptIn) previous rqcOptIn=" . $this->statusEnumToString($previousRqcOptIn));
 			//RqcDevHelper::writeToConsole("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
 		}
 		return false;

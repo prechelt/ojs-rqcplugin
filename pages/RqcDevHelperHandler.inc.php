@@ -198,6 +198,17 @@ class RqcDevHelperHandler extends Handler
 	}
 
 	/**
+	 * Print the content of the queue right now
+	 */
+	public function printDelayedRqcCallQueue($args, $request)
+	{
+		header("Content-Type: text/plain; charset=utf-8");
+		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
+		$delayedRqcCalls = $delayedRqcCallDao->getCallsToRetry()->toArray();
+		print_r($delayedRqcCalls);
+	}
+
+	/**
 	 * Make review case (MRC) in the current journal.
 	 * INCOMPLETE AND OUTDATED. TODO 2: remove or rewrite.
 	 */
