@@ -228,7 +228,7 @@ class RqcData
 	 * Return linear array of RQC review descriptor objects.
 	 * Would formerly use ReviewerSubmission::getMostRecentPeerReviewComment for the review text.
 	 * As of 3.3, there are two cases:
-	 * case 1) with configured ReviewForm (using ReviewFormElement, ReviewFormResponses),
+	 * case 1) with "custom" ReviewForm configured e.g.(or only?) by editor (using ReviewFormElement, ReviewFormResponses),
 	 * case 2) default review data structure (using SubmissionComment).
 	 * See PKPReviewerReviewStep3Form::saveReviewForm() for details.
 	 */
@@ -255,15 +255,11 @@ class RqcData
 			$rqcreview['submitted'] = rqcifyDatetime($reviewAssignment->getDateCompleted());
 			//--- review text:
 			$reviewFormId = $reviewAssignment->getReviewFormId();
-			if ($reviewFormId) {  // case 1
-				$reviewtext = $this->getReviewTextFromForm($reviewerSubmission, $reviewFormId);
-				$isHtml = false;  // TODO 2: is there really no way to get HTML here? Is HTML better? Yes
-			} else {  // case 2
-				$reviewtext = $this->getReviewTextDefault($reviewAssignment);
-				$isHtml = true;
-			}
-			$rqcreview['text'] = $reviewtext;
-			$rqcreview['is_html'] = $isHtml;
+			$reviewText = ($reviewFormId) ?
+				$this->getReviewTextFromForm($reviewerSubmission, $reviewFormId): // case 1
+				$this->getReviewTextDefault($reviewAssignment); // case 2
+			$rqcreview['text'] = $reviewText;
+			$rqcreview['is_html'] = true;
 			$rqcreview['attachment_set'] = array(); //  $this->getAttachmentSet($reviewerSubmission); // TODO 2: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
 			$recommendation = $reviewAssignment->getRecommendation();
 			$rqcreview['suggested_decision'] = $recommendation ? $this->rqcDecision("reviewer", $recommendation) : "";
@@ -299,6 +295,18 @@ class RqcData
 	 * producing a stretch of output text for each, using
 	 * 1. the element's name as a heading and
 	 * 2. the corresponding ReviewFormResponse's value as body.
+	 * @return string in HTML structure as follows
+	 * <div>
+	 *    <h3>my_header_text</h3>
+	 *    <p>Description: <i>my_description_text</i></p>
+	 *    <p>Answer: my_reviewer_answer_text</p>
+	 * </div>
+	 * <div>
+	 *    <h3>my_header_text2</h3>
+	 *    <p>Description: <i>my_description_text2</i></p>
+	 *    <p>Answer: my_reviewer_answer_text2</p>
+	 * </div>
+	 * ...
 	 */
 	protected function getReviewTextFromForm(ReviewerSubmission $reviewerSubmission, int $reviewFormId): string
 	{
@@ -310,16 +318,21 @@ class RqcData
 		while ($reviewFormElement = $reviewFormElements->next()) {
 			RqcDevHelper::writeToConsole("### reviewFormElement.elementType=" . $reviewFormElement->getElementType() .
 				"  included='" . $reviewFormElement->getIncluded() . "'\n");
-			if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_TEXTAREA &&
+			if (in_array($reviewFormElement->getElementType(), array(REVIEW_FORM_ELEMENT_TYPE_SMALL_TEXT_FIELD, REVIEW_FORM_ELEMENT_TYPE_TEXT_FIELD, REVIEW_FORM_ELEMENT_TYPE_TEXTAREA)) &&
 				$reviewFormElement->getIncluded()) {
 				$reviewFormElementId = $reviewFormElement->getId();
-				$elementTitle = $reviewFormElement->getQuestion('en_US');  // may have HTML tags!
-				$elementTitle = str_replace('<p>', '', $elementTitle);
-				$elementTitle = str_replace('</p>', '', $elementTitle);
+
+				$elementTitle = getNonlocalizedAttr($reviewFormElement, "getQuestion"); //use englishest to be safe // is in HTML-format (in <p> tags)
+				$elementTitle = $elementTitle ? "<h3>" . $elementTitle . "</h3>" : "";
+				$elementDescription = getNonlocalizedAttr($reviewFormElement, "getDescription"); //use englishest to be safe // is in HTML-format (in <p> tags)
+				$elementDescription = $elementDescription ? "<p>Description: <i>". $elementDescription . "</i></p>" : "";
+
 				$responseElement = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElementId);
-				$responseText = $this->cleanPlaintextTextarea($responseElement->getValue());
+				$responseText = htmlspecialchars($this->cleanPlaintextTextarea($responseElement->getValue())); // encode the special chars (that would be interpreted as html structure in some way)
+				$responseText = $responseText ? "<p>Answer: <br>" . $responseText  . "</p>" : "";
+
 				if (!preg_match(self::CONFIDENTIAL_FIELD_REGEXP, $elementTitle)) {
-					$result .= "\n### $elementTitle\n\n$responseText\n\n";  // plain-text-format this element
+					$result .= "<div>$elementTitle$elementDescription$responseText</div>";  // format the element in the structure described above
 				}
 			}
 		}
@@ -328,6 +341,16 @@ class RqcData
 
 	/**
 	 * Obtain what is to be considered the text of the review for case 2.
+	 * @return string in HTML structure as follows:
+	 * <div>
+	 *     <h3>Text field without a specific question</h3>
+	 *     <p>my_reviewer_text</p>
+	 * </div>
+	 * <div>
+	 *     <h3>Text field without a specific question</h3>
+	 *     <p>my_reviewer_text2</p>
+	 * </div>
+	 *  ...
 	 */
 	protected function getReviewTextDefault(ReviewAssignment $reviewAssignment): string
 	{
@@ -341,10 +364,9 @@ class RqcData
 			if ($submissionComment->getCommentType() != COMMENT_TYPE_PEER_REVIEW) {
 				continue;  // irrelevant record, skip it
 			}
-			$title = $submissionComment->getCommentTitle();  // will be empty
-			$body = $submissionComment->getComments();
-			$result .= ($title ? "\n<div>$title</div>\n\n$body\n\n" : "\n$body\n");
-
+			$title = $submissionComment->getCommentTitle() ?: "Text field without a specific question";  // will be empty but for safety-reasons we let it in there
+			$body = $submissionComment->getComments(); // will be in HTML structure already
+			$result .= ("<div><h3>$title</h3>$body</div>");   // format the element in the structure described above
 		}
 		return str_replace("\r", '', $result);  // may contain CR LF, we want only LF
 	}
