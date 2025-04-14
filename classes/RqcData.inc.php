@@ -18,11 +18,17 @@ import('lib.pkp.classes.submission.reviewRound.ReviewRoundDAO');
 import('classes.submission.SubmissionDAO');
 import('classes.core.Services');
 
+import('plugins.generic.rqc.pages.RqcDevHelperHandler');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define("RQC_AllOWED_FILE_EXTENSIONS", array(
 	"pdf", "docx", "xlsx", "pptx", "odt", "ods", "odp", "odg", "txt"
 )); // which files are allowed to be included in the review_set['attachment_set']
+define("RQC_ONE_LINE_STRING_SIZE_LIMIT", 2000); // All one-line strings must be no longer than 2000 characters
+define("RQC_MULTI_LINE_STRING_SIZE_LIMIT", 200000); // All multi-line strings (the review texts) must be no longer than 200000 characters
+define("RQC_AUTHOR_LIST_SIZE_LIMIT", 200); // Author lists must be no longer than 200 entries
+define("RQC_OTHER_LIST_SIZE_LIMIT", 20); // Other lists (reviews, editor assignments) must be no longer than 20 entries
+define("RQC_ATTACHMENTS_SIZE_LIMIT", 64000000); // Attachments cannot be larger than 64 MB each
 
 /**
  * Builds the JSON-like data object to be sent to the RQC server from the various pieces of the OJS data model:
@@ -65,13 +71,13 @@ class RqcData
 		$reviewroundN = $lastReviewRound->getRound();
 		$data['visible_uid'] = $this->getUid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
 		$data['external_uid'] = $this->getUid($journal, $submission, $reviewroundN, true);  // URL-friendly version.
-		$data['title'] = $this->getTitle($submission->getTitle(null));
+		$data['title'] = limitToSize($this->getTitle($submission->getTitle(null)));
 		$data['submitted'] = rqcifyDatetime($submission->getData('dateSubmitted'));
 
 		//----- authors, editor assignments, reviews, decision:
-		$data['author_set'] = $this->getAuthorSet($submission);
-		$data['edassgmt_set'] = $this->getEditorassignmentSet($submissionId);
-		$data['review_set'] = $this->getReviewSet($submissionId, $lastReviewRound, $contextId);
+		$data['author_set'] = limitToSizeArray($this->getAuthorSet($submission), RQC_AUTHOR_LIST_SIZE_LIMIT);
+		$data['edassgmt_set'] = limitToSizeArray($this->getEditorassignmentSet($submissionId), RQC_AUTHOR_LIST_SIZE_LIMIT);
+		$data['review_set'] = limitToSizeArray($this->getReviewSet($submissionId, $lastReviewRound, $contextId), RQC_OTHER_LIST_SIZE_LIMIT);
 		$data['decision'] = $this->getDecision($lastReviewRound);
 
 		return $data;
@@ -95,14 +101,21 @@ class RqcData
 
 			$ext = pathinfo($submissionFileName, PATHINFO_EXTENSION);
 			if (!in_array($ext, RQC_AllOWED_FILE_EXTENSIONS)) {
+				// TODO 1: pop up for which files aren't included
 				continue;
 			}
 			$fileId = $submissionFile->getData('fileId'); // !! not the submissionFileId
 			//RqcDevHelper::writeToConsole("SubmissionFile: ".$submissionFileName." with FileId: ".$fileId."\n");
-			$fileService = Services::get('file');
-			$file = $fileService->get($fileId);
+			$fileService = Services::get('file'); /** @var \PKP\Services\PKPFileService $fileService */
+			$file = $fileService->get($fileId); // TODO 2: if file not found: how to throw the error?
 			$fileContent = $fileService->fs->read($file->path);
-			//RqcDevHelper::writeToConsole("File: ".$file->id." ".$file->path." with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n".$fileContent."##EndOfFile##\n\n");
+			$fileSize = $fileService->fs->getSize($file->path);
+			RqcDevHelper::writeToConsole("File: ".$file->id." ".$file->path. " ($fileSize bytes) with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n$fileContent##EndOfFile##\n\n");
+
+			if ($fileSize > RQC_ATTACHMENTS_SIZE_LIMIT) {
+				// TODO 1: pop up for which files aren't included
+				continue;
+			}
 
 			$attachment['filename'] = $submissionFileName;
 			$attachment['data'] = base64_encode($fileContent);
@@ -259,9 +272,9 @@ class RqcData
 			$reviewText = ($reviewFormId) ?
 				$this->getReviewTextFromForm($reviewerSubmission, $reviewFormId) : // case 1
 				$this->getReviewTextDefault($reviewAssignment); // case 2
-			$rqcreview['text'] = $reviewText;
+			$rqcreview['text'] = limitToSize($reviewText, RQC_MULTI_LINE_STRING_SIZE_LIMIT);
 			$rqcreview['is_html'] = true;
-			$rqcreview['attachment_set'] = array(); //  $this->getAttachmentSet($reviewerSubmission); // TODO 2: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
+			$rqcreview['attachment_set'] = array(); //limitToSizeArray($this->getAttachmentSet($reviewerSubmission), RQC_OTHER_LIST_SIZE_LIMIT); // TODO Q: Also array size limit for attachments = 20? // TODO 2: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
 			$recommendation = $reviewAssignment->getRecommendation();
 			$rqcreview['suggested_decision'] = $recommendation ? $this->rqcDecision("reviewer", $recommendation) : "";
 
@@ -581,4 +594,25 @@ function generatePseudoEmail($reviewerEmail, $salt): string
 {
 	$hash = sha1($reviewerEmail . $salt, false); // hex
 	return $hash . "@example.edu";
+}
+
+/**
+ * Helper: truncate the string to maxLength-1 and add "…" to the end
+ */
+// TODO Q: where to add limitToSize()? Maybe at some places getting the error back from the server is better than the system truncating it without the user noticing?
+function limitToSize(string $string, int $maxLength = RQC_ONE_LINE_STRING_SIZE_LIMIT): string
+{
+	// TODO Q: give back all the places where a string is truncated?
+	//RqcDevHelper::writeToConsole("\u{2026}");
+	return mb_strimwidth($string, 0, $maxLength-1, "\u{2026}");
+}
+
+/**
+ * Helper: truncate the array to the maxLength
+ */
+// TODO Q: where to add limitToSize()? Maybe at some places getting the error back from the server is better than the system truncating it without the user noticing?
+function limitToSizeArray(array $array, $maxLength): array
+{
+	// TODO Q: give back all the places where an array is truncated?
+	return array_slice($array, 0, $maxLength, true);
 }

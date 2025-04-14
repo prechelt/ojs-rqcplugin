@@ -52,6 +52,6 @@ class RqcEditorDecisionHandler extends PKPHandler
 		// $cancelButton = '<a href="#" class="pkp_button pkpModalCloseButton cancelButton">' . __('common.cancel') . '</a>';
 		$content = __('plugins.generic.rqc.editoraction.grade.explanation');
 		$buttons = "<p>$okButton</p>";  // TODO 3: add a working cancel button: Using the templateMrg->fetchJson(some.tpl) that includes the {fbvFormButtons} didn't work either. So I guess the problem is before this function maybe? Something missing that has to be set. Or maybe is the structure wrong for that kind of modal form?
-		return new JSONMessage(true, "$content$buttons");
+		return new JSONMessage(true, "$content$buttons"); // TODO Q: Add the data that is not right, right here?
 	}
 }
