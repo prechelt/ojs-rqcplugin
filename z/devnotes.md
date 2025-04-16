@@ -15,28 +15,61 @@
   and see what to do with them once RQC is more-or-less release-ready.
   https://docs.pkp.sfu.ca/dev/contributors/#before-you-begin
 
-### Debian
+### Debian/Fedora for 3.3
 
-TODO 2: insert the .txt file contents??
+the Fedora and Debian installation follows the https://docs.pkp.sfu.ca/dev/documentation/en/getting-started.
+But there where some big problems that I fell into so I document that in case it helps someone.
 
-### Fedora
+#sudo n 16.20.2
+# test psql connection with psql -U your_ojs_user -h your_ojs_location -d your_ojs_db -W
 
-TODO 2: insert the .sh file contents
+# postfix
+sudo apt install postfix -y
+sudo systemctl --now enable postfix
 
-my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/documentation/3.3/en/getting-started)
+# ################### works only on debian!!!! (so copy from that system to fedora if needed) #######################
+mkdir -p /your_path_to_ojs/ojs/3.3/files
+
+cd /your_path_to_ojs/ojs/3.3
+git clone https://github.com/pkp/ojs --recurse-submodules -b stable-3_3_0
+
+cd /your_path_to_ojs/ojs/3.3/ojs
+cp /your_path_to_ojs/ojs/3.3/ojs/config.TEMPLATE.inc.php /your_path_to_ojs/ojs/3.3/ojs/config.inc.php
+# edit the config.inc.php to suit your needs
+
+composer --working-dir=lib/pkp install # no update !!! => jquery wouldn't work anymore #because of different file location
+composer --working-dir=plugins/paymethod/paypal install
+composer --working-dir=plugins/generic/citationStyleLanguage install
+npm install
+npm run build # with error
+# ####################################################################
+
+# this works on fedora after copying the folder that is compiled at debian
+php -S localhost:8000
+
+# install rqc via the ojs systems plugin gallery
+#cd /your_path_to_ojs/ojs/3.3/ojs/plugins/generic
+#sudo rm -r rqc # then remove
+#git clone https://github.com/prechelt/ojs-rqcplugin.git rqc # and clone the repo instead
+
+# sudo nano /etc/crontab
+# to insert * * * * * bluecube php /your_path_to_ojs/ojs/3.3/ojs/tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml > "/your_path_to_ojs/ojs/3.3/files/your_scheduled_task_log.log" 2>&1
+
+my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/documentation/3.3/en/getting-started) together with:
 
 - [general]:
 	- base_url = "http://localhost:8000"
 	- allowed_hosts = "[\"localhost\"]"
 - [database]:
 	- driver = postgres9
-	- name = ojs3_3
+	- name = "your_ojs_database"
 - [files]:
-	- files_dir = "_your_path_to_files_folder"
+	- files_dir = "your_path_to_files_folder"
 - [rqc]:
 	- activate_developer_functions = On
+    - rqc_log_info_messages = On #(I want the info logs to see if they work)
 - [scheduled_tasks]
-	- scheduled_tasks = On (currently doesn't work? TODO 2)
+	- scheduled_tasks = On (currently doesn't work to do Off? I think its always On TODO 2)
 
 ### generally used
 
