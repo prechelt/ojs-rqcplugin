@@ -180,8 +180,8 @@ class RqcData
 		$authorDao = DAORegistry::getDAO('AuthorDAO');
 		/** @var $authorDao AuthorDAO */
 
-		$authorObjects = array(); // TODO 2: how does RQC handle multiple authors with the same order_number? // its ok if no author is duplicated (filter that) (if two sets with multiple authors order with interleaving) // or maybe is the publication 2 an update of publication 1?
-		if ($submission) foreach ($submission->getData('publications') as $publication) {
+		$authorObjects = array(); // how does RQC handle multiple authors with the same order_number? // its ok if no author is duplicated (filter that) (if two sets with multiple authors order with interleaving) // or maybe is the publication 2 an update of publication 1?
+		if ($submission) foreach ($submission->getData('publications') as $publication) { // TODO Q: should we use only the current version of a submission? (or the last published one?) (or all?) https://docs.pkp.sfu.ca/dev/documentation/3.3/en/publication-versions#working-with-versions
 			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/7844 => the $submission object can be used again and the authors don't have to be queried separately
 			$authors = $authorDao->getByPublicationId($publication->getId()); // querying the authors separately
 			$authorObjects = array_merge($authorObjects, $authors);
