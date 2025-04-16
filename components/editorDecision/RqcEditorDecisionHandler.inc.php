@@ -16,6 +16,7 @@ import('lib.pkp.classes.handler.PKPHandler');
 import('lib.pkp.classes.core.JSONMessage');
 
 import('plugins.generic.rqc.RqcPlugin');
+import('plugins.generic.rqc.classes.RqcData');
 
 
 /**
@@ -51,7 +52,13 @@ class RqcEditorDecisionHandler extends PKPHandler
 		$okButton = "<a href='$target' class='pkp_button_primary submitFormButton'>" . __('common.ok') . '</a>';  // TODO 3: set focus
 		// $cancelButton = '<a href="#" class="pkp_button pkpModalCloseButton cancelButton">' . __('common.cancel') . '</a>';
 		$content = __('plugins.generic.rqc.editoraction.grade.explanation');
+		$rqcData = new RqcData();
+		$data = $rqcData->rqcDataArray($request, $submissionId); // only the truncation_omission_info is relevant at this call
+		$difference = count($data['truncation_omission_info']) > 0 ?
+			__('plugins.generic.rqc.editoraction.grade.difference') . "<ul><li>" .
+				implode("</li><li>", $data['truncation_omission_info']) . "</li></ul>" :
+			"";
 		$buttons = "<p>$okButton</p>";  // TODO 3: add a working cancel button: Using the templateMrg->fetchJson(some.tpl) that includes the {fbvFormButtons} didn't work either. So I guess the problem is before this function maybe? Something missing that has to be set. Or maybe is the structure wrong for that kind of modal form?
-		return new JSONMessage(true, "$content$buttons"); // TODO Q: Add the data that is not right, right here?
+		return new JSONMessage(true, "$content$difference$buttons");
 	}
 }

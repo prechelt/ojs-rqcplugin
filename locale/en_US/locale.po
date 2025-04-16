@@ -29,6 +29,9 @@ msgstr "Grade the reviews in RQC"
 msgid "plugins.generic.rqc.editoraction.grade.explanation"
 msgstr "<p>You are about to submit this submission's review data to <a href='https://reviewqualitycollector.org' target='_blank'>Review Quality Collector (RQC)</a>.</p><p>If you are assigned a role that should grade the reviews, you will be redirected to RQC to perform the grading and then directed back here to OJS.</p>"
 
+msgid "plugins.generic.rqc.editoraction.grade.difference"
+msgstr "<br><p>Note: The following data will not be sent in full due to RQC size limits (it may be truncated or omitted).<p>"
+
 msgid "plugins.generic.rqc.reviewerOptIn.header"
 msgstr "Take part in Review Quality Collector?"
 

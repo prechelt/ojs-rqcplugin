@@ -247,6 +247,10 @@ other typical identifiers for such objects):
   - TODO Forum (ask in the Forum and wait for an answer)
   - TODO if issue is closed: issue xy
 
+- these decisions should maybe be rethought about and done differently
+  - logging: Are all the places really needed?
+  - logging the body of Received an unexpected non-JSON response from RQC while making a .. That can be really large and we don't have to do that or do we?
+
 
 ## OJS versions
 

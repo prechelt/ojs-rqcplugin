@@ -9,6 +9,7 @@ use PKP\site\VersionCheck;
 */
 
 // needed in OJS 3.3:
+use PKP\Services\PKPFileService;
 use Random\RandomException;
 
 import('classes.workflow.EditorDecisionActionsManager');  // decision action constants
@@ -50,45 +51,86 @@ class RqcData
 	/**
 	 * Build PHP array with the data for an RQC call to be made.
 	 * if $request is null, interactive_user and mhs_submissionpage are transmitted as "".
+	 * returns 'data' (the data for the call) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
 	public function rqcDataArray($request, $submissionId): array
 	{
-		$contextDao = Application::getContextDAO();
-		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+		$contextDao = Application::getContextDAO(); /** @var $contextDao ContextDAO */
+		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /** @var $reviewRoundDao ReviewRoundDAO */
 		$submissionDao = DAORegistry::getDAO('SubmissionDAO'); /** @var $submissionDao SubmissionDAO */
 		//----- prepare processing:
-		$submission = $submissionDao->getById($submissionId);
+		$submission = $submissionDao->getById($submissionId); /** @var $submission Submission */
 		//RqcDevHelper::writeObjectToConsole($submission, "submission", true);
 		$contextId = $submission->getContextId();
 		$journal = $contextDao->getById($contextId);
 		$data = array();
+		$truncationOmissionInfo = array();
+
 		//----- fundamentals:
-		$data['interactive_user'] = $request ? $this->getInteractiveUser($request) : "";
-		$data['mhs_submissionpage'] = $request ? $this->getMhsSubmissionPage($request, $submissionId) : "";
+		$data['interactive_user'] = $request ? $this->getInteractiveUser($request) : ""; // OJS checks the length: no need for limitToSize()
+		$mhsSubmissionPage = $request ? $this->getMhsSubmissionPage($request, $submissionId) : ""; // TODO Q: Or should I not truncate that and let it throw an error?
+		$data['mhs_submissionpage'] = limitToSize($mhsSubmissionPage);
 
 		//----- submission data:
 		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submissionId);
 		$reviewroundN = $lastReviewRound->getRound();
-		$data['visible_uid'] = $this->getUid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
-		$data['external_uid'] = $this->getUid($journal, $submission, $reviewroundN, true);  // URL-friendly version.
-		$data['title'] = limitToSize($this->getTitle($submission->getTitle(null)));
-		$data['submitted'] = rqcifyDatetime($submission->getData('dateSubmitted'));
+
+		$visibleUid = $this->getUid($journal, $submission, $reviewroundN);
+		$data['visible_uid'] = limitToSize($visibleUid);  // user-facing pseudo ID
+		$externalUid = $this->getUid($journal, $submission, $reviewroundN, true); // URL-friendly version.
+		$data['external_uid'] = limitToSize($externalUid);  // user-facing pseudo ID
+		$title = $this->getTitle($submission->getTitle(null));
+		$data['title'] = limitToSize($title);
+		$data['submitted'] = rqcifyDatetime($submission->getData('dateSubmitted')); // date: no need for limitToSize()
 
 		//----- authors, editor assignments, reviews, decision:
-		$data['author_set'] = limitToSizeArray($this->getAuthorSet($submission), RQC_AUTHOR_LIST_SIZE_LIMIT);
-		$data['edassgmt_set'] = limitToSizeArray($this->getEditorassignmentSet($submissionId), RQC_AUTHOR_LIST_SIZE_LIMIT);
-		$data['review_set'] = limitToSizeArray($this->getReviewSet($submissionId, $lastReviewRound, $contextId), RQC_OTHER_LIST_SIZE_LIMIT);
-		$data['decision'] = $this->getDecision($lastReviewRound);
+		$authorSetWithAdditionalInfo = $this->getAuthorSet($submission);
+		$data['author_set'] = limitToSizeArray($authorSetWithAdditionalInfo['data'], RQC_AUTHOR_LIST_SIZE_LIMIT);
+		$editorAssignmentSetWithAdditionalInfo = $this->getEditorAssignmentSet($submissionId);
+		$data['edassgmt_set'] = limitToSizeArray($editorAssignmentSetWithAdditionalInfo['data']);
+		$reviewSetWithAdditionalInfo = $this->getReviewSet($submissionId, $lastReviewRound, $contextId);
+		$data['review_set'] = limitToSizeArray($reviewSetWithAdditionalInfo['data']);
+		$data['decision'] = $this->getDecision($lastReviewRound);  // self constructed decision string: no need for limitToSize()
 
-		return $data;
+		//----- add truncation && omission information if the truncated data is not the same as the "original" data
+		if ($data['mhs_submissionpage'] != $mhsSubmissionPage) {
+			$truncationOmissionInfo[] = "The url of the mhs submission page was truncated";
+		}
+		if ($data['visible_uid'] != $visibleUid) {
+			$truncationOmissionInfo[] = "The visible ID of the journal was truncated";
+		}
+		if ($data['external_uid'] != $externalUid) {
+			$truncationOmissionInfo[] = "The external ID of the journal was truncated";
+		}
+		if ($data['title'] != $title) {
+			$truncationOmissionInfo[] = "The title of the submission was truncated";
+		}
+		if ($data['author_set'] != $authorSetWithAdditionalInfo['data']) {
+			$truncationOmissionInfo[] = "The author set was truncated. Original size: " . count($authorSetWithAdditionalInfo['data']) . ". Truncated to: " . count($data['author_set']) . ". The size limit of this set is: " . RQC_AUTHOR_LIST_SIZE_LIMIT;;
+		}
+		if ($data['edassgmt_set'] != $editorAssignmentSetWithAdditionalInfo['data']) {
+			$truncationOmissionInfo[] = "The editor set was truncated. Original size: " . count($editorAssignmentSetWithAdditionalInfo['data']) . ". Truncated to: " . count($data['edassgmt_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;;
+		}
+		if ($data['review_set'] != $reviewSetWithAdditionalInfo['data']) {
+			$truncationOmissionInfo[] = "The review set was truncated. Original size: " . count($reviewSetWithAdditionalInfo['data']) . ". Truncated to: " . count($data['review_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;;
+		}
+
+		// merge the truncation && omission information of the function the called functions
+		$truncationOmissionInfo = array_merge($truncationOmissionInfo, $authorSetWithAdditionalInfo['truncation_omission_info']);
+		$truncationOmissionInfo = array_merge($truncationOmissionInfo, $editorAssignmentSetWithAdditionalInfo['truncation_omission_info']);
+		$truncationOmissionInfo = array_merge($truncationOmissionInfo, $reviewSetWithAdditionalInfo['truncation_omission_info']);
+
+		return array('data' => $data, 'truncation_omission_info' => $truncationOmissionInfo);
 	}
 
 	/**
-	 * Return linear array of RQC-ish attachment objects.
+	 * Build a linear array of RQC-ish attachment objects.
+	 * returns 'data' (the attachment objects) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
 	protected static function getAttachmentSet($reviewerSubmission): array
 	{
-		$attachmentSet = array();
+		$attachmentSet = array(); // the real result
+		$truncationOmissionInfo = array(); // if something is left out or truncated or else
 		//RqcDevHelper::writeToConsole("\nReviewer: ".$reviewerSubmission->getReviewerFullName()." with Id: ".$reviewerSubmission->getReviewerId()."\n");
 
 		$submissionFilesIterator = Services::get('submissionFile')->getMany(
@@ -101,32 +143,37 @@ class RqcData
 
 			$ext = pathinfo($submissionFileName, PATHINFO_EXTENSION);
 			if (!in_array($ext, RQC_AllOWED_FILE_EXTENSIONS)) {
-				// TODO 1: pop up for which files aren't included
+				$truncationOmissionInfo[] = "$submissionFileName could not be included because the file extension $ext is not supported by RQC. Supported file extensions: " . implode(", ", RQC_AllOWED_FILE_EXTENSIONS);
 				continue;
 			}
 			$fileId = $submissionFile->getData('fileId'); // !! not the submissionFileId
 			//RqcDevHelper::writeToConsole("SubmissionFile: ".$submissionFileName." with FileId: ".$fileId."\n");
-			$fileService = Services::get('file'); /** @var \PKP\Services\PKPFileService $fileService */
-			$file = $fileService->get($fileId); // TODO 2: if file not found: how to throw the error?
+			$fileService = Services::get('file'); /** @var PKPFileService $fileService */
+			$file = $fileService->get($fileId);
 			$fileContent = $fileService->fs->read($file->path);
+			if ($fileContent === false) {
+				$truncationOmissionInfo[] = $file->path . " could not be found";
+				continue;
+			}
 			$fileSize = $fileService->fs->getSize($file->path);
 			RqcDevHelper::writeToConsole("File: ".$file->id." ".$file->path. " ($fileSize bytes) with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n$fileContent##EndOfFile##\n\n");
 
 			if ($fileSize > RQC_ATTACHMENTS_SIZE_LIMIT) {
-				// TODO 1: pop up for which files aren't included
+				$truncationOmissionInfo[] = "$submissionFileName could not be included because the file size exceeds the size limit of RQC: " . $fileService->getNiceFileSize(RQC_ATTACHMENTS_SIZE_LIMIT);
 				continue;
 			}
 
-			$attachment['filename'] = $submissionFileName;
+			$attachment['filename'] = $submissionFileName;  // TODO Q: Also size limit of 2000?
 			$attachment['data'] = base64_encode($fileContent);
 			$attachmentSet[] = $attachment;
 		}
 		//RqcDevHelper::writeToConsole("\n".print_r($attachmentSet, true)."\n");
-		return $attachmentSet;
+		return array('data' => $attachmentSet, 'truncation_omission_info' => $truncationOmissionInfo);
 	}
 
 	/**
-	 * Return linear array of RQC-ish author objects.
+	 * Build a linear array of RQC-ish author objects.
+	 * returns 'data' (the author objects) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
 	protected static function getAuthorSet($submission): array
 	{
@@ -140,21 +187,36 @@ class RqcData
 			$authorObjects = array_merge($authorObjects, $authors);
 		}
 
-		$result = array();
+		$authors = array(); // the real result
+		$truncationOmissionInfo = array(); // if something is left out or truncated or else
 		foreach ($authorObjects as $authorObject) { /** @var $authorObject PKPAuthor */
 			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/6178
 			if (false) // if (!(bool)$authorObject->isCorrespondingAuthor()) // currently not available AND (primaryAuthor or includeInBrowse don't suffice/fulfill that role!)
 				continue;  // skip non-corresponding authors
 			//RqcDevHelper::writeObjectToConsole($authorObject, "AuthorObject in getAuthorSet(): ");
 			$rqcAuthor = array();
-			$rqcAuthor['email'] = $authorObject->getEmail();
-			$rqcAuthor['firstname'] = getNonlocalizedAttr($authorObject, "getGivenName");
-			$rqcAuthor['lastname'] = getNonlocalizedAttr($authorObject, "getFamilyName");
-			$rqcAuthor['order_number'] = (int)($authorObject->getSequence());
-			$rqcAuthor['orcid_id'] = getOrcidId($authorObject->getOrcid());
-			$result[] = $rqcAuthor;
+			$rqcAuthor['email'] = $authorObject->getEmail();  // OJS checks the length: no need for limitToSize()
+			$firstName = getNonlocalizedAttr($authorObject, "getGivenName");
+			$rqcAuthor['firstname'] = limitToSize($firstName);
+			$lastName = getNonlocalizedAttr($authorObject, "getFamilyName");
+			$rqcAuthor['lastname'] = limitToSize($lastName);
+			$rqcAuthor['order_number'] = (int)($authorObject->getSequence()); // int: no need for limitToSize()
+			$orcidId = getOrcidId($authorObject->getOrcid());
+			$rqcAuthor['orcid_id'] = limitToSize($orcidId); // more if something goes wrong
+			$authors[] = $rqcAuthor;
+
+			//----- add truncation && omission information if the truncated data is not the same as the "original" data
+			if ($rqcAuthor['firstname'] != $firstName) {
+				$truncationOmissionInfo[] = "The first name of the author with the email address: " . $authorObject->getEmail() . " was truncated.";
+			}
+			if ($rqcAuthor['lastname'] != $lastName) {
+				$truncationOmissionInfo[] = "The last name of the author with the email address: " . $authorObject->getEmail() . " was truncated.";
+			}
+			if ($rqcAuthor['orcid_id'] != $orcidId) {
+				$truncationOmissionInfo[] = "The orcid id of the author with the email address: " . $authorObject->getEmail() . " was truncated for some reason. Something did go wrong probably.";
+			}
 		}
-		return $result;
+		return array('data' => $authors, 'truncation_omission_info' => $truncationOmissionInfo);
 	}
 
 	/**
@@ -181,21 +243,25 @@ class RqcData
 	}
 
 	/**
-	 * Return linear array of RQC editorship descriptor objects.
+	 * Build a linear array of RQC editorship descriptor objects.
+	 * returns 'data' (the editorship descriptor objects) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
-	protected function getEditorassignmentSet($submissionId): array
+	protected function getEditorAssignmentSet($submissionId): array
 	{
-		$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
-		$userDao = DAORegistry::getDAO('UserDAO');
-		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
-		$result = array();
+		$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /** @var $stageAssignmentDao StageAssignmentDAO */
+		$userDao = DAORegistry::getDAO('UserDAO'); /** @var $userDao UserDAO */
+		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');  /** @var $userGroupDao UserGroupDAO */
+
+		$editorAssignments = array();  // the real result
+		$truncationOmissionInfo = array();  // if something is left out or truncated or else
+
 		$iter = $stageAssignmentDao->getBySubmissionAndStageId($submissionId,
 			WORKFLOW_STAGE_ID_EXTERNAL_REVIEW);
 		$level1N = 0;
-		foreach ($iter->toArray() as $stageassign) {
+		foreach ($iter->toArray() as $stageAssign) {
 			$assignment = array();
-			$user = $userDao->getById($stageassign->getUserId());
-			$userGroup = $userGroupDao->getById($stageassign->getUserGroupId());
+			$user = $userDao->getById($stageAssign->getUserId());
+			$userGroup = $userGroupDao->getById($stageAssign->getUserGroupId());
 			$role = $userGroup->getRoleId();
 			$levelMap = array(ROLE_ID_MANAGER    => 3,  // OJS 3.4: use prefix Role:: to find the constants
 							  ROLE_ID_SUB_EDITOR => 1
@@ -205,25 +271,39 @@ class RqcData
 				continue;  // irrelevant role, skip stage assignment entry
 			elseif ($level == 1)
 				$level1N++;
-			$assignment['level'] = $level;
-			$assignment['email'] = $user->getEmail();
-			$assignment['firstname'] = getNonlocalizedAttr($user, "getGivenName");
-			$assignment['lastname'] = getNonlocalizedAttr($user, "getFamilyName");
-			$assignment['orcid_id'] = getOrcidId($user->getOrcid());
-			$result[] = $assignment;  // append
+			$assignment['level'] = $level; // int: no need for limitToSize()
+			$assignment['email'] = $user->getEmail(); // OJS checks the length: no need for limitToSize()
+			$firstName = getNonlocalizedAttr($user, "getGivenName");
+			$assignment['firstname'] = limitToSize($firstName);
+			$lastName = getNonlocalizedAttr($user, "getFamilyName");
+			$assignment['lastname'] = limitToSize($lastName);
+			$orcidId = getOrcidId($user->getOrcid());
+			$assignment['orcid_id'] = limitToSize($orcidId); // more if something goes wrong
+			$editorAssignments[] = $assignment;  // append
+
+			//----- add truncation && omission information if the truncated data is not the same as the "original" data
+			if ($assignment['firstname'] != $firstName) {
+				$truncationOmissionInfo[] = "The first name of the user with the email address: " . $user->getEmail() . " was truncated.";
+			}
+			if ($assignment['lastname'] != $lastName) {
+				$truncationOmissionInfo[] = "The last name of the user with the email address: " . $user->getEmail() . " was truncated.";
+			}
+			if ($assignment['orcid_id'] != $orcidId) {
+				$truncationOmissionInfo[] = "The orcid id of the user with the email address: " . $user->getEmail() . " was truncated for some reason. Something did go wrong probably.";
+			}
 		}
-		if (!$level1N && count($result)) {
+		if (!$level1N && count($editorAssignments)) {
 			// there must be at least one level-1 editor:
-			$result[0]['level'] = 1; // TODO Q: better mechanism? (and what do they even mean in RQC?)
+			$editorAssignments[0]['level'] = 1; // TODO Q: better mechanism? (and what do they even mean in RQC?)
 		}
-		return $result;
+		return array('data' => $editorAssignments, 'truncation_omission_info' => $truncationOmissionInfo);
 	}
 
 	/**
 	 * Return emailaddress of current user or "" if this is not an interactive call.
 	 * The adapter needs to hope this same address is registered with RQC as well.
 	 */
-	protected static function getInteractiveUser($request)
+	protected static function getInteractiveUser($request): string
 	{
 		$user = $request->getUser();
 		return $user ? $user->getEmail() : "";
@@ -232,26 +312,32 @@ class RqcData
 	/**
 	 * Return the URL to which RQC should redirect after grading.
 	 */
-	protected function getMhsSubmissionPage(PKPRequest $request, int $submissionId)
+	protected function getMhsSubmissionPage(PKPRequest $request, int $submissionId): string
 	{
-		return $request->url(null, 'workflow', 'index',
-			array($submissionId, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)); // TODO 2: deprecated
+		$pageRouter = new PageRouter();
+		$pageRouter->setApplication(Application::get());  // so that url() will find context
+		return $pageRouter->url($request, null, 'workflow', 'index',
+			array($submissionId, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW));
 	}
 
 	/**
-	 * Return linear array of RQC review descriptor objects.
+	 * Build a linear array of RQC review descriptor objects.
 	 * Would formerly use ReviewerSubmission::getMostRecentPeerReviewComment for the review text.
 	 * As of 3.3, there are two cases:
 	 * case 1) with "custom" ReviewForm configured e.g.(or only?) by editor (using ReviewFormElement, ReviewFormResponses),
 	 * case 2) default review data structure (using SubmissionComment).
 	 * See PKPReviewerReviewStep3Form::saveReviewForm() for details.
+	 * returns 'data' (the review descriptor objects) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
-	protected function getReviewSet($submissionId, $reviewRound, $contextId): array
+	protected function getReviewSet(int $submissionId, $reviewRound, int $contextId): array
 	{
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$result = array();
+
+		$reviews = array(); // the real result
+		$truncationOmissionInfo = array(); // if something is left out or truncated or else
+
 		$assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRound->getId());
 		foreach ($assignments as $reviewId => $reviewAssignment) {
 			// TODO Q: What if a reviewer has not submitted his review but some data is already there (something like save for later)?
@@ -259,46 +345,75 @@ class RqcData
 			if ($reviewAssignment->getRound() != $reviewRound->getRound() ||
 				$reviewAssignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
 				continue;  // irrelevant record, skip it.
-			$rqcreview = array();  // will become one entry in the result set
+			$rqcReview = array();  // will become one entry in the result set
 			$reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewId);
 			//--- review metadata:
-			$rqcreview['visible_id'] = $reviewId;
-			$rqcreview['invited'] = rqcifyDatetime($reviewAssignment->getDateNotified());
-			$rqcreview['agreed'] = rqcifyDatetime($reviewAssignment->getDateConfirmed());
-			$rqcreview['expected'] = rqcifyDatetime($reviewAssignment->getDateDue());
-			$rqcreview['submitted'] = rqcifyDatetime($reviewAssignment->getDateCompleted());
+			$rqcReview['visible_id'] = $reviewId; // int: no need for limitToSize()
+			$rqcReview['invited'] = rqcifyDatetime($reviewAssignment->getDateNotified());  // date: no need for limitToSize()
+			$rqcReview['agreed'] = rqcifyDatetime($reviewAssignment->getDateConfirmed());  // date: no need for limitToSize()
+			$rqcReview['expected'] = rqcifyDatetime($reviewAssignment->getDateDue());  // date: no need for limitToSize()
+			$rqcReview['submitted'] = rqcifyDatetime($reviewAssignment->getDateCompleted());  // date: no need for limitToSize()
 			//--- review text:
 			$reviewFormId = $reviewAssignment->getReviewFormId();
 			$reviewText = ($reviewFormId) ?
 				$this->getReviewTextFromForm($reviewerSubmission, $reviewFormId) : // case 1
 				$this->getReviewTextDefault($reviewAssignment); // case 2
-			$rqcreview['text'] = limitToSize($reviewText, RQC_MULTI_LINE_STRING_SIZE_LIMIT);
-			$rqcreview['is_html'] = true;
-			$rqcreview['attachment_set'] = array(); //limitToSizeArray($this->getAttachmentSet($reviewerSubmission), RQC_OTHER_LIST_SIZE_LIMIT); // TODO Q: Also array size limit for attachments = 20? // TODO 2: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
+			$rqcReview['text'] = limitToSize($reviewText, RQC_MULTI_LINE_STRING_SIZE_LIMIT);
+			$rqcReview['is_html'] = true; // bool: no need for limitToSize()
+			$attachmentSetWithAdditionalInfo = $this->getAttachmentSet($reviewerSubmission);
+			$rqcReview['attachment_set'] = array(); // limitToSizeArray($attachmentSetWithAdditionalInfo['data']); // TODO Q: Also array size limit for attachments = 20? // TODO 2: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
 			$recommendation = $reviewAssignment->getRecommendation();
-			$rqcreview['suggested_decision'] = $recommendation ? $this->rqcDecision("reviewer", $recommendation) : "";
+			$rqcReview['suggested_decision'] = ($recommendation ? $this->rqcDecision("reviewer", $recommendation) : ""); // self constructed decision string: no need for limitToSize()
 
 			//--- reviewer:
-			$reviewerobject = $userDao->getById($reviewAssignment->getReviewerId());
+			$reviewerObject = $userDao->getById($reviewAssignment->getReviewerId());
 			// rqcOptOut
-			$status = (new ReviewerOpting())->getStatus($contextId, $reviewerobject, !RQC_PRELIM_OPTING);
-			$rqcreviewer = array();
+			$status = (new ReviewerOpting())->getStatus($contextId, $reviewerObject, !RQC_PRELIM_OPTING);
+			$rqcReviewer = array();
 			if ($status == RQC_OPTING_STATUS_IN) {
-				$rqcreviewer['email'] = $reviewerobject->getEmail();
-				$rqcreviewer['firstname'] = getNonlocalizedAttr($reviewerobject, "getGivenName");
-				$rqcreviewer['lastname'] = getNonlocalizedAttr($reviewerobject, "getFamilyName");
-				$rqcreviewer['orcid_id'] = getOrcidId($reviewerobject->getOrcid());
+				$rqcReviewer['email'] = $reviewerObject->getEmail(); // OJS checks the length: no need for limitToSize()
+				$firstName = getNonlocalizedAttr($reviewerObject, "getGivenName");
+				$rqcReviewer['firstname'] = limitToSize($firstName);
+				$lastName = getNonlocalizedAttr($reviewerObject, "getFamilyName");
+				$rqcReviewer['lastname'] = limitToSize($lastName);
+				$orcidId = getOrcidId($reviewerObject->getOrcid());
+				$rqcReviewer['orcid_id'] = limitToSize($orcidId); // more if something goes wrong
+
+				//----- add truncation && omission information if the truncated data is not the same as the "original" data
+				if ($rqcReviewer['firstname'] != $firstName) {
+					$truncationOmissionInfo[] = "The first name of the user " . $reviewerObject->getEmail() . " was truncated.";
+				}
+				if ($rqcReviewer['lastname'] != $lastName) {
+					$truncationOmissionInfo[] = "The last name of the user " . $reviewerObject->getEmail() . " was truncated.";
+				}
+				if ($rqcReviewer['orcid_id'] != $orcidId) {
+					$truncationOmissionInfo[] = "The orcid id of the user " . $reviewerObject->getEmail() . " was truncated for some reason. Something did go wrong probably.";
+				}
+				if ($rqcReview['text'] != $reviewText) { // check that here because of the reviewText being cleared with a pseudonym for the reviewer
+					$truncationOmissionInfo[] = "The review text of the reviewer " . $reviewerObject->getEmail() . " was truncated. Original size: " .
+						strlen($reviewText) . ". Truncated to: " . strlen($rqcReview['text']) . ". The size limit for the review text is: " . RQC_MULTI_LINE_STRING_SIZE_LIMIT;
+				}
+				// TODO uncomment if // TODO 2: base64_encoded content gives me an error 500 from the server (til then I leave it commented out) is done
+//				if ($rqcReview['attachment_set'] != $attachmentSetWithAdditionalInfo['data']) { // TODO Q: only with opt in?
+//					$truncationOmissionInfo[] = "The review attachments set of the reviewer " . $reviewerObject->getEmail() . " was truncated. Original size: " .
+//						count($attachmentSetWithAdditionalInfo['data']) . ". Truncated to: " . count($rqcReview['attachment_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT; // TODO Q: Also array size limit for attachments = 20?
+//				}
+
 			} else {
-				$rqcreviewer['email'] = generatePseudoEmail($reviewerobject->getEmail(), $this->getSaltAndGenerateIfNotSet($contextId));
-				$rqcreviewer['firstname'] = "";
-				$rqcreviewer['lastname'] = "";
-				$rqcreviewer['orcid_id'] = "";
-				$rqcreview['text'] = "";
+				$rqcReviewer['email'] = generatePseudoEmail($reviewerObject->getEmail(), $this->getSaltAndGenerateIfNotSet($contextId)); // hash + @example.edu: no need for limitToSize()
+				$rqcReviewer['firstname'] = "";
+				$rqcReviewer['lastname'] = "";
+				$rqcReviewer['orcid_id'] = "";
+				$rqcReview['text'] = "";
+				//$rqcReview['attachment_set'] = array(); // TODO Q: Shouldn't that also be blank?
 			}
-			$rqcreview['reviewer'] = $rqcreviewer;
-			$result[] = $rqcreview;  // append
+			$rqcReview['reviewer'] = $rqcReviewer;
+			$reviews[] = $rqcReview;  // append
+
+			// merge the truncation && omission information of the function the called functions
+			$truncationOmissionInfo = array_merge($truncationOmissionInfo, $attachmentSetWithAdditionalInfo['truncation_omission_info']);
 		}
-		return $result;
+		return array('data' => $reviews, 'truncation_omission_info' => $truncationOmissionInfo);
 	}
 
 
@@ -402,7 +517,7 @@ class RqcData
 	 * if round is 0 (for a non-existing predecessor), return "".
 	 * We could use $lastReviewRound->getId(), but don't.
 	 */
-	protected static function getUid($journal, $submission, $round, $forUrl = false): string
+	protected static function getUid($journal, Submission $submission, int $round, bool $forUrl = false): string
 	{
 		if ($round == 0) {
 			return "";
@@ -470,7 +585,7 @@ class RqcData
 	 * get the salt for the journal
 	 * if the salt was never generated: generate, store and return the new salt
 	 */
-	protected function getSaltAndGenerateIfNotSet($contextId): string
+	protected function getSaltAndGenerateIfNotSet(int $contextId): string
 	{
 		$saltLength = 32;
 		$salt = $this->plugin->getSetting($contextId, 'rqcJournalSalt');
@@ -602,17 +717,15 @@ function generatePseudoEmail($reviewerEmail, $salt): string
 // TODO Q: where to add limitToSize()? Maybe at some places getting the error back from the server is better than the system truncating it without the user noticing?
 function limitToSize(string $string, int $maxLength = RQC_ONE_LINE_STRING_SIZE_LIMIT): string
 {
-	// TODO Q: give back all the places where a string is truncated?
-	//RqcDevHelper::writeToConsole("\u{2026}");
-	return mb_strimwidth($string, 0, $maxLength-1, "\u{2026}");
+	//RqcDevHelper::writeToConsole("maxlength: $maxLength. Length of string: ". strlen($string) . "length of \u{2026}" . strlen("\u{2026}") . "\n");
+	return mb_strimwidth($string, 0, $maxLength-2, "\u{2026}"); // strlen("\u{2026}") == 3
 }
 
 /**
  * Helper: truncate the array to the maxLength
  */
 // TODO Q: where to add limitToSize()? Maybe at some places getting the error back from the server is better than the system truncating it without the user noticing?
-function limitToSizeArray(array $array, $maxLength): array
+function limitToSizeArray(array $array, int $maxLength = RQC_OTHER_LIST_SIZE_LIMIT): array
 {
-	// TODO Q: give back all the places where an array is truncated?
 	return array_slice($array, 0, $maxLength, true);
 }

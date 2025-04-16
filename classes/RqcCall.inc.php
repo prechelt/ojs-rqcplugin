@@ -29,10 +29,15 @@ class RqcCall
 	public static function callMhsSubmission(string $rqcHostUrl, string $rqcJournalId, string $rqcJournalAPIKey,
 													$request, int $submissionId, bool $strict = false): array
 	{
-		$rqcdata = new RqcData();
-		$data = $rqcdata->rqcDataArray($request, $submissionId);
+		$rqcData = new RqcData();
+		$data = $rqcData->rqcDataArray($request, $submissionId);
+		$postData = $data['data'];
+		$difference = $data['truncation_omission_info'];
+		if (count($difference) > 0) {
+			RqcLogger::logWarning("For submission $submissionId: The following data is truncated because of the size limits of rqc: " . implode("; ", $difference));
+		}
 		$url = sprintf(RQC_MHS_SUBMISSION_URL, $rqcHostUrl, $rqcJournalId, $submissionId);
-		return RqcCall::curlCall($url, $rqcJournalAPIKey, "POST", $data, $strict);
+		return RqcCall::curlCall($url, $rqcJournalAPIKey, "POST", $postData, $strict);
 	}
 
 	/**
