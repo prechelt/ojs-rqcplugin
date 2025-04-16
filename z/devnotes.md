@@ -51,7 +51,7 @@ my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/document
 - [database]: host, port, name, username, password, persistent
 - [email]: smtp_server, smtp_port, smtp_auth, smtp_username, smtp_password
 - [rqc]: activate_developer_functions = On; rqc_server = http://localhost:<port>
-  (the plugin will use rqc_server if set and a fixed default otherwise)
+  (the plugin will use rqc_server if set and a fixed default otherwise); rqc_log_info_messages = Off (to not get info messages; default is true)
 - For DB setup (schema, admin user), you must use the web config dialog
   at `http://localhost:port`.
   _For this to work, postgres must answer to its standard port 5432,_

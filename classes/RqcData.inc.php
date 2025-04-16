@@ -724,7 +724,7 @@ function limitToSize(string $string, int $maxLength = RQC_ONE_LINE_STRING_SIZE_L
 /**
  * Helper: truncate the array to the maxLength
  */
-// TODO Q: where to add limitToSize()? Maybe at some places getting the error back from the server is better than the system truncating it without the user noticing?
+// TODO Q: where to add limitToSizeArray()? Maybe at some places getting the error back from the server is better than the system truncating it without the user noticing?
 function limitToSizeArray(array $array, int $maxLength = RQC_OTHER_LIST_SIZE_LIMIT): array
 {
 	return array_slice($array, 0, $maxLength, true);

@@ -21,6 +21,11 @@ class RqcLogger
 		return Config::getVar('files', 'files_dir') . DIRECTORY_SEPARATOR . 'rqc.log';
 	}
 
+	protected static function infoLoggingOn(): bool
+	{
+		return Config::getVar('rqc', 'rqc_log_info_messages', true); // TODO Q: default?
+	}
+
 	/**
 	 * Write info message to log.
 	 *
@@ -29,7 +34,9 @@ class RqcLogger
 	 */
 	public static function logInfo(string $message): void
 	{
-		self::writeLog($message, 'INFO');
+		if (self::infoLoggingOn()) {
+			self::writeLog($message, 'INFO');
+		}
 	}
 
 	/**

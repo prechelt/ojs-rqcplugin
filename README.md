@@ -53,7 +53,7 @@ https://reviewqualitycollector.org/t/api.
 Target audience: OJS system administrators.
 
 - The RQC plugin requires PHP 7 and OJS 3.3.
-- In `config.inc.php`, set `scheduled_tasks = On`.
+- In `config.inc.php`, set `scheduled_tasks = On` and rqc_log_info_messages = Off/On (as you wish; default is On)
 - Install the plugin via the plugin gallery (in website settings).
 - Make sure there is an entry in your OJS server's crontab
   (see "Scheduled Tasks" in the OJS `docs/README`) and that it includes
