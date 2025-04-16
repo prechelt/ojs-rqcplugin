@@ -87,7 +87,7 @@ class RqcCallHandler extends WorkflowHandler
 		}
 		$submissionId = $qargs['submissionId'];
 		$rqcResult = $this->sendToRqc($request, $submissionId); // Explicit call
-		// TODO Q: TODO 1: if some data is faulty (use response?) or e.g. for not included files do a popup directly?
+		// TODO Q: if some data is faulty (use response?) or e.g. for not included files do a popup directly?
 		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS)) {
 			RqcLogger::logInfo("Explicit call to RQC for submission $submissionId successful");
 		} else {

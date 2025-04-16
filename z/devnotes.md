@@ -51,7 +51,8 @@ my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/document
 - [database]: host, port, name, username, password, persistent
 - [email]: smtp_server, smtp_port, smtp_auth, smtp_username, smtp_password
 - [rqc]: activate_developer_functions = On; rqc_server = http://localhost:<port>
-  (the plugin will use rqc_server if set and a fixed default otherwise); rqc_log_info_messages = Off (to not get info messages; default is true)
+  (the plugin will use rqc_server if set and a fixed default otherwise); rqc_log_info_messages = Off (to not get info
+  messages; default is true)
 - For DB setup (schema, admin user), you must use the web config dialog
   at `http://localhost:port`.
   _For this to work, postgres must answer to its standard port 5432,_
@@ -224,33 +225,35 @@ other typical identifiers for such objects):
   (and RQC's ends 2019-03-27!)
 - elaborate on "ask your publisher" in locale.po
 - write automated tests
-  - also for RqcApiIdKeyPair
+	- also for RqcApiIdKeyPair
 - testing
-  - every year the demojournals at RQC are deleted (so add a remark somewhere)
-  - which states can OJs be in in which RQC doesn't work?
+	- every year the demojournals at RQC are deleted (so add a remark somewhere)
+	- which states can OJs be in in which RQC doesn't work?
 - package the plugin, submit it for publication in OJS plugin gallery
 - document typical problems
-  - same email is needed for both services (RQC login and OJS user) (that is the "id" that identifies the people)
+	- same email is needed for both services (RQC login and OJS user) (that is the "id" that identifies the people)
 - rewrite some things here in the devnodes (some are old and I don't know what they mean)
 - better response if the APIIdKeyPair is not valid anymore? Or does the response body of rqc suffice?
-  - maybe if implicit calls also throw errors with pop ups then yeah I guess
+	- maybe if implicit calls also throw errors with pop ups then yeah I guess
 - if attachment sets are supported by the server: uncomment the place where its called
 - which patches are applied, which aren't
-- go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??; go through the whole OJS data model) if there are some logical errors there)
-- opting ranges (they go from e.g. 01.2025 til (incl.) 02.2026 because decisions can take a while; after that you have to redo the opting) TODO Q
-  - if not redone the opting then: use the opting status from the last year
+- go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??;
+  go through the whole OJS data model) if there are some logical errors there)
+- opting ranges (they go from e.g. 01.2025 til (incl.) 02.2026 because decisions can take a while; after that you have
+  to redo the opting) TODO Q
+	- if not redone the opting then: use the opting status from the last year
 - set up the Issue tracker for the future (after my bachelors thesis is finished)
 
 - TODOs in the files
-  - TODO 1, 2, 3
-  - TODO Q (Question @prechelt)
-  - TODO Forum (ask in the Forum and wait for an answer)
-  - TODO if issue is closed: issue xy
+	- TODO 1, 2, 3
+	- TODO Q (Question @prechelt)
+	- TODO Forum (ask in the Forum and wait for an answer)
+	- TODO if issue is closed: issue xy
 
 - these decisions should maybe be rethought about and done differently
-  - logging: Are all the places really needed?
-  - logging the body of Received an unexpected non-JSON response from RQC while making a .. That can be really large and we don't have to do that or do we?
-
+	- logging: Are all the places really needed?
+	- logging the body of Received an unexpected non-JSON response from RQC while making a .. That can be really large
+	  and we don't have to do that or do we?
 
 ## OJS versions
 

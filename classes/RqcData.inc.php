@@ -106,13 +106,13 @@ class RqcData
 			$truncationOmissionInfo[] = "The title of the submission was truncated";
 		}
 		if ($data['author_set'] != $authorSetWithAdditionalInfo['data']) {
-			$truncationOmissionInfo[] = "The author set was truncated. Original size: " . count($authorSetWithAdditionalInfo['data']) . ". Truncated to: " . count($data['author_set']) . ". The size limit of this set is: " . RQC_AUTHOR_LIST_SIZE_LIMIT;;
+			$truncationOmissionInfo[] = "The author set was truncated. Original size: " . count($authorSetWithAdditionalInfo['data']) . ". Truncated to: " . count($data['author_set']) . ". The size limit of this set is: " . RQC_AUTHOR_LIST_SIZE_LIMIT;
 		}
 		if ($data['edassgmt_set'] != $editorAssignmentSetWithAdditionalInfo['data']) {
-			$truncationOmissionInfo[] = "The editor set was truncated. Original size: " . count($editorAssignmentSetWithAdditionalInfo['data']) . ". Truncated to: " . count($data['edassgmt_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;;
+			$truncationOmissionInfo[] = "The editor set was truncated. Original size: " . count($editorAssignmentSetWithAdditionalInfo['data']) . ". Truncated to: " . count($data['edassgmt_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;
 		}
 		if ($data['review_set'] != $reviewSetWithAdditionalInfo['data']) {
-			$truncationOmissionInfo[] = "The review set was truncated. Original size: " . count($reviewSetWithAdditionalInfo['data']) . ". Truncated to: " . count($data['review_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;;
+			$truncationOmissionInfo[] = "The review set was truncated. Original size: " . count($reviewSetWithAdditionalInfo['data']) . ". Truncated to: " . count($data['review_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;
 		}
 
 		// merge the truncation && omission information of the function the called functions
@@ -156,7 +156,7 @@ class RqcData
 				continue;
 			}
 			$fileSize = $fileService->fs->getSize($file->path);
-			RqcDevHelper::writeToConsole("File: ".$file->id." ".$file->path. " ($fileSize bytes) with mimeType: ".$file->mimetype."\nContent: ##BeginOfFile##\n$fileContent##EndOfFile##\n\n");
+			//RqcDevHelper::writeToConsole("File: " . $file->id . " " . $file->path . " ($fileSize bytes) with mimeType: " . $file->mimetype . "\nContent: ##BeginOfFile##\n$fileContent##EndOfFile##\n\n");
 
 			if ($fileSize > RQC_ATTACHMENTS_SIZE_LIMIT) {
 				$truncationOmissionInfo[] = "$submissionFileName could not be included because the file size exceeds the size limit of RQC: " . $fileService->getNiceFileSize(RQC_ATTACHMENTS_SIZE_LIMIT);
@@ -718,7 +718,7 @@ function generatePseudoEmail($reviewerEmail, $salt): string
 function limitToSize(string $string, int $maxLength = RQC_ONE_LINE_STRING_SIZE_LIMIT): string
 {
 	//RqcDevHelper::writeToConsole("maxlength: $maxLength. Length of string: ". strlen($string) . "length of \u{2026}" . strlen("\u{2026}") . "\n");
-	return mb_strimwidth($string, 0, $maxLength-2, "\u{2026}"); // strlen("\u{2026}") == 3
+	return mb_strimwidth($string, 0, $maxLength - 2, "\u{2026}"); // strlen("\u{2026}") == 3
 }
 
 /**
