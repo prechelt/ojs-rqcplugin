@@ -43,7 +43,7 @@ class DelayedRqcCallSender extends ScheduledTask
 	{
 		$lastNRetriesFailed = 0;
 
-		$delayedRqcCallDao = new DelayedRqcCallDAO(); // not getting the DAORegistry to work TODO 2?
+		$delayedRqcCallDao = new DelayedRqcCallDAO();
 		$allDelayedCallsToBeRetriedNow = $delayedRqcCallDao->getCallsToRetry()->toArray(); // grab all delayed calls that should be retried now
 		//RqcDevHelper::writeObjectToConsole($allDelayedCallsToBeRetriedNow, "all delayed calls");
 		foreach ($allDelayedCallsToBeRetriedNow as $call) { /** @var $call DelayedRqcCall */
