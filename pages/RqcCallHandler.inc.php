@@ -71,7 +71,7 @@ class RqcCallHandler extends WorkflowHandler
 
 	/**
 	 * Confirm submission+redirection to RQC
-	 * Called by RqcEditorDecisionHandler
+	 * popup where the submit button lies in created by RqcEditorDecisionHandler
 	 */
 	public function submit($args, $request)
 	{

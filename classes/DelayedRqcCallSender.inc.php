@@ -13,6 +13,7 @@ import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
 import('plugins.generic.rqc.classes.DelayedRqcCall');
 import('plugins.generic.rqc.pages.RqcCallHandler');
 import('plugins.generic.rqc.classes.RqcDevHelper');
+import('plugins.generic.rqc.RqcPlugin');
 
 /**
  * Class to retry failed RQC calls as a scheduled task.
@@ -41,6 +42,11 @@ class DelayedRqcCallSender extends ScheduledTask
 	 */
 	public function executeActions(): bool
 	{
+		$rqcPlugin = new RqcPlugin();
+		if (!$rqcPlugin->hasValidRqcIdKeyPair()) { // execute only if the credentials for sending the data to RQC are present
+			return false;
+		}
+
 		$lastNRetriesFailed = 0;
 
 		$delayedRqcCallDao = new DelayedRqcCallDAO();

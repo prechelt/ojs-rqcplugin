@@ -210,7 +210,7 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * Make review case (MRC) in the current journal.
-	 * INCOMPLETE AND OUTDATED. TODO 2: remove or rewrite.
+	 * INCOMPLETE AND OUTDATED. TODO 3: remove or rewrite. (maybe useful for the building of tests)
 	 */
 	/*
 	function mrc($args, $request)

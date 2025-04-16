@@ -54,8 +54,8 @@ class RqcPlugin extends GenericPlugin
 	public function register($category, $path, $mainContextId = null): bool
 	{
 		$success = parent::register($category, $path, $mainContextId);
-		if ($success && $this->getEnabled()) {
-			if ($this->hasValidRqcIdKeyPair()) { // register only if the plugin is usable
+		if ($success && $this->getEnabled()) { // register only if the plugin is usable
+			if ($this->hasValidRqcIdKeyPair()) {  // register only if the credentials for sending the data to RQC are present
 				HookRegistry::register(
 					'TemplateResource::getFilename',
 					array($this, '_overridePluginTemplates')
@@ -231,7 +231,7 @@ class RqcPlugin extends GenericPlugin
 	 * returns true if the RQC-Key and ID are set in the db
 	 * these should only be set if the check for the id-key pair was successfully done in the past (else the entry shouldn't be there or empty)
 	 */
-	public function hasValidRqcIdKeyPair(): bool // TODO 2: find all the places where this should be added
+	public function hasValidRqcIdKeyPair(): bool
 	{
 		// PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair()
 		$request = Application::get()->getRequest();
