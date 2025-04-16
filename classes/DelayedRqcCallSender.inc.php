@@ -94,7 +94,7 @@ class DelayedRqcCallSender extends ScheduledTask
 					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
 					$logMessage = "Delayed RQC call error: Tried to send (probably faulty) data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
-						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\n";
+						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\nThe original post request body: " . json_encode($rqcResult['request']) . "\n";
 					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_ERROR);
 					RqcLogger::logError($logMessage);
 					break;

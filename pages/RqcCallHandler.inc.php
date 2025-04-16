@@ -94,7 +94,7 @@ class RqcCallHandler extends WorkflowHandler
 			if ($rqcResult['enqueuedCall']) {
 				RqcLogger::logWarning("Explicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "Inserted it into the db to be retried later as a delayed rqc call.");
 			} else {
-				RqcLogger::logError("Explicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . ": The call was probably faulty (and wasn't put into the queue to retry later).");
+				RqcLogger::logError("Explicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . " The call was probably faulty (and wasn't put into the queue to retry later).\nThe original post request body: " . json_encode($rqcResult['request']) . "\n");
 			}
 		}
 		$this->processRqcResponse($rqcResult['status'], $rqcResult['response']);

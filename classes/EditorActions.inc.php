@@ -156,7 +156,7 @@ class EditorActions
 			if ($rqcResult['enqueuedCall']) {
 				RqcLogger::logWarning("Implicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "Inserted it into the db to be retried later as a delayed rqc call.");
 			} else {
-				RqcLogger::logError("Implicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . ": The call was probably faulty (and wasn't put into the queue to retry later).");
+				RqcLogger::logError("Implicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . " The call was probably faulty (and wasn't put into the queue to retry later).\nThe original post request body: " . json_encode($rqcResult['request']) . "\n");
 			}
 		}
 		// RqcDevHelper::writeObjectToConsole($rqcResult);
