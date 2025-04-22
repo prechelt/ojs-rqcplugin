@@ -204,7 +204,7 @@ class RqcDevHelperHandler extends Handler
 	{
 		header("Content-Type: text/plain; charset=utf-8");
 		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
-		$delayedRqcCalls = $delayedRqcCallDao->getCallsToRetry()->toArray();
+		$delayedRqcCalls = $delayedRqcCallDao->getCallsToRetry(0, time())->toArray();
 		print_r($delayedRqcCalls);
 	}
 

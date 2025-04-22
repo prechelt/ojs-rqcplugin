@@ -34,11 +34,16 @@ class DelayedRqcCallSchemaMigration extends Migration
 		});
 		RqcLogger::logInfo("Created table 'rqc_delayed_calls' in the database");
 
-		// there has to be a _settings table in the db (if not there are errors with some SchemaDAO-methods) TODO Forum: forum question to make pull-request so that one can have a custom table without settings via SchemaDAO
-		Capsule::schema()->create('rqc_delayed_calls_settings', function (Blueprint $table) {
-			$table->bigIncrements('rqc_delayed_call_id');
-		});
-		RqcLogger::logInfo("Created table 'rqc_delayed_calls_settings' in the database");
+		// TODO Forum: forum question to make pull-request so that one can have a custom table without settings via SchemaDAO. TODO Q: should I really do that or is that unnecessary?
+
+		// first try was with the empty settingsTable, but I found a way not to use it as it's not necessary
+		// see DelayedRqcCallDAO::deleteById(), $this->down() and DelayedRqcCallDAO::$settingsTableName
+
+//		// there has to be a _settings table in the db (if not there are errors with some SchemaDAO-methods)
+//		Capsule::schema()->create('rqc_delayed_calls_settings', function (Blueprint $table) {
+//			$table->bigIncrements('rqc_delayed_call_id');
+//		});
+//		RqcLogger::logInfo("Created table 'rqc_delayed_calls_settings' in the database");
 	}
 
 	/**
@@ -47,7 +52,8 @@ class DelayedRqcCallSchemaMigration extends Migration
 	public function down(): void
 	{
 		Capsule::schema()->drop('rqc_delayed_calls');
-		Capsule::schema()->drop('rqc_delayed_calls_settings');
-		RqcLogger::logInfo("Dropped tables 'rqc_delayed_calls' and 'rqc_delayed_calls_settings' in the database");
+		//Capsule::schema()->drop('rqc_delayed_calls_settings'); // first try was with the empty settingsTable, but I found a way not to use it as it's not necessary
+		RqcLogger::logInfo("Dropped table 'rqc_delayed_calls' in the database");
+		//RqcLogger::logInfo("Dropped table 'rqc_delayed_calls_settings' in the database"); // first try was with the empty settingsTable, but I found a way not to use it as it's not necessary
 	}
 }

@@ -30,7 +30,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 	public $tableName = 'rqc_delayed_calls';
 
 	/** @copydoc SchemaDAO::$settingsTableName */
-	public $settingsTableName = 'rqc_delayed_calls_settings';
+	//public $settingsTableName = 'rqc_delayed_calls_settings'; // first try was with the empty settingsTable, but I found a way not to use it as it's not necessary
 
 	/** @copydoc SchemaDAO::$primaryKeyColumn */
 	public $primaryKeyColumn = 'rqc_delayed_call_id';
@@ -147,5 +147,17 @@ class DelayedRqcCallDAO extends SchemaDAO
 			$call->setLastTryTs(Core::getCurrentDate($now));
 			$this->updateObject($call);
 		}
+	}
+
+	/**
+	 * @copydoc SchemaDAO::deleteById()
+	 * overwrite the SchemaDAO::deleteById() so that I don't have to create a rqc_delayed_calls_settings table in the db
+	 */
+	public function deleteById($objectId): void
+	{
+		$this->update(
+			"DELETE FROM $this->tableName WHERE $this->primaryKeyColumn = ?",
+			[(int) $objectId]
+		);
 	}
 }
