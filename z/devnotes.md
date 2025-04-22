@@ -270,6 +270,7 @@ other typical identifiers for such objects):
 	- maybe if implicit calls also throw errors with pop ups then yeah I guess
 - if attachment sets are supported by the server: uncomment the place where its called
 - which patches are applied, which aren't
+    - what to do with the patches that are accepted? (3.3 is fully accepted!; 3.4 I haven't looked)
 - go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??;
   go through the whole OJS data model) if there are some logical errors there)
 - opting ranges (they go from e.g. 01.2025 til (incl.) 02.2026 because decisions can take a while; after that you have

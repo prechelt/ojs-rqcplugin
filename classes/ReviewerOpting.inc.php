@@ -30,6 +30,7 @@ define('RQC_PRELIM_OPTING', true);  // for readability
  *  - callbackAddReviewerOptingField() injects the selection values.
  *  - callbackReadOptIn() (for POST) moves the opting value from request to form.
  *  - callbackStep3execute() (for POST) stores opting value into DB.
+ *  - callbackStep3saveForLater() (for POST) stores opting value into DB (preliminary).
  *
  * @see      PKPReviewerReviewStep3Form
  * @ingroup  plugins_generic_rqc
@@ -62,8 +63,11 @@ class ReviewerOpting
 			'reviewerreviewstep3form::execute',
 			array($this, 'callbackStep3execute')
 		);
-		// TODO Forum: Hook into ReviewerReviewStep3Form::saveForLater(), but no such hook exists as of 2022-09. (do prelim_opting then) => TODO Q: is that even needed or should we discard the information then?
-		//RqcDevHelper::writeToConsole(">>>>>>" . json_encode(array_keys(HookRegistry::getHooks())) . "<<<<<<\n");
+		HookRegistry::register(
+			'reviewerreviewstep3form::saveForLater',
+			array($this, 'callbackStep3saveForLater')
+		);
+		// TODO Forum: Added an issue for adding the hook. If the issue https://github.com/pkp/pkp-lib/issues/11305 is closed and merged these changes will take effect. Until then this part of the software can stay inside but does noting.
 	}
 
 
@@ -79,7 +83,11 @@ class ReviewerOpting
 		$optingRequired = $this->optingRequired($contextId, $user);
 		RqcDevHelper::writeToConsole("##### rqcOptingRequired = '$optingRequired'\n");
 		$step3Form->setData('rqcOptingRequired', $optingRequired);
-		$step3Form->setData('rqcOptIn', '');
+
+		// if a preliminary Opt In or Out is stored then preselect that value in the gui. Else preselect the empty select
+		$previousRqcOptIn = $this->getStatus($contextId, $user, RQC_PRELIM_OPTING);
+		$rqcPreselectedOptIn = in_array($previousRqcOptIn, [RQC_OPTING_STATUS_IN, RQC_OPTING_STATUS_OUT]) ? $previousRqcOptIn : "";
+		$step3Form->setData('rqcPreselectedOptIn', $rqcPreselectedOptIn);
 		//RqcDevHelper::writeObjectToConsole($step3Form, "####step3Form");
 		return false;
 	}
@@ -125,24 +133,15 @@ class ReviewerOpting
 	 */
 	public function callbackStep3execute($hookName, $args): bool
 	{
-		// callbacks are called last in PKPReviewerReviewStep3Form::execute()
-		$step3Form =& $args[0];
-		$request = Application::get()->getRequest();
-		$user = $request->getUser();
-		$contextId = $request->getContext()->getId();
-		$optingRequired = $this->optingRequired($contextId, $user);
-		RqcDevHelper::writeToConsole("##### callbackStep3execute: optingRequired=$optingRequired\n");
-		if (!$optingRequired)
-			return false;  // nothing to do because form field was not shown
-		$rqcOptIn = $step3Form->getData('rqcOptIn');
-		$previousRqcOptIn = $this->getStatus($contextId, $user);
-		RqcDevHelper::writeToConsole("##### callbackStep3execute: previous rqcOptIn=$previousRqcOptIn\n");
-		if ($rqcOptIn) {
-			$this->setStatus($contextId, $user, $rqcOptIn);
-			RqcLogger::logInfo("Stored a new RQC opting status for user with ID " . $user->getId() . " for context $contextId: rqcOptIn=" . $this->statusEnumToString($rqcOptIn) . " (representation: $rqcOptIn) previous rqcOptIn=" . $this->statusEnumToString($previousRqcOptIn));
-			//RqcDevHelper::writeToConsole("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
-		}
-		return false;
+		return $this->getAndSaveOptingStatus($args, !RQC_PRELIM_OPTING);
+	}
+
+	/**
+	 * Callback for reviewerreviewstep3form::saveForLater. (called via PKPReviewerReviewStep3Form::saveForLater)
+	 */
+	public function callbackStep3saveForLater($hookName, $args): bool
+	{
+		return $this->getAndSaveOptingStatus($args, RQC_PRELIM_OPTING);
 	}
 
 	/**
@@ -169,7 +168,7 @@ class ReviewerOpting
 	 */
 	public function optingRequired(int $contextId, User $user): bool
 	{
-		return $this->getStatus($contextId, $user, false) == RQC_OPTING_STATUS_UNDEFINED;
+		return $this->getStatus($contextId, $user, !RQC_PRELIM_OPTING) == RQC_OPTING_STATUS_UNDEFINED;
 	}
 
 	/**
@@ -216,5 +215,32 @@ class ReviewerOpting
 			$status = ($status == RQC_OPTING_STATUS_OUT) ? RQC_OPTING_STATUS_OUT_PRELIM : RQC_OPTING_STATUS_IN_PRELIM;
 		}
 		$user->updateSetting(self::$statusName, $status, 'int', $contextId);
+	}
+
+	/**
+	 * @param $args[0] the form object
+	 * @param bool $preliminary where the whole opting status should be "savedForLater" (thus preliminary) or "real" with the executeForm
+	 * @return false so that the HookRegistry call can be resumed for all other functions
+	 */
+	public function getAndSaveOptingStatus($args, bool $preliminary): false
+	{
+		$step3Form =& $args[0];
+		$request = Application::get()->getRequest();
+		$user = $request->getUser();
+		$contextId = $request->getContext()->getId();
+		$optingRequired = $this->optingRequired($contextId, $user);
+		RqcDevHelper::writeToConsole("##### callbackStep3execute: optingRequired=$optingRequired\n");
+		if (!$optingRequired)
+			return false;  // nothing to do because form field was not shown
+		$preliminaryMessage = $preliminary ? "(preliminary)" : "";
+		$rqcOptIn = $step3Form->getData('rqcOptIn');
+		$previousRqcOptIn = $this->getStatus($contextId, $user, $preliminary);
+		RqcDevHelper::writeToConsole("##### callbackStep3execute: previous $preliminaryMessage rqcOptIn=$previousRqcOptIn\n");
+		if ($rqcOptIn) {
+			$this->setStatus($contextId, $user, $rqcOptIn, $preliminary);
+			RqcLogger::logInfo("Stored a new $preliminaryMessage RQC opting status for user with ID " . $user->getId() . " for context $contextId: rqcOptIn=" . $this->statusEnumToString($rqcOptIn, $preliminary) . " (representation: $rqcOptIn) previous $preliminaryMessage rqcOptIn=" . $this->statusEnumToString($previousRqcOptIn, $preliminary));
+			//RqcDevHelper::writeToConsole("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
+		}
+		return false;
 	}
 }

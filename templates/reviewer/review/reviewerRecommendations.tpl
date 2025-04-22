@@ -21,7 +21,7 @@
 		The problem lies somewhere at the description attribute. If its not there then it works. And if the select element is outside the fbvFormSection then the error class is not applied to the fbvFormSection so the error also isn't happening**}
 		{fbvElement type="select" id="rqcOptIn"
 					from=$rqcReviewerOptingChoices
-					selected=null
+					selected=$rqcPreselectedOptIn
 					size=$fbvStyles.size.MEDIUM
 					required=true
 					disabled=$readOnly}
