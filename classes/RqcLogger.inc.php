@@ -23,7 +23,7 @@ class RqcLogger
 
 	protected static function infoLoggingOn(): bool
 	{
-		return Config::getVar('rqc', 'rqc_log_info_messages', true); // TODO Q: default true?
+		return Config::getVar('rqc', 'rqc_log_info_messages', true);
 	}
 
 	/**
