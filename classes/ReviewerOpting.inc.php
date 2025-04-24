@@ -67,7 +67,6 @@ class ReviewerOpting
 			'reviewerreviewstep3form::saveForLater',
 			array($this, 'callbackStep3saveForLater')
 		);
-		// TODO Forum: Added an issue for adding the hook. If the issue https://github.com/pkp/pkp-lib/issues/11305 is closed and merged these changes will take effect. Until then this part of the software can stay inside but does noting.
 	}
 
 

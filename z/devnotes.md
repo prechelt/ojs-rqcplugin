@@ -256,27 +256,36 @@ other typical identifiers for such objects):
 - Switch to LetsEncrypt and put its root certificate into the plugin,
   because the Telekom certificate ends 2019-07-09
   (and RQC's ends 2019-03-27!)
-- elaborate on "ask your publisher" in locale.po
 - write automated tests
 	- also for RqcApiIdKeyPair
 - testing
 	- every year the demojournals at RQC are deleted (so add a remark somewhere)
 	- which states can OJs be in in which RQC doesn't work?
-- package the plugin, submit it for publication in OJS plugin gallery
 - document typical problems
 	- same email is needed for both services (RQC login and OJS user) (that is the "id" that identifies the people)
+    - try one explicit call the first time so that they can test if the system works with immediate feedback
 - rewrite some things here in the devnodes (some are old and I don't know what they mean)
-- better response if the APIIdKeyPair is not valid anymore? Or does the response body of rqc suffice?
-	- maybe if implicit calls also throw errors with pop ups then yeah I guess
 - if attachment sets are supported by the server: uncomment the place where its called
 - which patches are applied, which aren't
-    - what to do with the patches that are accepted? (3.3 is fully accepted!; 3.4 I haven't looked)
+    - delete patches that are applied at the code base (3.3 is fully accepted!; 3.4 I haven't looked)
 - go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??;
   go through the whole OJS data model) if there are some logical errors there)
 - opting ranges (they go from e.g. 01.2025 til (incl.) 02.2026 because decisions can take a while; after that you have
   to redo the opting) TODO Q
-	- if not redone the opting then: use the opting status from the last year
-- set up the Issue tracker for the future (after my bachelors thesis is finished)
+	- if not redone the opting then: use the opting status from the last year TODO Q
+- at the end (if no tasks are left)
+  - better response for implicit calls (show errors) => add hook I guess
+    - invalid APIIdKeyPair
+    - errors
+    - maybe then redirect for grading?
+  - package the plugin, submit it for publication in OJS plugin gallery
+- at the end (after my bachelors thesis is finished)
+  - set up the Issue tracker for the future
+  - elaborate on "ask your publisher" in locale.po
+
+- wait for other people
+  - Added an issue for adding the hook. If the issue https://github.com/pkp/pkp-lib/issues/11305 is closed and merged these changes will take effect. Until then ReviewerOpting::getAndSaveOptingStatus() can stay inside but does noting.
+
 
 - TODOs in the files
 	- TODO 1, 2, 3
