@@ -21,13 +21,16 @@ the Fedora and Debian installation follows the https://docs.pkp.sfu.ca/dev/docum
 But there where some big problems that I fell into so I document that in case it helps someone.
 
 #sudo n 16.20.2
+
 # test psql connection with psql -U your_ojs_user -h your_ojs_location -d your_ojs_db -W
 
 # postfix
+
 sudo apt install postfix -y
 sudo systemctl --now enable postfix
 
 # ################### works only on debian!!!! (so copy from that system to fedora if needed) #######################
+
 mkdir -p /your_path_to_ojs/ojs/3.3/files
 
 cd /your_path_to_ojs/ojs/3.3
@@ -35,27 +38,34 @@ git clone https://github.com/pkp/ojs --recurse-submodules -b stable-3_3_0
 
 cd /your_path_to_ojs/ojs/3.3/ojs
 cp /your_path_to_ojs/ojs/3.3/ojs/config.TEMPLATE.inc.php /your_path_to_ojs/ojs/3.3/ojs/config.inc.php
+
 # edit the config.inc.php to suit your needs
 
-composer --working-dir=lib/pkp install # no update !!! => jquery wouldn't work anymore #because of different file location
+composer --working-dir=lib/pkp install
+# no update !!! => jquery wouldn't work anymore #because of different file location
 composer --working-dir=plugins/paymethod/paypal install
 composer --working-dir=plugins/generic/citationStyleLanguage install
 npm install
 npm run build # with error
-# ####################################################################
+
+#  ####################################################################
 
 # this works on fedora after copying the folder that is compiled at debian
+
 php -S localhost:8000
 
 # install rqc via the ojs systems plugin gallery
+
 #cd /your_path_to_ojs/ojs/3.3/ojs/plugins/generic
 #sudo rm -r rqc # then remove
 #git clone https://github.com/prechelt/ojs-rqcplugin.git rqc # and clone the repo instead
 
 # sudo nano /etc/crontab
+
 # to insert * * * * * bluecube php /your_path_to_ojs/ojs/3.3/ojs/tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml > "/your_path_to_ojs/ojs/3.3/files/your_scheduled_task_log.log" 2>&1
 
-my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/documentation/3.3/en/getting-started) together with:
+my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/documentation/3.3/en/getting-started) together
+with:
 
 - [general]:
 	- base_url = "http://localhost:8000"
@@ -67,7 +77,7 @@ my custom setup for the config.inc.php (see https://docs.pkp.sfu.ca/dev/document
 	- files_dir = "your_path_to_files_folder"
 - [rqc]:
 	- activate_developer_functions = On
-    - rqc_log_info_messages = On #(I want the info logs to see if they work)
+	- rqc_log_info_messages = On #(I want the info logs to see if they work)
 - [scheduled_tasks]
 	- scheduled_tasks = On (currently doesn't work to do Off? I think its always On TODO 2)
 
@@ -263,28 +273,30 @@ other typical identifiers for such objects):
 	- which states can OJs be in in which RQC doesn't work?
 - document typical problems
 	- same email is needed for both services (RQC login and OJS user) (that is the "id" that identifies the people)
-    - try one explicit call the first time so that they can test if the system works with immediate feedback
+	- try one explicit call the first time so that they can test if the system works with immediate feedback
 - rewrite some things here in the devnodes (some are old and I don't know what they mean)
 - if attachment sets are supported by the server: uncomment the place where its called
 - which patches are applied, which aren't
-    - delete patches that are applied at the code base (3.3 is fully accepted!; 3.4 I haven't looked)
+	- delete patches that are applied at the code base (3.3 is fully accepted!; 3.4 I haven't looked)
 - go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??;
   go through the whole OJS data model) if there are some logical errors there)
 - opting ranges (they go from e.g. 01.2025 til (incl.) 02.2026 because decisions can take a while; after that you have
   to redo the opting) TODO Q
 	- if not redone the opting then: use the opting status from the last year TODO Q
 - at the end (if no tasks are left)
-  - better response for implicit calls (show errors) => add hook I guess
-    - invalid APIIdKeyPair
-    - errors
-    - maybe then redirect for grading?
-  - package the plugin, submit it for publication in OJS plugin gallery
+	- better response for implicit calls (show errors) => add hook I guess
+		- invalid APIIdKeyPair
+		- errors
+		- maybe then redirect for grading?
+	- package the plugin, submit it for publication in OJS plugin gallery
 - at the end (after my bachelors thesis is finished)
-  - set up the Issue tracker for the future
-  - elaborate on "ask your publisher" in locale.po
+	- set up the Issue tracker for the future
+	- elaborate on "ask your publisher" in locale.po
 
 - wait for other people
-  - Added an issue for adding the hook. If the issue https://github.com/pkp/pkp-lib/issues/11305 is closed and merged these changes will take effect. Until then ReviewerOpting::getAndSaveOptingStatus() can stay inside but does noting.
+	- Added an issue for adding the hook. If the issue https://github.com/pkp/pkp-lib/issues/11305 is closed and merged
+	  these changes will take effect. Until then ReviewerOpting::getAndSaveOptingStatus() can stay inside but does
+	  noting.
 
 
 - TODOs in the files

@@ -3,7 +3,7 @@
  * - the reviewer's decision recommendation
  * - the RQC opt-in or opt-out if needed
  * We use this approach (which duplicates the original content of the same-named file)
- * rather than overwriting step3.tpl (which would duplicate only structure, not content) TODO Q: Why not this? That is easier to overview if something has changed
+ * rather than overwriting step3.tpl (which would duplicate only structure, not content) TODO 1: add into structure instead of like its done here
  * because for some reason we could not get the required
  *   {include file="core:reviewer/review/step3.tpl"}
  * to work; it always ran into some infinite recursion.

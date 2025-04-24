@@ -85,7 +85,8 @@ class ReviewerOpting
 
 		// if a preliminary Opt In or Out is stored then preselect that value in the gui. Else preselect the empty select
 		$previousRqcOptIn = $this->getStatus($contextId, $user, RQC_PRELIM_OPTING);
-		$rqcPreselectedOptIn = in_array($previousRqcOptIn, [RQC_OPTING_STATUS_IN, RQC_OPTING_STATUS_OUT]) ? $previousRqcOptIn : "";
+		$rqcPreselectedOptIn = in_array($previousRqcOptIn, [RQC_OPTING_STATUS_IN, RQC_OPTING_STATUS_OUT]) ?
+			$previousRqcOptIn : "";
 		$step3Form->setData('rqcPreselectedOptIn', $rqcPreselectedOptIn);
 		//RqcDevHelper::writeObjectToConsole($step3Form, "####step3Form");
 		return false;
@@ -217,8 +218,8 @@ class ReviewerOpting
 	}
 
 	/**
-	 * @param $args[0] the form object
-	 * @param bool $preliminary where the whole opting status should be "savedForLater" (thus preliminary) or "real" with the executeForm
+	 * @param array $args        must contain the form object as the first element
+	 * @param bool  $preliminary where the whole opting status should be "savedForLater" (thus preliminary) or "real" with the executeForm
 	 * @return false so that the HookRegistry call can be resumed for all other functions
 	 */
 	public function getAndSaveOptingStatus($args, bool $preliminary): false

@@ -112,8 +112,8 @@ class RqcCall
 		$result['status'] = $status;
 		if ($curl_error || $body === false) {
 			$result['response'] = array(
-				'error' => $curl_error,
-				'responseBody' => $body // maybe (but not likely) there are important information in there if an error occurred
+				'error'        => $curl_error,
+				'responseBody' => $body // maybe (not likely) are important information in there if an error occurred
 			);
 			return $result;  // return prematurely
 		}
@@ -122,7 +122,7 @@ class RqcCall
 			$result['response'] = json_decode($body, true);
 			if (json_last_error() !== JSON_ERROR_NONE) {
 				$result['response'] = array(
-					'error' => 'JSON parsing error: ' . json_last_error_msg(),
+					'error'        => 'JSON parsing error: ' . json_last_error_msg(),
 					'responseBody' => $body
 				);
 			}
