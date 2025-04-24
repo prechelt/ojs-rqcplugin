@@ -53,7 +53,7 @@ class RqcData
 	 * if $request is null, interactive_user and mhs_submissionpage are transmitted as "".
 	 * returns 'data' (the data for the call) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
-	public function rqcDataArray($request, $submissionId): array
+	public function rqcDataArray($request, int $submissionId): array
 	{
 		$contextDao = Application::getContextDAO(); /** @var $contextDao ContextDAO */
 		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /** @var $reviewRoundDao ReviewRoundDAO */
@@ -165,12 +165,8 @@ class RqcData
 		$authorDao = DAORegistry::getDAO('AuthorDAO');
 		/** @var $authorDao AuthorDAO */
 
-		$authorObjects = array(); // how does RQC handle multiple authors with the same order_number? // its ok if no author is duplicated (filter that) (if two sets with multiple authors order with interleaving) // or maybe is the publication 2 an update of publication 1?
-		if ($submission) foreach ($submission->getData('publications') as $publication) { // TODO Q: should we use only the current version of a submission? (or the last published one?) (or all?) https://docs.pkp.sfu.ca/dev/documentation/3.3/en/publication-versions#working-with-versions
-			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/7844 => the $submission object can be used again and the authors don't have to be queried separately
-			$authors = $authorDao->getByPublicationId($publication->getId()); // querying the authors separately
-			$authorObjects = array_merge($authorObjects, $authors);
-		}
+		$publicationId = $submission->getLatestPublication()->getId();
+		$authorObjects = $authorDao->getByPublicationId($publicationId); // querying the authors separately because of this bug: https://github.com/pkp/pkp-lib/issues/7844
 
 		$authors = array(); // the real result
 		$truncationOmissionInfo = array(); // if something is left out or truncated or else
@@ -203,10 +199,10 @@ class RqcData
 		$editDecisionDao = DAORegistry::getDAO('EditDecisionDAO');
 		$rr = $reviewRound;
 		$editorDecisions = $editDecisionDao->getEditorDecisions(
-			$rr->getSubmissionId(), $rr->getStageId(), $rr->getRound());
-		foreach ($editorDecisions as $decision) {
-			$result = $this->rqcDecision("editor", $decision['decision']);
-			if ($result) {  // use the first non-undefined decision TODO 2: understand it better (maybe its generally better to use the last decision?)
+			$rr->getSubmissionId(), $rr->getStageId(), $rr->getRound()); // all decisions are stored in the database like a history
+		for ($i = sizeof($editorDecisions) - 1; $i >= 0; $i--) { // ordered by ASC Date: most recent decision last
+			$result = $this->rqcDecision("editor", $editorDecisions[$i]['decision']);
+			if ($result) {  // use the last non-undefined decision
 				return $result;
 			}
 		}
