@@ -102,20 +102,30 @@ class RqcCall
 		//RqcDevHelper::writeObjectToConsole($body, "body: ");
 		$curl_error = curl_error($cc);
 		//RqcDevHelper::writeObjectToConsole($curl_error, "curl_Error: ");
+		//RqcDevHelper::writeObjectToConsole(curl_errno($cc), "curl_Errno: ");
 		$status = curl_getinfo($cc, CURLINFO_RESPONSE_CODE);
 		//RqcDevHelper::writeObjectToConsole($status, "status: ");
 		$content_type = curl_getinfo($cc, CURLINFO_CONTENT_TYPE);
 		//RqcDevHelper::writeObjectToConsole($content_type, "content_type: ");
 		curl_close($cc);
-		//----- handle call errors:
+		//----- handle curl_call errors:
 		$result['status'] = $status;
-		if ($curl_error) {
-			$result['response'] = array('error' => $curl_error);
+		if ($curl_error || $body === false) {
+			$result['response'] = array(
+				'error' => $curl_error,
+				'responseBody' => $body // maybe (but not likely) there are important information in there if an error occurred
+			);
 			return $result;  // return prematurely
 		}
 		//----- create $result:
 		if ($content_type == 'application/json') {  //----- handle expected JSON response:
 			$result['response'] = json_decode($body, true);
+			if (json_last_error() !== JSON_ERROR_NONE) {
+				$result['response'] = array(
+					'error' => 'JSON parsing error: ' . json_last_error_msg(),
+					'responseBody' => $body
+				);
+			}
 		} else {                                    //----- handle unexpected response:
 			RqcLogger::logError("Received an unexpected non-JSON response from RQC while making a $mode-request to $url. Resulted in http status code $status with response " . json_encode($body));
 			$result['response'] = array(
