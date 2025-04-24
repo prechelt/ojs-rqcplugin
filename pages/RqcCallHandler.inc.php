@@ -18,33 +18,21 @@ import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define("RQC_CALL_STATUS_CODES_TO_RESEND", array(
 	408, // "Request Timeout"
+	428, // "Too Many Requests"
 	500, // "Internal Server Error"
 	501, // "Not Implemented"
 	502, // "Bad Gateway"
 	503, // "Service Unavailable"
 	504, // "Gateway Timeout"
 	505, // "HTTP Version Not Supported"
+	506, // "Variant Also Negotiates"
+	507, // "Insufficient Storage"
+	508, // "Loop detected"
+	510, // "Not Extended"
+	511, // "Network Authentication Required"
 	0 // Unabled to communicate with the server. Aka connection closed, ...
-)); // which status codes make the system put the call into the queue to retry later (as opposed to ignoring it because the call was invalidly build) // TODO 2: review the codes
-define("RQC_CALL_SERVER_DOWN", array(
-	408, // "Request Timeout"
-	501, // "Not Implemented"
-	502, // "Bad Gateway"
-	503, // "Service Unavailable"
-	504, // "Gateway Timeout"
-	505, // "HTTP Version Not Supported"
-	0 // Unabled to communicate with the server. Aka connection closed, ...
-)); // TODO 2: review the codes
-define("RQC_CALL_STATUS_CODES_SUCESS", array(
-	200, // "OK"
-	201, // "Created"
-	202, // "Accepted"
-	203, // "Non-Authoritative Information"
-	204, // "No Content"
-	205, // "Reset Content"
-	206, // "Partial Content"
-));
-
+)); // these status codes make the system put the call into the queue to retry later (as opposed to ignoring it because the call was invalidly build)
+// use 200, 303, 400, 403, 404 explicitly and/or catch via "else"
 
 /**
  * Class RqcCallHandler.
@@ -71,11 +59,10 @@ class RqcCallHandler extends WorkflowHandler
 
 	/**
 	 * Confirm submission+redirection to RQC
-	 * popup where the submit button lies in created by RqcEditorDecisionHandler
+	 * submit function of the popup form that is created by RqcEditorDecisionHandler::rqcGrade()
 	 */
-	public function submit($args, $request)
+	public function submit($args, $request): void
 	{
-		// TODO Q By Julius: Should we have a x Sec lock on the button to not spam calls if the system is lagging?
 		$qargs = $this->plugin->getQueryArray($request);
 		$stageId = $qargs['stageId'];
 		if ($stageId != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
@@ -87,23 +74,12 @@ class RqcCallHandler extends WorkflowHandler
 		}
 		$submissionId = $qargs['submissionId'];
 		$rqcResult = $this->sendToRqc($request, $submissionId); // Explicit call
-		// TODO Q: if some data is faulty (use response?) or e.g. for not included files do a popup directly?
-		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS)) {
-			RqcLogger::logInfo("Explicit call to RQC for submission $submissionId successful");
-		} else {
-			if ($rqcResult['enqueuedCall']) {
-				RqcLogger::logWarning("Explicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\nInserted it into the db to be retried later as a delayed rqc call.");
-			} else {
-				RqcLogger::logError("Explicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\nThe call was probably faulty (and wasn't put into the queue to retry later).\nThe original post request body: " . json_encode($rqcResult['request']));
-			}
-		}
-		$this->processRqcResponse($rqcResult['status'], $rqcResult['response']);
+		$this->processRqcResponse($rqcResult, $submissionId, true);
 	}
 
 	/**
 	 * The workhorse for actually sending one submission's reviewing data to RQC.
-	 * Upon a network failure or non-response, puts call in queue (if "status" is in RQC_CALL_STATUS_CODES_TO_RESEND)
-	 * @return array  "status" and "response" information together with "enqueuedCall" (true/false)
+	 * @return array  "status" and "response" information
 	 */
 	function sendToRqc($request, int $submissionId): array
 	{
@@ -112,33 +88,8 @@ class RqcCallHandler extends WorkflowHandler
 		$contextId = $submission->getContextId();
 		$rqcJournalId = $this->plugin->getSetting($contextId, 'rqcJournalId');
 		$rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
-		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
+		return RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
 			$request, $submissionId, !$this->plugin->hasDeveloperFunctions());
-		//RqcDevHelper::writeObjectToConsole($rqcResult);
-		$rqcResult['enqueuedCall'] = false;
-		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)) { // queue when the error was not an implementation error
-			$this->putCallIntoQueue($submissionId);
-			$rqcResult['enqueuedCall'] = true; // for logging/response
-		}
-		return $rqcResult;
-	}
-
-
-	/**
-	 * Analyze RQC response and react:
-	 * Upon a successful call, redirects as indicated by RQC.
-	 * Upon an unsuccessful call, shows a simple HTML page with the entire JSON response for diagnosis.
-	 */
-	function processRqcResponse($statuscode, $jsonarray)
-	{
-		if ($statuscode == 303) {  // that's what we expect: redirect
-			header("HTTP/1.1 303 See Other");
-			header("Location: " . $jsonarray['redirect_target']);
-		} else {  // hmm, something is very, very wrong: Print the json.
-			foreach ($jsonarray as $key => $value) {
-				print("<pre>$key: " . print_r($value, true) . "</pre><br>"); // <pre> to be \n-safe e.g.
-			}
-		}
 	}
 
 	/**
@@ -148,28 +99,63 @@ class RqcCallHandler extends WorkflowHandler
 	 */
 	public function resend($submissionId): array
 	{
-		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
-		$submission = $submissionDao->getById($submissionId);
-		$contextId = $submission->getContextId();
-		$rqcJournalId = $this->plugin->getSetting($contextId, 'rqcJournalId');
-		$rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
-		$rqcResult = RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
-			null, $submissionId, !$this->plugin->hasDeveloperFunctions());
-		//RqcDevHelper::writeObjectToConsole($rqcResult);
-		return $rqcResult;
+		return $this->sendToRqc(null, $submissionId); // Delayed call
 	}
 
+	/**
+	 * Analyze RQC response and react:
+	 * Upon a successful call, redirects (explicit=>303) or does nothing (200 or implicit=>303)
+	 * Upon an unsuccessful call, log the error (and show a simple HTML page with the entire JSON response for diagnosis if explicit call)
+	 * Upon a network failure or non-response, puts call in queue (if "status" is in RQC_CALL_STATUS_CODES_TO_RESEND)
+	 * Logging depending on http status
+	 */
+	function processRqcResponse(array $rqcCallResult, int $submissionId, bool $explicitCall): void
+	{
+		$statusCode = $rqcCallResult['status'];
+		$responseBodyArray = $rqcCallResult['response'];
+		$postRequestBody = $rqcCallResult['request'];
+		$logMessageStarter = $explicitCall ? "Explicit" : "Implicit";
+		if (in_array($statusCode, [200, 303])) { // request successful
+			if ($explicitCall && $statusCode == 200) {
+				print("has to be designed "); // show message that no redirect is needed for explicit call // TODO 1 // display that grading happened and don't have to be done again: TODO 2: send to prechelt for the API-description
+				RqcLogger::logInfo("Explicit call to RQC for submission $submissionId successful: Redirect not needed!");
+			} else if ($explicitCall && $statusCode == 303) {
+				header("HTTP/1.1 303 See Other");
+				header("Location: " . $responseBodyArray['redirect_target']);
+				RqcLogger::logInfo("Explicit call to RQC for submission $submissionId successfully redirected");
+			} else { // implicit call is successful for both statusCodes (because it doesn't redirect)
+				RqcLogger::logInfo("Implicit call to RQC for submission $submissionId successful");
+			}
+		} else { // request unsuccessful
+			if (in_array($statusCode, RQC_CALL_STATUS_CODES_TO_RESEND)) { // error: probably not an implementation error
+				$this->putCallIntoQueue($submissionId);
+				RqcLogger::logWarning("$logMessageStarter call to RQC for submission $submissionId resulted in status "
+					. $statusCode . " with response body " . json_encode($responseBodyArray)
+					. "\nInserted it into the db to be retried later as a delayed rqc call.");
+			} else { // something else went wrong (implementation error or else)
+				RqcLogger::logError("$logMessageStarter call to RQC for submission $submissionId resulted in status "
+					. $statusCode . " with response body " . json_encode($responseBodyArray)
+					. "\nThe call was probably faulty (and wasn't put into the queue to retry later).\nThe original post request body: "
+					. json_encode($postRequestBody));
+			}
+			if ($explicitCall) { // show the error if explicit call
+				foreach ($responseBodyArray as $key => $value) {
+					print("<pre>$key: " . print_r($value, true) . "</pre>"); // <pre> to be \n-safe e.g.
+				}
+			}
+		}
+	}
 
+	/**
+	 * @return int The ID of the new delayedRqcCall that is generated and put into the queue
+	 */
 	public function putCallIntoQueue(int $submissionId): int
 	{
 		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
 		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
 		$submission = $submissionDao->getById($submissionId);
 		$contextId = $submission->getContextId();
-		if ($delayedRqcCallDao->getById($submissionId) != null) { // if there is already a call in the queue for this submission: Delete to not have multiple delayed calls for the same submission
-			$delayedRqcCallDao->deleteById($submissionId);
-			RqcLogger::logWarning("A delayed rqc call for submission $submissionId was already in the db. Deleted that delayed call in the queue.");
-		}
+		$delayedRqcCallDao->deleteCallsBySubmissionId($submissionId); // if there is already a call in the queue for this submission: Delete to not have multiple delayed calls for the same submission
 		$delayedRqcCall = $delayedRqcCallDao->newDataObject();
 		$delayedRqcCall->setSubmissionId($submissionId);
 		$delayedRqcCall->setContextId($contextId);

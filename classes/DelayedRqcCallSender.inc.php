@@ -72,7 +72,7 @@ class DelayedRqcCallSender extends ScheduledTask
 			$rqcResult = $callHandler->resend($call->getSubmissionId()); // try again
 
 			switch ($rqcResult) {
-				case in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS): // resend successfully
+				case in_array($rqcResult['status'], [200, 303]): // resend successful
 					$delayedRqcCallDao->deleteById($call->getId());
 					$lastNRetriesFailed = 0; // reset counter
 					$logMessage = "Successfully send the delayed RQC call from from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
@@ -80,15 +80,7 @@ class DelayedRqcCallSender extends ScheduledTask
 					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_NOTICE);
 					RqcLogger::logInfo($logMessage);
 					break;
-				case (in_array($rqcResult['status'], RQC_CALL_SERVER_DOWN)): // no connection to server: abort trying the next calls in the queue // TODO Q: Ok like that or should I delete that case (subclass of RQC_CALL_STATUS_CODES_TO_RESEND)?
-					$delayedRqcCallDao->updateCall($call);
-					$lastNRetriesFailed = $this->_NRetriesToAbort;
-					$logMessage = "Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
-						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\n";
-					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
-					RqcLogger::logWarning($logMessage);
-					break;
-				case (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND)): // other errors (probably not an implementation error)
+				case in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND): // error: probably not an implementation error
 					$delayedRqcCallDao->updateCall($call);
 					$lastNRetriesFailed += 1;
 					$logMessage = "Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .

@@ -99,7 +99,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 		$result = $this->retrieve(
 			'SELECT	* FROM ' . $this->tableName .
 			' WHERE (context_id = ? OR ? = 0) AND
-			      (last_try_ts < ? OR last_try_ts IS NULL)
+			      (last_try_ts <= ? OR last_try_ts IS NULL)
 		  	ORDER BY last_try_ts ASC', // this makes it a queue
 			array(
 				$contextId, $contextId,
@@ -147,6 +147,17 @@ class DelayedRqcCallDAO extends SchemaDAO
 			$call->setRemainingRetries($remainingRetries);
 			$call->setLastTryTs(Core::getCurrentDate($now));
 			$this->updateObject($call);
+		}
+	}
+
+	public function deleteCallsBySubmissionId(int $submissionId): void
+	{
+		$result = $this->retrieve('SELECT * FROM ' . $this->tableName . 'WHERE (submission_id = ?)', array($submissionId)); // result is an array of arrays and not of rqcDelayedCall-objects!
+		if (count($result) != 0) {
+			RqcLogger::logWarning("A delayed rqc call for submission $submissionId was already in the db. Deleted that delayed call in the queue.");
+			foreach ($result as $rqcDelayedCallArray) {
+				$this->deleteById($rqcDelayedCallArray['rqc_delayed_call_id']);
+			}
 		}
 	}
 }

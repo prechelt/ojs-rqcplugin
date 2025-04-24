@@ -35,31 +35,28 @@ class RqcFormValidator extends FormValidator
 			!$form->_plugin->hasDeveloperFunctions());
 		//RqcDevHelper::writeObjectToConsole($result);
 		$status = $result['status'];
-		if ($status == 200) {
-			return true;  // all is fine
+		switch ($status) {
+			case 200:
+				return true;  // all is fine
+			case 400:
+			case 404:
+				$msg = array_key_exists('response', $result) ? $result['response']['error']
+					: "something went wrong with the RQC request";
+				$form->addError('rqcJournalId', $msg);
+				RqcLogger::logError("API Key check went wrong: Didn't save the new credentials for the context $contextId. Status $status with response " . json_encode($result['response']));
+				// $form->addError('rqcJournalId', print_r($result, true));  // debug
+				return true;  // suppress the message configured at the FormValidator level
+			case 403:
+				$msg = array_key_exists('response', $result) ? $result['response']['error']
+					: "something went horribly wrong with the RQC request";
+				$form->addError('rqcJournalAPIKey', $msg);
+				RqcLogger::logError("API Key check went wrong: Didn't save the new credentials for the context $contextId. Status $status with response " . json_encode($result['response']));
+				// $form->addError('rqcJournalAPI', print_r($result, true));  // debug
+				return true;  // suppress the message configured at the FormValidator level
+			default:
+				RqcLogger::logError("API Key check went wrong: Didn't save the new credentials for the context $contextId. Status $status with response " . json_encode($result['response']));
+				return true;  // suppress the message configured at the FormValidator level
 		}
-		if ($status == 400 || $status == 404) {
-			$msg = array_key_exists('response', $result) ? $result['response']['error']
-				: "something went wrong with the RQC request";
-			$form->addError('rqcJournalId', $msg);
-			RqcLogger::logError("API Key check went wrong: Didn't save the new credentials for the context $contextId. Status $status with response " . json_encode($result['response']));
-			// $form->addError('rqcJournalId', print_r($result, true));  // debug
-			return true;  // suppress the message configured at the FormValidator level
-		}
-		if ($status == 403) {
-			$msg = array_key_exists('response', $result) ? $result['response']['error']
-				: "something went horribly wrong with the RQC request";
-			$form->addError('rqcJournalAPIKey', $msg);
-			RqcLogger::logError("API Key check went wrong: Didn't save the new credentials for the context $contextId. Status $status with response " . json_encode($result['response']));
-			// $form->addError('rqcJournalAPI', print_r($result, true));  // debug
-			return true;  // suppress the message configured at the FormValidator level
-		}
-		if ($status >= 500) {
-			RqcLogger::logError("API Key check went wrong: Didn't save the new credentials for the context $contextId. Status $status with response " . json_encode($result['response']));
-			return true;  // suppress the message configured at the FormValidator level
-		}
-		// TODO 2: other status codes? Default? Or are there some missing?
-		return true;  // suppress the message configured at the FormValidator level
 	}
 }
 

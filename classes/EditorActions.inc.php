@@ -147,18 +147,7 @@ class EditorActions
 		// RqcDevHelper::writeToConsole("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
 		$caller = new RqcCallHandler();
 		$rqcResult = $caller->sendToRqc(null, $submissionId); // Implicit call
-		// TODO Q: what to do if something not send (attachments) or truncated: Logging and/or popup for the current user? (see RqcEditorDecisionHandler::rqcGrade())
-		// TODO Q: what to do if some data is faulty (use response as popup? and/or just logging?)
-		// TODO Q: if check for redirect is there: make the software do that redirect // TODO Q: 303 if grading didn't happen yet. Else 200? Would make sense and would make the potential "grading happend" check (as a call) irrelevant (less logic)
-		if (in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_SUCESS)) {
-			RqcLogger::logInfo("Implicit call to RQC for submission $submissionId successful");
-		} else {
-			if ($rqcResult['enqueuedCall']) {
-				RqcLogger::logWarning("Implicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\nInserted it into the db to be retried later as a delayed rqc call.");
-			} else {
-				RqcLogger::logError("Implicit call to RQC for submission $submissionId resulted in status " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\nThe call was probably faulty (and wasn't put into the queue to retry later).\nThe original post request body: " . json_encode($rqcResult['request']));
-			}
-		}
+		$caller->processRqcResponse($rqcResult, $submissionId, false);
 		// RqcDevHelper::writeObjectToConsole($rqcResult);
 		return $GO_ON;
 	}

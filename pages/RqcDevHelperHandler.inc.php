@@ -55,8 +55,8 @@ class RqcDevHelperHandler extends Handler
 			print(json_encode($data, JSON_PRETTY_PRINT));
 		} else {  //----- make an actual RQC call:
 			$handler = new RqcCallHandler();
-			$rqcResult = $handler->sendToRqc($request, $submissionId);
-			$handler->processRqcResponse($rqcResult['status'], $rqcResult['response']);
+			$rqcResult = $handler->sendToRqc($request, $submissionId); // test explicit call
+			$handler->processRqcResponse($rqcResult, $submissionId, true);
 		}
 	}
 
