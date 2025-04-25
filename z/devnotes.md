@@ -260,22 +260,18 @@ other typical identifiers for such objects):
 
 ### TO DO and status
 
-- store opt-in response in review submission
-  https://docs.pkp.sfu.ca/dev/plugin-guide/en/examples-custom-field
-- add all hooks and actual activity
 - Switch to LetsEncrypt and put its root certificate into the plugin,
   because the Telekom certificate ends 2019-07-09
-  (and RQC's ends 2019-03-27!)
+  (and RQC's ends 2019-03-27!) TODO Q: Huh?
 - write automated tests
 	- also for RqcApiIdKeyPair
 - testing
 	- every year the demojournals at RQC are deleted (so add a remark somewhere)
-	- which states can OJs be in in which RQC doesn't work?
+	- which states can OJS be in, in which RQC doesn't work?
 - document typical problems
 	- same email is needed for both services (RQC login and OJS user) (that is the "id" that identifies the people)
 	- try one explicit call the first time so that they can test if the system works with immediate feedback
 - rewrite some things here in the devnodes (some are old and I don't know what they mean)
-- if attachment sets are supported by the server: uncomment the place where its called
 - which patches are applied, which aren't
 	- delete patches that are applied at the code base (3.3 is fully accepted!; 3.4 I haven't looked)
 - go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??;
@@ -297,7 +293,7 @@ other typical identifiers for such objects):
 	- Added an issue for adding the hook. If the issue https://github.com/pkp/pkp-lib/issues/11305 is closed and merged
 	  these changes will take effect. Until then ReviewerOpting::getAndSaveOptingStatus() can stay inside but does
 	  noting.
-
+    - if attachment sets are supported by the server: uncomment the place where its called
 
 - TODOs in the files
 	- TODO 1, 2, 3

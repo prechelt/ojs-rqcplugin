@@ -59,7 +59,7 @@ class RqcPlugin extends GenericPlugin
 				HookRegistry::register(
 					'TemplateResource::getFilename',
 					array($this, '_overridePluginTemplates')
-				); // needed by ReviewerOpting (automatically override all the templates of ojs with templates set by this plugin. In this case: /reviewer/review/reviewerRecommendation.tpl)
+				); // needed by ReviewerOpting (automatically override all the templates of ojs with templates set by this plugin. In this case: /reviewer/review/step3.tpl)
 				(new ReviewerOpting())->register();
 				(new EditorActions())->register();
 				DAORegistry::registerDAO('DelayedRqcCallDAO', new DelayedRqcCallDAO());
@@ -208,6 +208,22 @@ class RqcPlugin extends GenericPlugin
 			return true;  // this hook's handling is done
 		}
 		return false;  // continue calling hook functions for this hook
+	}
+
+	/**
+	 * to block an infinite loop
+	 * with _overridePluginTemplates() "template:step3" and "core:step3" are both replaced by "plugin:step3"
+	 * (if the file is present)
+	 * without "plugin:step3" this happens: "template:step3" includes "core:step3" and that is displayed
+	 * but with "plugin:step3" this happens: "template:step3" is overwritten by "plugin:step3"
+	 * which also includes "core:step3" (but that is overwritten as well to be "plugin:step3" to go into infinite recursion)
+	 * so this "if" blocks "plugin:step3" overwriting "core:step3"
+	 */
+	public function _overridePluginTemplates($hookName, $args): void
+	{
+		if (!str_contains($args[0], "lib/pkp/templates/reviewer/review/step3.tpl")) {
+			parent::_overridePluginTemplates($hookName, $args);
+		}
 	}
 
 	//========== Helpers ==========

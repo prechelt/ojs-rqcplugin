@@ -24,7 +24,7 @@ define('RQC_PRELIM_OPTING', true);  // for readability
 /**
  * Handle the opt-in/opt-out status of a user (via the step3Form)
  * setStatus()/getStatus()/optingRequired() manage the status in two user settings fields.
- * reviewerRecommendations.tpl adds an opting selection field into ReviewerReviewStep3Form.
+ * rqcReviewerOptingFormField.tpl adds an opting selection field that is included into a custom step3.tpl that overwrites OJS' step3.tpl
  * these methods are usually called in this order to get the values and then take them after a submit
  *  - callbackInitOptingData() (for GET) injects the current opting value (null selected) and a flag for showing/not showing the field.
  *  - callbackAddReviewerOptingField() injects the selection values.
