@@ -117,7 +117,7 @@ class RqcCallHandler extends WorkflowHandler
 		$logMessageStarter = $explicitCall ? "Explicit" : "Implicit";
 		if (in_array($statusCode, [200, 303])) { // request successful
 			if ($explicitCall && $statusCode == 200) {
-				print("has to be designed "); // show message that no redirect is needed for explicit call // TODO 1 // display that grading happened and don't have to be done again: TODO 2: send to prechelt for the API-description
+				print("has to be designed "); // show message that no redirect is needed for explicit call // TODO 1 display that grading happened and don't have to be done again: TODO Q: what message should we show?
 				RqcLogger::logInfo("Explicit call to RQC for submission $submissionId successful: Redirect not needed!");
 			} else if ($explicitCall && $statusCode == 303) {
 				header("HTTP/1.1 303 See Other");

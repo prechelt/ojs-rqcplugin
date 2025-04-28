@@ -4,17 +4,13 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php b/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php
---- a/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php	
+--- a/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php
 +++ b/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php	(date 1745313062064)
 @@ -212,7 +212,10 @@
  		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
  		$reviewAssignmentDao->updateObject($reviewAssignment);
- 
+
 -
-+		$returner = null;
-+		if (HookRegistry::call(strtolower_codesafe(get_class($this)) . '::saveForLater', array($this, &$returner))) {
-+			return $returner;
-+		}
- 
++		HookRegistry::call(strtolower_codesafe(get_class($this)) . '::saveForLater', array($this));
  		return true;
  	}
