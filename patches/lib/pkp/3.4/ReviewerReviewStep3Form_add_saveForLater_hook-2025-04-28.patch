@@ -1,20 +1,24 @@
-Index: classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php
+Index: classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php b/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php
---- a/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php	
-+++ b/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.inc.php	(date 1745313062064)
-@@ -212,7 +212,10 @@
- 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
- 		$reviewAssignmentDao->updateObject($reviewAssignment);
- 
--
-+		$returner = null;
-+		if (HookRegistry::call(strtolower_codesafe(get_class($this)) . '::saveForLater', array($this, &$returner))) {
-+			return $returner;
-+		}
- 
- 		return true;
- 	}
+diff --git a/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php b/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php
+--- a/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php	(revision 897d263cc341f90bccb4f948196bdb59e43160d8)
++++ b/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php	(date 1745836147725)
+@@ -33,6 +33,7 @@
+ use PKP\notification\NotificationDAO;
+ use PKP\notification\NotificationSubscriptionSettingsDAO;
+ use PKP\notification\PKPNotification;
++use PKP\plugins\Hook;
+ use PKP\reviewForm\ReviewFormDAO;
+ use PKP\reviewForm\ReviewFormElement;
+ use PKP\reviewForm\ReviewFormElementDAO;
+@@ -294,6 +295,7 @@
+         $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /** @var ReviewAssignmentDAO $reviewAssignmentDao */
+         $reviewAssignmentDao->updateObject($reviewAssignment);
+
++        Hook::call(strtolower_codesafe(get_class($this)) . '::saveForLater', array($this));
+         return true;
+     }
+
