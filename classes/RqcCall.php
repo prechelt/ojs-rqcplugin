@@ -2,6 +2,7 @@
 
 namespace APP\plugins\generic\rqc\classes;
 
+use DateTime;
 use PKP\plugins\PluginRegistry;
 
 use APP\plugins\generic\rqc\classes\RqcLogger;

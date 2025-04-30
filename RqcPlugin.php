@@ -55,8 +55,8 @@ class RqcPlugin extends GenericPlugin
 					'TemplateResource::getFilename',
 					array($this, '_overridePluginTemplates')
 				); // needed by ReviewerOpting (automatically override all the templates of ojs with templates set by this plugin. In this case: /reviewer/review/step3.tpl)
-				(new ReviewerOpting())->register();
-				(new EditorActions())->register();
+				//(new ReviewerOpting())->register();
+				//(new EditorActions())->register();
 				DAORegistry::registerDAO('DelayedRqcCallDAO', new DelayedRqcCallDAO());
 			}
 			if (RqcPlugin::hasDeveloperFunctions()) {  // register the devFunctions independent of RQC-ID-Key-Pair

@@ -3,8 +3,10 @@
 namespace APP\plugins\generic\rqc\pages;
 
 use APP\pages\workflow\WorkflowHandler;
+use PKP\plugins\Plugin;
 use PKP\plugins\PluginRegistry;
 use APP\submission\DAO;
+use PKP\security\Role;
 
 use APP\plugins\generic\rqc\RqcPlugin;
 use APP\plugins\generic\rqc\classes\RqcCall;
@@ -50,7 +52,7 @@ class RqcCallHandler extends WorkflowHandler
 	{
 		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
 		$this->addRoleAssignment(
-			array(ROLE_ID_SUB_EDITOR, ROLE_ID_MANAGER, ROLE_ID_ASSISTANT),
+			array(Role::ROLE_ID_SUB_EDITOR, Role::ROLE_ID_MANAGER, Role::ROLE_ID_ASSISTANT),
 			array('submit',));
 		parent::__construct();
 	}
