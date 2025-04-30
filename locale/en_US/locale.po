@@ -33,6 +33,9 @@ msgstr "<p>You are about to submit this submission's review data to <a href='htt
 msgid "plugins.generic.rqc.editoraction.grade.difference"
 msgstr "<br><p>Note: The following data will not be sent in full due to RQC size limits (it may be truncated or omitted).<p>"
 
+msgid "plugins.generic.rqc.editoraction.grade.notRedirect"
+msgstr "<p>Note: You are not redirected as normal. This could mean that you already performed the grading or someone else did it and it can be done just once.<p>"
+
 msgid "plugins.generic.rqc.reviewerOptIn.header"
 msgstr "Take part in Review Quality Collector?"
 
