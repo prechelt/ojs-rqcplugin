@@ -319,8 +319,9 @@ class RqcData
 
 			//--- reviewer:
 			$reviewerObject = $userDao->getById($reviewAssignment->getReviewerId());
-			// rqcOptOut
-			$status = (new ReviewerOpting())->getStatus($contextId, $reviewerObject, !RQC_PRELIM_OPTING);
+			// rqcOptIn or rqcOptOut
+			$reviewAssignmentYear = date('Y', strtotime($reviewAssignment->getDateCompleted()));
+			$status = (new ReviewerOpting())->getStatus($contextId, $reviewerObject, !RQC_PRELIM_OPTING, $reviewAssignmentYear); // get opting decision for the year the assignment was submitted
 			$rqcReviewer = array();
 			if ($status == RQC_OPTING_STATUS_IN) {
 				$rqcReviewer['email'] = $reviewerObject->getEmail();

@@ -107,12 +107,12 @@ class RqcDevHelperHandler extends Handler
 	 */
 	public function rqcOptingStatusReset($args, $request)
 	{
+		$year =& $args[0];
 		$contextId = $request->getContext()->getId();
 		$user = $request->getUser();
 		$userId = $user->getId();
-		$user->updateSetting(ReviewerOpting::$dateName, null, 'string', $contextId);
-		$user->updateSetting(ReviewerOpting::$statusName, null, 'int', $contextId);
-		return ("rqcOptingStatusReset for reviewer $userId in journal $contextId");
+		$user->updateSetting(ReviewerOpting::$statusName . $year, null, 'int', $contextId);
+		return ("rqcOptingStatusReset for reviewer $userId in journal $contextId for year $year");
 	}
 
 	/**

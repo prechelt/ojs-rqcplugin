@@ -49,14 +49,14 @@ class RqcReviewerReviewerOptingTest extends DatabaseTestCase
 		$status = $opting->getStatus($context, $user);
 		$this->assertEquals(RQC_OPTING_STATUS_UNDEFINED, $status);
 		//----- check storing OUT preliminarily:
-		$opting->setStatus($context, $user, RQC_OPTING_STATUS_OUT, RQC_PRELIM_OPTING);
-		$status = $opting->getStatus($context, $user, RQC_PRELIM_OPTING);
+		$opting->setStatus($context, $user, RQC_OPTING_STATUS_OUT, RQC_PRELIM_OPTING, "2024");
+		$status = $opting->getStatus($context, $user, RQC_PRELIM_OPTING, "2024");
 		$this->assertEquals(RQC_OPTING_STATUS_OUT, $status);
-		$status = $opting->getStatus($context, $user);
+		$status = $opting->getStatus($context, $user, !RQC_PRELIM_OPTING, "2024");
 		$this->assertEquals(RQC_OPTING_STATUS_UNDEFINED, $status);
 		//----- check storing IN:
-		$opting->setStatus($context, $user, RQC_OPTING_STATUS_IN);
-		$status = $opting->getStatus($context, $user, RQC_PRELIM_OPTING);
+		$opting->setStatus($context, $user, RQC_OPTING_STATUS_IN, date('Y'));
+		$status = $opting->getStatus($context, $user, RQC_PRELIM_OPTING, date('Y'));
 		$this->assertEquals(RQC_OPTING_STATUS_IN, $status);
 		$status = $opting->getStatus($context, $user);
 		$this->assertEquals(RQC_OPTING_STATUS_IN, $status);

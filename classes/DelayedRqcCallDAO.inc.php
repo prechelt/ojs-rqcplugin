@@ -30,7 +30,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 	public $tableName = 'rqc_delayed_calls';
 
 	/** @copydoc SchemaDAO::$settingsTableName */
-	// create the settings table (even if it will be empty for sure) because its to big of a error source to not have it
+	// create the settings table (even if it will be empty for sure) because its to big of an error source to not have it
 	public $settingsTableName = 'rqc_delayed_calls_settings';
 
 	/** @copydoc SchemaDAO::$primaryKeyColumn */

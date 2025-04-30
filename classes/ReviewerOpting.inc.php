@@ -37,8 +37,7 @@ define('RQC_PRELIM_OPTING', true);  // for readability
  */
 class ReviewerOpting
 {
-	public static string $dateName = 'rqc_opting_date';
-	public static string $statusName = 'rqc_opting_status';
+	public static string $statusName = 'rqcOptingStatus_';
 
 	/**
 	 * Register callbacks. This is to be called from the plugin's register().
@@ -84,9 +83,9 @@ class ReviewerOpting
 		$step3Form->setData('rqcOptingRequired', $optingRequired);
 
 		// if a preliminary Opt In or Out is stored then preselect that value in the gui. Else preselect the empty select
-		$previousRqcOptIn = $this->getStatus($contextId, $user, RQC_PRELIM_OPTING);
-		$rqcPreselectedOptIn = in_array($previousRqcOptIn, [RQC_OPTING_STATUS_IN, RQC_OPTING_STATUS_OUT]) ?
-			$previousRqcOptIn : "";
+		$preliminaryRqcOptIn = $this->getStatus($contextId, $user, RQC_PRELIM_OPTING);
+		$rqcPreselectedOptIn = in_array($preliminaryRqcOptIn, [RQC_OPTING_STATUS_IN, RQC_OPTING_STATUS_OUT]) ?
+			$preliminaryRqcOptIn : "";
 		$step3Form->setData('rqcPreselectedOptIn', $rqcPreselectedOptIn);
 		//RqcDevHelper::writeObjectToConsole($step3Form, "####step3Form");
 		return false;
@@ -164,11 +163,15 @@ class ReviewerOpting
 	 * True iff opting is missing, outdated, or preliminary.
 	 * @param $contextId  int the ID of the context
 	 * @param $user       User the user to check (typically the logged-in user)
+	 * @param $year		  string|null the year which to check
 	 * @returns $status: one of RQC_OPTING_STATUS_* except *_PRELIM
 	 */
-	public function optingRequired(int $contextId, User $user): bool
+	public function optingRequired(int $contextId, User $user, string $year = null): bool
 	{
-		return $this->getStatus($contextId, $user, !RQC_PRELIM_OPTING) == RQC_OPTING_STATUS_UNDEFINED;
+		if ($year == null) {
+			$year = date('Y');
+		}
+		return $this->getStatus($contextId, $user, !RQC_PRELIM_OPTING, $year) == RQC_OPTING_STATUS_UNDEFINED;
 	}
 
 	/**
@@ -176,20 +179,18 @@ class ReviewerOpting
 	 * @param $contextId       int the ID of the context
 	 * @param $user            User the user to check (typically the logged-in user)
 	 * @param $preliminary     bool whether to return preliminary statuses (else return ...UNKNOWN then)
+	 * @param $year            string|null the year which to check
 	 * @returns $status: one of RQC_OPTING_STATUS_* except *_PRELIM
 	 */
-	public function getStatus(int $contextId, User $user, bool $preliminary = !RQC_PRELIM_OPTING): int
+	public function getStatus(int $contextId, User $user, bool $preliminary = !RQC_PRELIM_OPTING, string $year = null): int
 	{
-		$optingDate = $user->getSetting(self::$dateName, $contextId);
-		if ($optingDate == null) {
-			return RQC_OPTING_STATUS_UNDEFINED;  // no opting entry found at all
+		if ($year == null) {
+			$year = date('Y');
 		}
-		$currentyear = (int)substr(gmdate("Y-m-d"), 0, 4);
-		$statusyear = (int)substr($optingDate, 0, 4);
-		if ($currentyear > $statusyear) {
-			return RQC_OPTING_STATUS_UNDEFINED;  // opting entry is outdated
+		$optingStatus = $user->getSetting(self::$statusName . $year, $contextId); // one of ...IN/OUT/IN_PRELIM/OUT_PRELIM
+		if ($optingStatus == null) {
+			return RQC_OPTING_STATUS_UNDEFINED;  // no opting entry found for that year
 		}
-		$optingStatus = $user->getSetting(self::$statusName, $contextId);  // one of ...IN/OUT/IN_PRELIM/OUT_PRELIM
 		if ($optingStatus == RQC_OPTING_STATUS_OUT_PRELIM) {
 			return $preliminary ? RQC_OPTING_STATUS_OUT : RQC_OPTING_STATUS_UNDEFINED;
 		} else if ($optingStatus == RQC_OPTING_STATUS_IN_PRELIM) {
@@ -199,27 +200,31 @@ class ReviewerOpting
 	}
 
 	/**
-	 * Store timestamped opting status into the DB for this user and journal.
+	 * Store opting status into the DB for this user and journal (for each year separately).
 	 * @param $contextId     int the ID of the context
 	 * @param $user          User the user to set the status (typically the logged-in user)
 	 * @param $status        int RQC_OPTING_STATUS_(IN/OUT)
 	 * @param $preliminary   bool whether to store status as _PRELIM
+	 * @param $year          string|null the year for which the status is stored
 	 */
-	public function setStatus(int $contextId, User $user, int $status, bool $preliminary = !RQC_PRELIM_OPTING): void
+	public function setStatus(int $contextId, User $user, int $status, bool $preliminary = !RQC_PRELIM_OPTING, string $year = null): void
 	{
-		if ($status != RQC_OPTING_STATUS_IN and $status != RQC_OPTING_STATUS_OUT) {
-			trigger_error("Illegal opting status " . $status, E_USER_ERROR);
+		if ($year == null) {
+			$year = date('Y');
 		}
-		$user->updateSetting(self::$dateName, gmdate("Y-m-d"), 'string', $contextId);
+		if ($status != RQC_OPTING_STATUS_IN and $status != RQC_OPTING_STATUS_OUT) {
+			RqcLogger::logError("Invalid opting status $status");
+		}
 		if ($preliminary) {
 			$status = ($status == RQC_OPTING_STATUS_OUT) ? RQC_OPTING_STATUS_OUT_PRELIM : RQC_OPTING_STATUS_IN_PRELIM;
 		}
-		$user->updateSetting(self::$statusName, $status, 'int', $contextId);
+		$user->updateSetting(self::$statusName . $year, $status, 'int', $contextId);
 	}
 
 	/**
+	 * gets the opting status from the form and stores it into the db
 	 * @param array $args        must contain the form object as the first element
-	 * @param bool  $preliminary where the whole opting status should be "savedForLater" (thus preliminary) or "real" with the executeForm
+	 * @param bool  $preliminary if the whole opting status should be "savedForLater" (thus preliminary) or "real" with the executeForm
 	 * @return false so that the HookRegistry call can be resumed for all other functions
 	 */
 	public function getAndSaveOptingStatus($args, bool $preliminary): false
@@ -234,11 +239,14 @@ class ReviewerOpting
 			return false;  // nothing to do because form field was not shown
 		$preliminaryMessage = $preliminary ? "(preliminary)" : "";
 		$rqcOptIn = $step3Form->getData('rqcOptIn');
-		$previousRqcOptIn = $this->getStatus($contextId, $user, $preliminary);
+		$previousYear = (string) (((int) date('Y')) - 1);
+		$previousRqcOptIn = $this->getStatus($contextId, $user, $preliminary, $previousYear);
 		RqcDevHelper::writeToConsole("##### callbackStep3execute: previous $preliminaryMessage rqcOptIn=$previousRqcOptIn\n");
 		if ($rqcOptIn) {
-			$this->setStatus($contextId, $user, $rqcOptIn, $preliminary);
-			RqcLogger::logInfo("Stored a new $preliminaryMessage RQC opting status for user with ID " . $user->getId() . " for context $contextId: rqcOptIn=" . $this->statusEnumToString($rqcOptIn, $preliminary) . " (representation: $rqcOptIn) previous $preliminaryMessage rqcOptIn=" . $this->statusEnumToString($previousRqcOptIn, $preliminary));
+			$this->setStatus($contextId, $user, $rqcOptIn, $preliminary); // for the current year
+			RqcLogger::logInfo("Stored a new $preliminaryMessage RQC opting status for user with ID " . $user->getId() .
+				" for context $contextId: rqcOptIn=" . $this->statusEnumToString($rqcOptIn, $preliminary) .
+				" (representation: $rqcOptIn) previous $preliminaryMessage rqcOptIn=" . $this->statusEnumToString($previousRqcOptIn, $preliminary));
 			//RqcDevHelper::writeToConsole("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
 		}
 		return false;
