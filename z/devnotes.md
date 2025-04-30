@@ -265,9 +265,6 @@ other typical identifiers for such objects):
 
 ### TO DO and status
 
-- Switch to LetsEncrypt and put its root certificate into the plugin,
-  because the Telekom certificate ends 2019-07-09
-  (and RQC's ends 2019-03-27!) TODO Q: Huh?
 - write automated tests
 	- also for RqcApiIdKeyPair
 - testing
@@ -291,7 +288,7 @@ other typical identifiers for such objects):
 		- maybe then redirect for grading?
 	- package the plugin, submit it for publication in OJS plugin gallery
 - at the end (after my bachelors thesis is finished)
-	- set up the Issue tracker for the future
+	- put in all open issues into the issues
 	- elaborate on "ask your publisher" in locale.po
 
 - wait for other people
