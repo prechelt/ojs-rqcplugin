@@ -1,6 +1,6 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\classes;
 
 use APP\plugins\generic\rqc\RqcPlugin;
 

@@ -1,14 +1,14 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\classes;
 
 use APP\core\Application;
 use APP\template\TemplateManager;
 use PKP\plugins\Hook;
 use PKP\user\User;
 
-use APP\plugins\generic\rqc\RqcLogger;
-use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\RqcLogger;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
 use APP\plugins\generic\rqc\RqcPlugin;
 
 define('RQC_OPTING_STATUS_IN', 36);  // internal, external

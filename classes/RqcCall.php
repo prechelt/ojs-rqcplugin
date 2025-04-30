@@ -1,12 +1,12 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\classes;
 
 use PKP\plugins\PluginRegistry;
 
-use APP\plugins\generic\rqc\RqcLogger;
-use APP\plugins\generic\rqc\RqcDevHelper;
-use APP\plugins\generic\rqc\RqcData;
+use APP\plugins\generic\rqc\classes\RqcLogger;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\RqcData;
 use APP\plugins\generic\rqc\RqcPlugin;
 
 define('RQC_MHS_APIKEYCHECK_URL', "%s/api/mhs_apikeycheck/%s");  // host, rqcJournalId

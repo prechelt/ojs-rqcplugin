@@ -10,9 +10,9 @@ use PKP\form\validation\FormValidatorRegExp;
 use PKP\form\validation\FormValidator;
 
 use APP\plugins\generic\rqc\RqcPlugin;
-use APP\plugins\generic\rqc\RqcCall;
-use APP\plugins\generic\rqc\RqcDevHelper;
-use APP\plugins\generic\rqc\RqcLogger;
+use APP\plugins\generic\rqc\classes\RqcCall;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\RqcLogger;
 
 
 /**

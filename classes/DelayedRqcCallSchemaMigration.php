@@ -1,14 +1,14 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\classes;
 
 use APP\core\Application;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-use APP\plugins\generic\rqc\RqcDevHelper;
-use APP\plugins\generic\rqc\RqcLogger;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\RqcLogger;
 
 
 /**

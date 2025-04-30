@@ -1,6 +1,6 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\pages;
 
 use APP\handler\Handler;
 use PKP\db\DAORegistry;
@@ -8,14 +8,14 @@ use PKP\plugins\PluginRegistry;
 
 use Composer\Semver\Semver; // used by x()
 
-use APP\plugins\generic\rqc\DelayedRqcCallSchemaMigration;
-use APP\plugins\generic\rqc\DelayedRqcCallSender;
-use APP\plugins\generic\rqc\DelayedRqcCall;
-use APP\plugins\generic\rqc\DelayedRqcCallDAO;
-use APP\plugins\generic\rqc\RqcData;
-use APP\plugins\generic\rqc\ReviewerOpting;
-use APP\plugins\generic\rqc\RqcLogger;
-use APP\plugins\generic\rqc\RqcCallHandler;
+use APP\plugins\generic\rqc\classes\DelayedRqcCallSchemaMigration;
+use APP\plugins\generic\rqc\classes\DelayedRqcCallSender;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall;
+use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\RqcData;
+use APP\plugins\generic\rqc\classes\ReviewerOpting;
+use APP\plugins\generic\rqc\classes\RqcLogger;
+use APP\plugins\generic\rqc\pages\RqcCallHandler;
 use APP\plugins\generic\rqc\RqcPlugin;
 
 

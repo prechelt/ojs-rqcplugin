@@ -1,15 +1,15 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\classes;
 
 use PKP\db\DAORegistry;
 use PKP\scheduledTask\ScheduledTask;
 use PKP\core\Core;
 
-use APP\plugins\generic\rqc\DelayedRqcCallDAO;
-use APP\plugins\generic\rqc\DelayedRqcCall;
-use APP\plugins\generic\rqc\RqcCallHandler;
-use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall;
+use APP\plugins\generic\rqc\pages\RqcCallHandler;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
 use APP\plugins\generic\rqc\RqcPlugin;
 
 

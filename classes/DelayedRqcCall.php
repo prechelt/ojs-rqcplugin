@@ -1,10 +1,10 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\classes;
 
 use PKP\core\DataObject;
 
-use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 
 /**

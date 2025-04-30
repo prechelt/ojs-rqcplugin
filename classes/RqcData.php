@@ -1,6 +1,6 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\classes;
 
 use PKP\Services\PKPFileService;
 use Random\RandomException;
@@ -14,8 +14,8 @@ use PKP\submission\reviewRound\ReviewRoundDAO;
 use PKP\submission\DAO;
 use PKP\plugins\Plugin;
 
-use APP\plugins\generic\rqc\RqcDevHelperHandler;
-use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\pages\RqcDevHelperHandler;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 define("RQC_AllOWED_FILE_EXTENSIONS", array(
 	"pdf", "docx", "xlsx", "pptx", "odt", "ods", "odp", "odg", "txt"
@@ -569,7 +569,7 @@ class RqcOjsData
  * the entry of the alphabetically first locale otherwise.
  * @param array $allEntries mapping from locale name to string
  */
-function englishest(array $allEntries, $elseAll = false)
+function englishest(array $allEntries, $elseAll = false) // en/us moved to en // TODO 1: did that change something?
 {
 	$allNonenglishLocales = array();
 	foreach ($allEntries as $locale => $entry) {

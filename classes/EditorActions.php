@@ -1,16 +1,16 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\classes;
 
 use PKP\plugins\Hook;
 use PKP\submission\reviewRound\ReviewRoundDAO;
 use PKP\submission\reviewAssignment\DAO;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 
-use APP\plugins\generic\rqc\RqcCallHandler;
-use APP\plugins\generic\rqc\RqcData;
-use APP\plugins\generic\rqc\RqcDevHelper;
-use APP\plugins\generic\rqc\RqcLogger;
+use APP\plugins\generic\rqc\pages\RqcCallHandler;
+use APP\plugins\generic\rqc\classes\RqcData;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\RqcLogger;
 
 
 /**

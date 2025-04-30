@@ -18,55 +18,57 @@
 ### Debian/Fedora for 3.3
 
 the Fedora and Debian installation follows the https://docs.pkp.sfu.ca/dev/documentation/en/getting-started.
-But there where some big problems that I fell into so I document that in case it helps someone.
+But there were some big problems that I fell into, so I document that in case it helps someone.
 
 ```
-#sudo n 16.20.2
+# sudo n 20.0.0 # node is needed with min this version
 
 #test psql connection with psql -U your_ojs_user -h your_ojs_location -d your_ojs_db -W
 
 #postfix
-sudo apt install postfix -y
+sudo dnf install node php-zip php-gd php-bcmath postfix patch -y # patch, postfix and the php ext are needed
+sudo npm install -g n
 sudo systemctl --now enable postfix
 
-#################### works only on debian!!!! (so copy from that system to fedora if needed) #######################
+mkdir -p /your_path_to_ojs/files # make all necessary dirs
 
-mkdir -p /your_path_to_ojs/ojs/3.3/files
+cd /your_path_to_ojs
+git clone git@github.com:pkp/ojs.git --recurse-submodules -b stable-3_5_0
 
-cd /your_path_to_ojs/ojs/3.3
-git clone https://github.com/pkp/ojs --recurse-submodules -b stable-3_3_0
+cd ojs/lib/pkp
+git remote add upstream git@github.com:pkp/pkp-lib.git
+cd ../ui-library
+git remote add upstream git@github.com:pkp/ui-library.git
+cd ../..
 
-cd /your_path_to_ojs/ojs/3.3/ojs
-cp /your_path_to_ojs/ojs/3.3/ojs/config.TEMPLATE.inc.php /your_path_to_ojs/ojs/3.3/ojs/config.inc.php
+cd ojs
+cp config.TEMPLATE.inc.php config.inc.php
 
-#edit the config.inc.php to suit your needs
+#edit the config.inc.php to suit your needs: see below
 
 composer --working-dir=lib/pkp install
-#no update !!! => jquery wouldn't work anymore #because of different file location
-composer --working-dir=plugins/paymethod/paypal install
 composer --working-dir=plugins/generic/citationStyleLanguage install
+composer --working-dir=plugins/paymethod/paypal install
+
 npm install
-npm run build # with error
+npm run build
 
-#  ####################################################################
+php -S localhost:8001
 
-# this works on fedora after copying the folder that is compiled at debian
+# for updates
+# git submodule update --init --recursive
+# composer --working-dir=lib/pkp update
+# npm install
+# npm run build
 
-php -S localhost:8000
+# install rqc
+#cd /your_path_to_ojs/ojs/plugins/generic
+#git clone git@github.com:prechelt/ojs-rqcplugin.git rqc # clone the repo into the folder rqc
+#cd /your_path_to_ojs/ojs
+#php tools/upgrade.php upgrade # register the plugin
 
-# install rqc via the ojs systems plugin gallery
-
-#cd /your_path_to_ojs/ojs/3.3/ojs/plugins/generic
-#sudo rm -r rqc # then remove
-#git clone https://github.com/prechelt/ojs-rqcplugin.git rqc # and clone the repo instead
-
-# or
-# 1. clone the rqc plugin into the /your_path_to_ojs/ojs/3.3/ojs/plugins/generic
-# 2. php tools/upgrade.php upgrade
-
-# sudo nano /etc/crontab
-
-# to insert * * * * * bluecube php /your_path_to_ojs/ojs/3.3/ojs/tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml > "/your_path_to_ojs/ojs/3.3/files/your_scheduled_task_log.log" 2>&1
+# sudo nano /etc/crontab # that needs reviewing! TODO 1
+# to insert * * * * * bluecube php /your_path_to_ojs/ojs/tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml > "/your_path_to_ojs/files/your_scheduled_task_log.log" 2>&1
 ```
 
 for my custom setup for the config.inc.php see https://docs.pkp.sfu.ca/dev/documentation/3.3/en/getting-started together

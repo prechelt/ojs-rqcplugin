@@ -1,6 +1,6 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\classes;
 
 use PKP\core\DataObject;
 use PKP\db\SchemaDAO;
@@ -8,8 +8,8 @@ use PKP\db\DAOResultFactory;
 use PKP\plugins\Hook;
 
 use APP\plugins\generic\rqc\RqcPlugin;
-use APP\plugins\generic\rqc\DelayedRqcCall;
-use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 
 /**

@@ -1,17 +1,17 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\pages;
 
 use APP\pages\workflow\WorkflowHandler;
 use PKP\plugins\PluginRegistry;
 use APP\submission\DAO;
 
 use APP\plugins\generic\rqc\RqcPlugin;
-use APP\plugins\generic\rqc\RqcCall;
-use APP\plugins\generic\rqc\DelayedRqcCallDAO;
-use APP\plugins\generic\rqc\DelayedRqcCall;
-use APP\plugins\generic\rqc\RqcLogger;
-use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\RqcCall;
+use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall;
+use APP\plugins\generic\rqc\classes\RqcLogger;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 
 define("RQC_CALL_STATUS_CODES_TO_RESEND", array(

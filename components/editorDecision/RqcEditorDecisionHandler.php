@@ -1,6 +1,6 @@
 <?php
 
-namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc\components\editorDecision;
 
 use APP\core\Application;
 use APP\core\PageRouter;
@@ -10,7 +10,7 @@ use PKP\handler\PKPHandler;
 use PKP\plugins\PluginRegistry;
 
 use APP\plugins\generic\rqc\RqcPlugin;
-use APP\plugins\generic\rqc\RqcData;
+use APP\plugins\generic\rqc\classes\RqcData;
 
 
 /**

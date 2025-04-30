@@ -8,16 +8,17 @@ use PKP\core\JSONMessage;
 use PKP\core\PKPRequest;
 use PKP\linkAction\LinkAction;
 use PKP\linkAction\request\AjaxModal;
+use PKP\db\DAORegistry;
 use PKP\linkAction\request\OpenWindowAction;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 
 use APP\plugins\generic\rqc\RqcSettingsForm;
-use APP\plugins\generic\rqc\ReviewerOpting;
-use APP\plugins\generic\rqc\EditorActions;
-use APP\plugins\generic\rqc\RqcDevHelper;
-use APP\plugins\generic\rqc\DelayedRqcCallSchemaMigration;
-use APP\plugins\generic\rqc\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\ReviewerOpting;
+use APP\plugins\generic\rqc\classes\EditorActions;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\DelayedRqcCallSchemaMigration;
+use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
 
 define('RQC_API_VERSION', '2023-09-06');  // the API documentation version last used during development
 define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
@@ -59,10 +60,7 @@ class RqcPlugin extends GenericPlugin
 				DAORegistry::registerDAO('DelayedRqcCallDAO', new DelayedRqcCallDAO());
 			}
 			if (RqcPlugin::hasDeveloperFunctions()) {  // register the devFunctions independent of RQC-ID-Key-Pair
-				Hook::add(
-					'LoadHandler',
-					array($this, 'callbackSetupRqcDevHelperHandler')
-				);
+				Hook::add('LoadHandler', $this->callbackSetupRqcDevHelperHandler(...));
 			}
 		}
 		return $success;
@@ -126,18 +124,18 @@ class RqcPlugin extends GenericPlugin
 			__('manager.plugins.settings'),
 			null
 		);
-		//----- perhaps add development-only stuff:
-		if (RqcPlugin::hasDeveloperFunctions()) {
-			//		import('lib.pkp.classes.linkAction.request.OpenWindowAction');
-			//		$additions[] = new LinkAction(
-			//			'example_request2',
-			//			new OpenWindowAction(
-			//				$router->url($request, /*Application::*/ ROUTE_PAGE, 'MySuperHandler', 'myop', null, ['my', 'array'])
-			//			),
-			//			'(example_request2)',
-			//			null
-			//		);
-		}
+		//----- perhaps add development-only stuff: TODO 3
+//		if (RqcPlugin::hasDeveloperFunctions()) {
+//            import('lib.pkp.classes.linkAction.request.OpenWindowAction');
+//            $additions[] = new LinkAction(
+//                'example_request2',
+//                new OpenWindowAction(
+//                    $router->url($request, /*Application::*/ ROUTE_PAGE, 'MySuperHandler', 'myop', null, ['my', 'array'])
+//                ),
+//                '(example_request2)',
+//                null
+//            );
+//		}
 		//----- return:
 		$actions = array_merge($additions, $actions);
 		return $actions;
