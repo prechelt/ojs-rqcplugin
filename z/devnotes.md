@@ -278,9 +278,6 @@ other typical identifiers for such objects):
 	- delete patches that are applied at the code base (3.3 is fully accepted!; 3.4 I haven't looked)
 - go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??;
   go through the whole OJS data model) if there are some logical errors there)
-- opting ranges (they go from e.g. 01.2025 til (incl.) 02.2026 because decisions can take a while; after that you have
-  to redo the opting) TODO Q
-	- if not redone the opting then: use the opting status from the last year TODO Q
 - at the end (if no tasks are left)
 	- better response for implicit calls (show errors) => add hook I guess
 		- invalid APIIdKeyPair
