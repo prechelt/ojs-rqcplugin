@@ -2,9 +2,10 @@
 
 namespace APP\plugins\generic\rqc;
 
-use Illuminate\Database\Capsule\Manager as Capsule;
+use APP\core\Application;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 use APP\plugins\generic\rqc\RqcDevHelper;
 use APP\plugins\generic\rqc\RqcLogger;
@@ -25,7 +26,7 @@ class DelayedRqcCallSchemaMigration extends Migration
 	 */
 	public function up(): void
 	{
-		Capsule::schema()->create('rqc_delayed_calls', function (Blueprint $table) {
+		Schema::create('rqc_delayed_calls', function (Blueprint $table) {
 			$table->bigIncrements('rqc_delayed_call_id');
 			$table->bigInteger('submission_id');
 			$table->bigInteger('context_id');
@@ -33,12 +34,19 @@ class DelayedRqcCallSchemaMigration extends Migration
 			$table->timestamp('original_try_ts');
 			$table->tinyInteger('remaining_retries'); // does only need value between 10 and 0
 			$table->index(['last_try_ts'], 'rqc_delayed_calls_last_try_ts'); // for querying the queue ORDER BY
-			$table->foreign('submission_id')->references('submission_id')->on('submissions');
+			$table->foreign('context_id', 'rqc_delayed_calls_context_id')
+                ->references(Application::getContextDAO()->primaryKeyColumn)
+                ->on(Application::getContextDAO()->tableName)
+                ->onDelete('cascade');
+            $table->foreign('submission_id', 'rqc_delayed_calls_submission_id')
+                ->references('submission_id')
+                ->on('submissions')
+                ->onDelete('cascade');
 		});
 		RqcLogger::logInfo("Created table 'rqc_delayed_calls' in the database");
 
 		// empty settings table, but necessary for SchemaDAO
-		Capsule::schema()->create('rqc_delayed_calls_settings', function (Blueprint $table) {
+        Schema::create('rqc_delayed_calls_settings', function (Blueprint $table) {
 			$table->bigIncrements('rqc_delayed_call_id');
 		});
 		RqcLogger::logInfo("Created table 'rqc_delayed_calls_settings' in the database");
@@ -49,8 +57,8 @@ class DelayedRqcCallSchemaMigration extends Migration
 	 */
 	public function down(): void
 	{
-		Capsule::schema()->drop('rqc_delayed_calls');
-		Capsule::schema()->drop('rqc_delayed_calls_settings');
+        Schema::drop('rqc_delayed_calls');
+        Schema::drop('rqc_delayed_calls_settings');
 		RqcLogger::logInfo("Dropped table 'rqc_delayed_calls' in the database");
 		RqcLogger::logInfo("Dropped table 'rqc_delayed_calls_settings' in the database");
 	}
