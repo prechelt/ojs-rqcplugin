@@ -46,10 +46,14 @@ class DelayedRqcCallSchemaMigration extends Migration
 		RqcLogger::logInfo("Created table 'rqc_delayed_calls' in the database");
 
 		// empty settings table, but necessary for SchemaDAO
-        Schema::create('rqc_delayed_calls_settings', function (Blueprint $table) {
+        Schema::create('rqc_delayed_call_settings', function (Blueprint $table) {
 			$table->bigIncrements('rqc_delayed_call_id');
+            $table->foreign('rqc_delayed_call_id', 'rqc_delayed_call_settings_rqc_delayed_call_id')
+                ->references('rqc_delayed_call_id')
+                ->on('rqc_delayed_calls')
+                ->onDelete('cascade');
 		});
-		RqcLogger::logInfo("Created table 'rqc_delayed_calls_settings' in the database");
+		RqcLogger::logInfo("Created table 'rqc_delayed_call_settings' in the database");
 	}
 
 	/**
@@ -58,8 +62,8 @@ class DelayedRqcCallSchemaMigration extends Migration
 	public function down(): void
 	{
         Schema::drop('rqc_delayed_calls');
-        Schema::drop('rqc_delayed_calls_settings');
+        Schema::drop('rqc_delayed_call_settings');
 		RqcLogger::logInfo("Dropped table 'rqc_delayed_calls' in the database");
-		RqcLogger::logInfo("Dropped table 'rqc_delayed_calls_settings' in the database");
+		RqcLogger::logInfo("Dropped table 'rqc_delayed_call_settings' in the database");
 	}
 }
