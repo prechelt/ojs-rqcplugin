@@ -295,7 +295,7 @@ class RqcData
 		foreach ($assignments as $reviewId => $reviewAssignment) { /** @var $reviewAssignment ReviewAssignment */
 			if ($reviewAssignment->getRound() != $reviewRound->getRound() ||
 				$reviewAssignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW ||
-				$reviewAssignment->getDateCompleted() != null)
+				$reviewAssignment->getDateCompleted() == null)
 				continue;  // irrelevant record, skip it.
 			$rqcReview = array();  // will become one entry in the result set
 			$reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewId);
