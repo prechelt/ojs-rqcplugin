@@ -1,7 +1,11 @@
 <?php
 
-import('lib.pkp.classes.core.DataObject');
-import('plugins.generic.rqc.classes.RqcDevHelper');
+namespace APP\plugins\generic\rqc;
+
+use PKP\core\DataObject;
+
+use APP\plugins\generic\rqc\RqcDevHelper;
+
 
 /**
  * DataObject representing the delayed call to rqc

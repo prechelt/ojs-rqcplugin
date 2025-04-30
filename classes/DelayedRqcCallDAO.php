@@ -1,18 +1,16 @@
 <?php
 
-/* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
-use \PKP\db\DAO;
-use \PKP\db\DAOResultFactory;
-*/
 
-import('lib.pkp.classes.plugins.HookRegistry');
-import('lib.pkp.classes.db.SchemaDAO');
-import('lib.pkp.classes.db.DAOResultFactory');
-import('lib.pkp.classes.core.DataObject');
+use PKP\core\DataObject;
+use PKP\db\SchemaDAO;
+use PKP\db\DAOResultFactory;
+use PKP\plugins\Hook;
 
-import('plugins.generic.rqc.classes.DelayedRqcCall');
-import('plugins.generic.rqc.classes.RqcDevHelper');
+use APP\plugins\generic\rqc\RqcPlugin;
+use APP\plugins\generic\rqc\DelayedRqcCall;
+use APP\plugins\generic\rqc\RqcDevHelper;
+
 
 /**
  * Operations for retrieving and modifying DelayedRqcCall objects.
@@ -57,7 +55,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 	public function __construct()
 	{
 		// used to inject the schema into the SchemaDAO
-		HookRegistry::register(
+		Hook::add(
 			'Schema::get::' . $this->schemaName,
 			array($this, 'callbackInsertSchema')
 		);

@@ -1,20 +1,18 @@
 <?php
 
-/* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
+
 use APP\pages\workflow\WorkflowHandler;
 use PKP\plugins\PluginRegistry;
-*/
+use APP\submission\DAO;
 
-import('pages.workflow.WorkflowHandler');
-import('classes.submission.SubmissionDAO');
+use APP\plugins\generic\rqc\RqcPlugin;
+use APP\plugins\generic\rqc\RqcCall;
+use APP\plugins\generic\rqc\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\DelayedRqcCall;
+use APP\plugins\generic\rqc\RqcLogger;
+use APP\plugins\generic\rqc\RqcDevHelper;
 
-import('plugins.generic.rqc.classes.RqcCall');
-import('plugins.generic.rqc.RqcPlugin');
-import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
-import('plugins.generic.rqc.classes.DelayedRqcCall');
-import('plugins.generic.rqc.classes.RqcLogger');
-import('plugins.generic.rqc.classes.RqcDevHelper');
 
 define("RQC_CALL_STATUS_CODES_TO_RESEND", array(
 	408, // "Request Timeout"

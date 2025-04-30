@@ -1,23 +1,22 @@
 <?php
 
-/* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
+
 use APP\handler\Handler;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
-*/
 
 use Composer\Semver\Semver; // used by x()
 
-import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
-import('plugins.generic.rqc.classes.DelayedRqcCallSender');
-import('plugins.generic.rqc.classes.DelayedRqcCall');
-import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
-import('plugins.generic.rqc.classes.RqcData');
-import('plugins.generic.rqc.classes.ReviewerOpting');
-import('plugins.generic.rqc.classes.RqcLogger');
-import('plugins.generic.rqc.pages.RqcCallHandler');
-import('plugins.generic.rqc.RqcPlugin');
+use APP\plugins\generic\rqc\DelayedRqcCallSchemaMigration;
+use APP\plugins\generic\rqc\DelayedRqcCallSender;
+use APP\plugins\generic\rqc\DelayedRqcCall;
+use APP\plugins\generic\rqc\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\RqcData;
+use APP\plugins\generic\rqc\ReviewerOpting;
+use APP\plugins\generic\rqc\RqcLogger;
+use APP\plugins\generic\rqc\RqcCallHandler;
+use APP\plugins\generic\rqc\RqcPlugin;
 
 
 /**

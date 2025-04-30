@@ -1,14 +1,13 @@
 <?php
 
-/* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
-use PKP\plugins\PluginRegistry;
-*/
 
-import('plugins.generic.rqc.RqcPlugin');
-import('plugins.generic.rqc.classes.RqcData');
-import('plugins.generic.rqc.classes.RqcDevHelper');
-import('plugins.generic.rqc.classes.RqcLogger');
+use PKP\plugins\PluginRegistry;
+
+use APP\plugins\generic\rqc\RqcLogger;
+use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\RqcData;
+use APP\plugins\generic\rqc\RqcPlugin;
 
 define('RQC_MHS_APIKEYCHECK_URL', "%s/api/mhs_apikeycheck/%s");  // host, rqcJournalId
 define('RQC_MHS_SUBMISSION_URL', "%s/api/mhs_submission/%s/%s");  // host, rqcJournalId, externalUid

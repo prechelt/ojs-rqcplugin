@@ -1,26 +1,21 @@
 <?php
 
-/* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
+
+use PKP\Services\PKPFileService;
+use Random\RandomException;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
 use PKP\security\Role;
 use PKP\site\VersionCheck;
-*/
+use PKP\decision; // TODO 1: refactor constants
+use PKP\core\PKPPageRouter;
+use PKP\submission\reviewRound\ReviewRoundDAO;
+use PKP\submission\DAO;
+use PKP\plugins\Plugin;
 
-// needed in OJS 3.3:
-use PKP\Services\PKPFileService;
-use Random\RandomException;
-
-import('classes.workflow.EditorDecisionActionsManager');  // decision action constants
-import('lib.pkp.classes.core.PKPPageRouter');
-import('lib.pkp.classes.site.VersionCheck');
-import('lib.pkp.classes.submission.reviewRound.ReviewRoundDAO');
-import('classes.submission.SubmissionDAO');
-import('classes.core.Services');
-
-import('plugins.generic.rqc.pages.RqcDevHelperHandler');
-import('plugins.generic.rqc.classes.RqcDevHelper');
+use APP\plugins\generic\rqc\RqcDevHelperHandler;
+use APP\plugins\generic\rqc\RqcDevHelper;
 
 define("RQC_AllOWED_FILE_EXTENSIONS", array(
 	"pdf", "docx", "xlsx", "pptx", "odt", "ods", "odp", "odg", "txt"
@@ -30,6 +25,7 @@ define("RQC_MULTI_LINE_STRING_SIZE_LIMIT", 200000); // All multi-line strings (t
 define("RQC_AUTHOR_LIST_SIZE_LIMIT", 200); // Author lists must be no longer than 200 entries
 define("RQC_OTHER_LIST_SIZE_LIMIT", 20); // Other lists (reviews, editor assignments) must be no longer than 20 entries
 define("RQC_ATTACHMENTS_SIZE_LIMIT", 64000000); // Attachments cannot be larger than 64 MB each
+
 
 /**
  * Builds the JSON-like data object to be sent to the RQC server from the various pieces of the OJS data model:
@@ -41,7 +37,7 @@ class RqcData
 {
 	private Plugin|null $plugin;
 
-	public const string CONFIDENTIAL_FIELD_REGEXP = '/[Cc]onfidential/';  // review form fields with such names are excluded
+	public const CONFIDENTIAL_FIELD_REGEXP = '/[Cc]onfidential/';  // review form fields with such names are excluded
 
 	public function __construct()
 	{

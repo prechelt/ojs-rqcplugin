@@ -1,19 +1,17 @@
 <?php
 
-/* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
+
 use PKP\plugins\Hook;
-*/
+use PKP\submission\reviewRound\ReviewRoundDAO;
+use PKP\submission\reviewAssignment\DAO;
+use PKP\submission\reviewAssignment\ReviewAssignment;
 
-import('lib.pkp.classes.plugins.HookRegistry');
-import('lib.pkp.classes.submission.reviewRound.ReviewRoundDAO');
-import('lib.pkp.classes.submission.reviewAssignment.ReviewAssignmentDAO');
-import('lib.pkp.classes.submission.reviewAssignment.ReviewAssignment');
+use APP\plugins\generic\rqc\RqcCallHandler;
+use APP\plugins\generic\rqc\RqcData;
+use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\RqcLogger;
 
-import('plugins.generic.rqc.pages.RqcCallHandler');
-import('plugins.generic.rqc.classes.RqcData');
-import('plugins.generic.rqc.classes.RqcDevHelper');
-import('plugins.generic.rqc.classes.RqcLogger');
 
 /**
  * RQC adapter parts revolving around editorial decisions using the hooking mechanism.
@@ -27,19 +25,19 @@ class EditorActions
 	 */
 	public function register(): void
 	{
-		HookRegistry::register(
+		Hook::add(
 			'LoadComponentHandler',
 			array($this, 'callbackEditorActionRqcGrade')
 		);
-		HookRegistry::register(
+		Hook::add(
 			'EditorAction::modifyDecisionOptions',
 			array($this, 'callbackModifyDecisionOptions')
 		);
-		HookRegistry::register(
+		Hook::add(
 			'LoadHandler',
 			array($this, 'callbackPageHandlers')
 		);
-		HookRegistry::register(
+		Hook::add(
 			'EditorAction::recordDecision',
 			array($this, 'callbackRecordDecision')
 		);
@@ -84,9 +82,9 @@ class EditorActions
 		foreach ($assignments as $reviewAssignment) {
 			$reviewAssignmentStatus = $reviewAssignment->getStatus(); // get status of the assignment of the external reviewer
 			switch ($reviewAssignmentStatus) {
-				case REVIEW_ASSIGNMENT_STATUS_RECEIVED:
-				case REVIEW_ASSIGNMENT_STATUS_COMPLETE:
-				case REVIEW_ASSIGNMENT_STATUS_THANKED:
+				case ReviewAssignment::REVIEW_ASSIGNMENT_STATUS_RECEIVED:
+				case ReviewAssignment::REVIEW_ASSIGNMENT_STATUS_COMPLETE:
+				case ReviewAssignment::REVIEW_ASSIGNMENT_STATUS_THANKED:
 					$atLeastOneReviewSubmitted = true;
 					break 2; // break out of foreach (found at least one submitted review)
 				default: // review not submitted

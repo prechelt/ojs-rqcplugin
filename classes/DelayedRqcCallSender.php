@@ -1,19 +1,17 @@
 <?php
 
-/* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
+
 use PKP\db\DAORegistry;
 use PKP\scheduledTask\ScheduledTask;
-*/
+use PKP\core\Core;
 
-import('lib.pkp.classes.core.Core');
-import('lib.pkp.classes.scheduledTask.ScheduledTask');
-import('lib.pkp.classes.db.DAORegistry');
-import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
-import('plugins.generic.rqc.classes.DelayedRqcCall');
-import('plugins.generic.rqc.pages.RqcCallHandler');
-import('plugins.generic.rqc.classes.RqcDevHelper');
-import('plugins.generic.rqc.RqcPlugin');
+use APP\plugins\generic\rqc\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\DelayedRqcCall;
+use APP\plugins\generic\rqc\RqcCallHandler;
+use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\RqcPlugin;
+
 
 /**
  * Class to retry failed RQC calls as a scheduled task.

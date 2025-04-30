@@ -1,11 +1,14 @@
 <?php
 
+namespace APP\plugins\generic\rqc;
+
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-import('plugins.generic.rqc.classes.RqcLogger');
-import('plugins.generic.rqc.classes.RqcDevHelper');
+use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\RqcLogger;
+
 
 /**
  * Generate database table structures

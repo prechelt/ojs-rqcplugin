@@ -1,18 +1,15 @@
 <?php
 
-/* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
+
 use APP\core\Application;
 use APP\template\TemplateManager;
 use PKP\plugins\Hook;
 use PKP\user\User;
-*/
 
-import('lib.pkp.classes.plugins.HookRegistry');
-
-import('plugins.generic.rqc.RqcPlugin');
-import('plugins.generic.rqc.classes.RqcDevHelper');
-import('plugins.generic.rqc.classes.RqcLogger');
+use APP\plugins\generic\rqc\RqcLogger;
+use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\RqcPlugin;
 
 define('RQC_OPTING_STATUS_IN', 36);  // internal, external
 define('RQC_OPTING_STATUS_OUT', 35);  // internal, external
@@ -20,6 +17,7 @@ define('RQC_OPTING_STATUS_IN_PRELIM', 32);  // internal (save for later; not sub
 define('RQC_OPTING_STATUS_OUT_PRELIM', 31);  // internal (save for later; not submitted yet)
 define('RQC_OPTING_STATUS_UNDEFINED', 30);  // external only
 define('RQC_PRELIM_OPTING', true);  // for readability
+
 
 /**
  * Handle the opt-in/opt-out status of a user (via the step3Form)
@@ -45,24 +43,24 @@ class ReviewerOpting
 	public function register(): void
 	{
 		// used for the building of the form
-		HookRegistry::register(
+		Hook::add(
 			'reviewerreviewstep3form::initdata',
 			array($this, 'callbackInitOptingData')
 		);
-		HookRegistry::register(
+		Hook::add(
 			'TemplateManager::fetch',
 			array($this, 'callbackAddReviewerOptingField')
 		);
 		// used for submitting the form
-		HookRegistry::register(
+		Hook::add(
 			'reviewerreviewstep3form::readuservars',
 			array($this, 'callbackReadOptIn')
 		);
-		HookRegistry::register(
+		Hook::add(
 			'reviewerreviewstep3form::execute',
 			array($this, 'callbackStep3execute')
 		);
-		HookRegistry::register(
+		Hook::add(
 			'reviewerreviewstep3form::saveForLater',
 			array($this, 'callbackStep3saveForLater')
 		);

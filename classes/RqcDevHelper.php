@@ -1,8 +1,9 @@
 <?php
 
-// namespace APP\plugins\generic\rqc;
+namespace APP\plugins\generic\rqc;
 
-import('plugins.generic.rqc.RqcPlugin');
+use APP\plugins\generic\rqc\RqcPlugin;
+
 
 /**
  * class providing writeToConsole() and writeObjectToConsole() for ad-hoc manual tracing during development

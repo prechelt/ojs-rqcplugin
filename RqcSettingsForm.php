@@ -1,21 +1,19 @@
 <?php
 
-/* for OJS 3.4:
 namespace APP\plugins\generic\rqc;
+
 use APP\template\TemplateManager;
 use PKP\form\Form;
 use PKP\form\validation\FormValidatorCSRF;
 use PKP\form\validation\FormValidatorPost;
 use PKP\form\validation\FormValidatorRegExp;
-*/
+use PKP\form\validation\FormValidator;
 
-import('lib.pkp.classes.form.Form');
-import('lib.pkp.classes.form.validation.FormValidator');
+use APP\plugins\generic\rqc\RqcPlugin;
+use APP\plugins\generic\rqc\RqcCall;
+use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\RqcLogger;
 
-import('plugins.generic.rqc.RqcPlugin');
-import('plugins.generic.rqc.classes.RqcCall');
-import('plugins.generic.rqc.classes.RqcDevHelper');
-import('plugins.generic.rqc.classes.RqcLogger');
 
 /**
  * Form for journal managers to modify RQC plugin settings

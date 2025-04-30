@@ -1,7 +1,7 @@
 <?php
 
-/*  for OJS 3.4:
 namespace APP\plugins\generic\rqc;
+
 use APP\core\Application;
 use PKP\config\Config;
 use PKP\core\JSONMessage;
@@ -11,19 +11,13 @@ use PKP\linkAction\request\AjaxModal;
 use PKP\linkAction\request\OpenWindowAction;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
-*/
 
-import('lib.pkp.classes.plugins.HookRegistry');
-import('lib.pkp.classes.plugins.GenericPlugin');
-import('lib.pkp.classes.linkAction.LinkAction');
-import('lib.pkp.classes.linkAction.request.AjaxModal');
-import('classes.core.Application');
-import('plugins.generic.rqc.RqcSettingsForm');
-import('plugins.generic.rqc.classes.ReviewerOpting');
-import('plugins.generic.rqc.classes.EditorActions');
-import('plugins.generic.rqc.classes.RqcDevHelper');
-import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
-import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
+use APP\plugins\generic\rqc\RqcSettingsForm;
+use APP\plugins\generic\rqc\ReviewerOpting;
+use APP\plugins\generic\rqc\EditorActions;
+use APP\plugins\generic\rqc\RqcDevHelper;
+use APP\plugins\generic\rqc\DelayedRqcCallSchemaMigration;
+use APP\plugins\generic\rqc\DelayedRqcCallDAO;
 
 define('RQC_API_VERSION', '2023-09-06');  // the API documentation version last used during development
 define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
@@ -56,7 +50,7 @@ class RqcPlugin extends GenericPlugin
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success && $this->getEnabled()) { // register only if the plugin is usable
 			if ($this->hasValidRqcIdKeyPair()) {  // register only if the credentials for sending the data to RQC are present
-				HookRegistry::register(
+				Hook::add(
 					'TemplateResource::getFilename',
 					array($this, '_overridePluginTemplates')
 				); // needed by ReviewerOpting (automatically override all the templates of ojs with templates set by this plugin. In this case: /reviewer/review/step3.tpl)
@@ -65,7 +59,7 @@ class RqcPlugin extends GenericPlugin
 				DAORegistry::registerDAO('DelayedRqcCallDAO', new DelayedRqcCallDAO());
 			}
 			if (RqcPlugin::hasDeveloperFunctions()) {  // register the devFunctions independent of RQC-ID-Key-Pair
-				HookRegistry::register(
+				Hook::add(
 					'LoadHandler',
 					array($this, 'callbackSetupRqcDevHelperHandler')
 				);
@@ -257,4 +251,8 @@ class RqcPlugin extends GenericPlugin
 		// RqcDevHelper::writeToConsole("\nhasValidRqcIdKeyPair\nId: ".$hasId."\t\tKey: ".$hasKey."\nReturns: ValidkeyPair ".(($hasId and $hasKey) ? "True" : "False")."\n\n");
 		return ($hasId and $hasKey);
 	}
+}
+
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\plugins\generic\rqc\RqcPlugin', '\RqcPlugin');
 }

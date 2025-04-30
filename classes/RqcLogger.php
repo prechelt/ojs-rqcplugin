@@ -1,6 +1,9 @@
 <?php
 
-import('lib.pkp.classes.config.Config');
+namespace APP\plugins\generic\rqc;
+
+use PKP\config\Config;
+
 
 /**
  * class to unify logging within the RQC plugin
