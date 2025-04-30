@@ -1,3 +1,7 @@
+## General information
+
+This branch is for the LTS Version 3.3 of OJS.
+
 ## Development setup
 
 ### Windows with WSL Debian
@@ -189,18 +193,6 @@ other typical identifiers for such objects):
 	  `ReviewAssignmentDAO::getByReviewRoundId` (one could also use
 	  `ReviewAssignmentDAO::getBySubmissionId`).
 	  This returns an array. Its indices are the review IDs!.
-
-### OJS 3.4
-
-- List all hooks: `php lib/pkp/tools/getHooks.php | tr , '\n'`
-  Many hooks live in lib/pkp, not in ojs.
-- `HookRegistry::register()` turns into `Hook::add()`.
-- Hook: the former `modifydecisionoptionshook` is now `Decision::add`
-  and `Decision::validate`.
-- Convert code to use namespaces, new data model, new hooks.
-  Will make it incompatible with OJS 3.3. Hmm.
-  Hints regarding namespaces: https://github.com/pkp/pkp-lib/issues/6091
-  in section "Additional details on plugins"
 
 ### phpunit and PKPTestCase/DatabaseTestCase
 
