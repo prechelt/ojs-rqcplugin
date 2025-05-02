@@ -26,12 +26,12 @@ use APP\plugins\generic\rqc\RqcPlugin;
  */
 class RqcDevHelperHandler extends Handler
 {
-	public Plugin|null $plugin;
+	public RqcPlugin $plugin;
 
-	function __construct()
+	function __construct(RqcPlugin $plugin)
 	{
 		parent::__construct();
-		$this->plugin = PluginRegistry::getPlugin('generic', 'rqcplugin');
+		$this->plugin = $plugin;
 	}
 
 	/**

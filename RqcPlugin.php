@@ -13,12 +13,13 @@ use PKP\linkAction\request\OpenWindowAction;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 
-use APP\plugins\generic\rqc\RqcSettingsForm;
 use APP\plugins\generic\rqc\classes\ReviewerOpting;
 use APP\plugins\generic\rqc\classes\EditorActions;
-use APP\plugins\generic\rqc\classes\RqcDevHelper;
+use APP\plugins\generic\rqc\pages\RqcDevHelperHandler;
 use APP\plugins\generic\rqc\classes\DelayedRqcCallSchemaMigration;
 use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
+
 
 define('RQC_API_VERSION', '2023-09-06');  // the API documentation version last used during development
 define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
@@ -191,16 +192,15 @@ class RqcPlugin extends GenericPlugin
 	 */
 	public function callbackSetupRqcDevHelperHandler($hookName, $params)
 	{
-		$page =& $params[0];
-		$op =& $params[1];
-		// RqcDevHelper::writeToConsole("### callbackSetupRqcDevHelperHandler: page='$page' op='$op'\n");
-		if (self::hasDeveloperFunctions() && $page == 'rqcdevhelper') {
-			$this->import('pages/RqcDevHelperHandler');
-			define('HANDLER_CLASS', 'RqcDevHelperHandler');
-			return true;  // this hook's handling is done
-		}
-		return false;  // continue calling hook functions for this hook
-	}
+        $page = &$params[0];
+        $handler = &$params[3];
+        // RqcDevHelper::writeToConsole("### callbackSetupRqcDevHelperHandler: page='$page' op='$op'\n");
+        if (self::hasDeveloperFunctions() && $page == 'rqcdevhelper') {
+            $handler = new RqcDevHelperHandler($this);
+            return true;
+        }
+        return false;
+    }
 
 	/**
 	 * to block an infinite loop
