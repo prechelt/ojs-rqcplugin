@@ -549,25 +549,21 @@ class RqcData
 		}
 		return $salt;
 	}
-}
 
-
-class RqcOjsData // TODO Q: why this construct?
-{
-	/**
-	 * Helper: Discriminate decisions from recommendations.
-	 */
-	public static function isDecision($ojsDecision): bool
-	{
-		return match ($ojsDecision) {
+    /**
+     * Helper: Discriminate decisions from recommendations.
+     */
+    public static function isDecision($ojsDecision): bool
+    {
+        return match ($ojsDecision) {
             Decision::ACCEPT,
             Decision::DECLINE,
             Decision::INITIAL_DECLINE,
             Decision::PENDING_REVISIONS,
             Decision::RESUBMIT => true,
-			default => false, // everything else isn't
-		};
-	}
+            default => false, // everything else isn't
+        };
+    }
 }
 
 /**

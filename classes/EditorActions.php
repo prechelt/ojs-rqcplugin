@@ -6,8 +6,10 @@ use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Event;
 use PKP\observers\events\DecisionAdded;
 use PKP\plugins\Hook;
+use APP\facades\Repo;
 
 use APP\plugins\generic\rqc\pages\RqcCallHandler;
+use APP\plugins\generic\rqc\classes\RqcData;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 
@@ -111,7 +113,7 @@ class EditorActions
         $decisionType = $event->decisionType;
         //--- ignore non-decision:
         if (Repo::decision()->isRecommendation($decisionType->getDecision()) ||
-            !RqcOjsData::isDecision($decisionType->getDecision())) {
+            !RqcData::isDecision($decisionType->getDecision())) {
             // RqcDevHelper::writeToConsole("### callbackRecordDecision ignores the $theDecision|$theStatus call\n");
             return;
         }
