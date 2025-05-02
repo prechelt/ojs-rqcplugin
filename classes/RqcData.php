@@ -545,13 +545,13 @@ class RqcData
 }
 
 
-class RqcOjsData
+class RqcOjsData // TODO Q: why this construct?
 {
 	/**
 	 * Helper: Discriminate decisions from recommendations.
 	 */
 	public static function isDecision($ojsDecision): bool
-	{
+	{ // TODO 2: use the new constants
 		return match ($ojsDecision) {
 			SUBMISSION_EDITOR_DECISION_ACCEPT,
 			SUBMISSION_EDITOR_DECISION_DECLINE,

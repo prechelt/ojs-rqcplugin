@@ -2,15 +2,13 @@
 
 namespace APP\plugins\generic\rqc\classes;
 
+use Illuminate\Events\Dispatcher;
+use Illuminate\Support\Facades\Event;
+use PKP\observers\events\DecisionAdded;
 use PKP\plugins\Hook;
-use PKP\submission\reviewRound\ReviewRoundDAO;
-use PKP\submission\reviewAssignment\DAO;
-use PKP\submission\reviewAssignment\ReviewAssignment;
 
 use APP\plugins\generic\rqc\pages\RqcCallHandler;
-use APP\plugins\generic\rqc\classes\RqcData;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
-use APP\plugins\generic\rqc\classes\RqcLogger;
 
 
 /**
@@ -24,24 +22,17 @@ class EditorActions
 	 * Register callbacks. This is to be called from the plugin's register().
 	 */
 	public function register(): void
-	{
-		Hook::add(
-			'LoadComponentHandler',
-			array($this, 'callbackEditorActionRqcGrade')
-		);
-		Hook::add(
-			'EditorAction::modifyDecisionOptions',
-			array($this, 'callbackModifyDecisionOptions')
-		);
-		Hook::add(
-			'LoadHandler',
-			array($this, 'callbackPageHandlers')
-		);
-		Hook::add(
-			'EditorAction::recordDecision',
-			array($this, 'callbackRecordDecision')
-		);
-	}
+    {
+        Hook::add('LoadComponentHandler', $this->callbackEditorActionRqcGrade(...));
+        Hook::add('Workflow::Decisions', $this->callbackModifyDecisionOptions(...)); // TODO 3.5: https://docs.pkp.sfu.ca/dev/release-notebooks/en/3.4-release-notebook#editoraction
+        Hook::add('LoadHandler', $this->callbackPageHandlers(...));
+        Event::subscribe($this);
+    }
+
+    public function subscribe(Dispatcher $events): void
+    {
+        $events->listen(DecisionAdded::class, self::class . '@handleDecisionAdded');
+    }
 
 	/**
 	 * Callback for LoadComponentHandler.
@@ -61,47 +52,35 @@ class EditorActions
 
 
 	/**
-	 * Callback for EditorAction::modifyDecisionOptions.
+	 * Callback for Workflow::Decisions.
 	 * Adds button "RQC-Grade the Reviews" to the Workflow page.
 	 */
 	public function callbackModifyDecisionOptions($hookName, $args): bool
 	{
-		$context = $args[0];
-		$submission = $args[1];
-		$stageId = $args[2];
-		$makeDecision = &$args[3];
-		$decisionOpts = &$args[4];  // result
+        $decisionTypes = &$args[0];
+        $stageId = $args[1];
+        //$submission = $args[2]; // maybe add that to the hook
 
-		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
-		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submission->getId());
-		//RqcDevHelper::writeObjectToConsole($lastReviewRound->determineStatus(), "### Lastreviewroundstatus: ");
+        //$decisionTypes[] = new RQCGrade();
 
-		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-		$assignments = $reviewAssignmentDao->getBySubmissionId($submission->getId(), $lastReviewRound->getId(), WORKFLOW_STAGE_ID_EXTERNAL_REVIEW); // get all assignments of external reviewers in the current review round
-		$atLeastOneReviewSubmitted = false; // I don't use $lastReviewRound->getStatus() because for some status it's not sure if at least one review is submitted
-		foreach ($assignments as $reviewAssignment) {
-			$reviewAssignmentStatus = $reviewAssignment->getStatus(); // get status of the assignment of the external reviewer
-			switch ($reviewAssignmentStatus) {
-				case ReviewAssignment::REVIEW_ASSIGNMENT_STATUS_RECEIVED:
-				case ReviewAssignment::REVIEW_ASSIGNMENT_STATUS_COMPLETE:
-				case ReviewAssignment::REVIEW_ASSIGNMENT_STATUS_THANKED:
-					$atLeastOneReviewSubmitted = true;
-					break 2; // break out of foreach (found at least one submitted review)
-				default: // review not submitted
-					break 1; // only break out of switch
-			}
-		}
-		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $atLeastOneReviewSubmitted) { // stage 3 && at least one review has been submitted
-			//----- add button for RQC grading:
-			$decisionOpts[SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = [
-				'operation' => 'rqcGrade',
-				'name'      => 'rqcGradeName',
-				'title'     => 'plugins.generic.rqc.editoraction.grade.button',
-			];
-			// RqcDevHelper::writeToConsole("### rqcGrade Button added");
-		} else {
-			// RqcDevHelper::writeToConsole("### no rqcGrade Button added: wrong stage");
-		}
+//		$completedAssignments = Repo::reviewAssignment()->getCollector()
+//            ->filterBySubmissionIds([$submission->getId()])
+//            ->filterByLastReviewRound(true)
+//            ->filterByStageId(WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
+//            ->filterByCompleted(true)
+//            ->getMany(); // TODO 1: right like that?
+//        $atLeastOneReviewSubmitted = !$completedAssignments->isEmpty();
+//		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $atLeastOneReviewSubmitted) { // stage 3 && at least one review has been submitted
+//			//----- add button for RQC grading:
+//            $decisionTypes[] = new RQCGrade(); /*[
+//				'operation' => 'rqcGrade',
+//				'name'      => 'rqcGradeName',
+//				'title'     => 'plugins.generic.rqc.editoraction.grade.button',
+//			];*/
+//			// RqcDevHelper::writeToConsole("### rqcGrade Button added");
+//		} else {
+//			// RqcDevHelper::writeToConsole("### no rqcGrade Button added: wrong stage");
+//		}
 		return false;  // proceed with other callbacks, if any
 	}
 
@@ -119,34 +98,28 @@ class EditorActions
 		return false;
 	}
 
-	/**
-	 * Callback for EditorAction::recordDecision.
-	 * See lib.pkp.classes.EditorAction::recordDecision for the $args.
-	 * We send data to RQC like for a non-interactive call and no redirection is performed
-	 * in order to give the editors full control over when they want to visit RQC.
-	 * (Besides, redirection would be enormously difficult in the OJS control flow.)
-	 */
-	public function callbackRecordDecision($hookName, $args): bool
-	{
-		$GO_ON = false;  // false continues processing (default), true stops it (for testing during development).
-		$submission = &$args[0];
-		$submissionId = $submission->getId();
-		$decision = &$args[1];
-		$isRecommendation = &$args[3];
-		// RqcDevHelper::writeToConsole("### callbackRecordDecision called\n");
-		$theDecision = $decision['decision'];
-		$theStatus = $isRecommendation ? 'is-rec-only' : 'is-decision';
-		//--- ignore non-decision:
-		if ($isRecommendation || !RqcOjsData::isDecision($theDecision)) {
-			// RqcDevHelper::writeToConsole("### callbackRecordDecision ignores the $theDecision|$theStatus call\n");
-			return $GO_ON;
-		}
-		//--- act on decision:
-		// RqcDevHelper::writeToConsole("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
-		$caller = new RqcCallHandler();
-		$rqcResult = $caller->sendToRqc(null, $submissionId); // Implicit call
-		$caller->processRqcResponse($rqcResult, $submissionId, false);
-		// RqcDevHelper::writeObjectToConsole($rqcResult);
-		return $GO_ON;
-	}
+    /**
+     * Handler for DecisionAdded
+     * We send data to RQC like for a non-interactive call and no redirection is performed
+     * in order to give the editors full control over when they want to visit RQC.
+     * (Besides, redirection would be enormously difficult in the OJS control flow.)
+     * @see lib.pkp.classes/decision/Repository::add
+     */
+    public function handleDecisionAdded(DecisionAdded $event): void
+    {
+        $submissionId = $event->submission->getId();
+        $decisionType = $event->decisionType;
+        //--- ignore non-decision:
+        if (Repo::decision()->isRecommendation($decisionType->getDecision()) ||
+            !RqcOjsData::isDecision($decisionType->getDecision())) {
+            // RqcDevHelper::writeToConsole("### callbackRecordDecision ignores the $theDecision|$theStatus call\n");
+            return;
+        }
+        //--- act on decision:
+        // RqcDevHelper::writeToConsole("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
+        $caller = new RqcCallHandler();
+        $rqcResult = $caller->sendToRqc(null, $submissionId); // Implicit call
+        $caller->processRqcResponse($rqcResult, $submissionId, false);
+        // RqcDevHelper::writeObjectToConsole($rqcResult);
+    }
 }
