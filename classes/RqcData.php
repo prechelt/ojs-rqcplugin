@@ -2,19 +2,28 @@
 
 namespace APP\plugins\generic\rqc\classes;
 
-use PKP\Services\PKPFileService;
+use APP\author\Author;
+use APP\core\Application;
+use APP\core\PageRouter;
+use APP\facades\Repo;
+use APP\submission\Submission;
+use Illuminate\Support\Number;
+use PKP\context\Context;
+use PKP\context\ContextDAO;
+use PKP\core\PKPRequest;
+use PKP\decision\Decision;
+use PKP\reviewForm\ReviewFormElement;
+use PKP\security\Role;
+use PKP\stageAssignment\StageAssignment;
+use PKP\submission\reviewAssignment\ReviewAssignment;
+use PKP\submission\reviewRound\ReviewRound;
+use PKP\submission\SubmissionComment;
 use Random\RandomException;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
-use PKP\security\Role;
-use PKP\site\VersionCheck;
-use PKP\decision; // TODO 1: refactor constants
-use PKP\core\PKPPageRouter;
 use PKP\submission\reviewRound\ReviewRoundDAO;
-use PKP\submission\DAO;
 use PKP\plugins\Plugin;
 
-use APP\plugins\generic\rqc\pages\RqcDevHelperHandler;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 define("RQC_AllOWED_FILE_EXTENSIONS", array(
@@ -49,16 +58,17 @@ class RqcData
 	 * if $request is null, interactive_user and mhs_submissionpage are transmitted as "".
 	 * returns 'data' (the data for the call) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
-	public function rqcDataArray($request, int $submissionId): array
+	public function rqcDataArray(PKPRequest|null $request, int $submissionId): array
 	{
-		$contextDao = Application::getContextDAO(); /** @var $contextDao ContextDAO */
-		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /** @var $reviewRoundDao ReviewRoundDAO */
-		$submissionDao = DAORegistry::getDAO('SubmissionDAO'); /** @var $submissionDao SubmissionDAO */
+        $contextDao = Application::getContextDAO(); /** @var ContextDAO $contextDao */
+        $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /** @var $reviewRoundDao ReviewRoundDAO */
 		//----- prepare processing:
-		$submission = $submissionDao->getById($submissionId); /** @var $submission Submission */
-		//RqcDevHelper::writeObjectToConsole($submission, "submission", true);
-		$contextId = $submission->getContextId();
-		$journal = $contextDao->getById($contextId);
+
+        $submission = Repo::submission()->get((int) $submissionId);
+        $contextId = $submission->getData('contextId');
+        $journal = $contextDao->getById($contextId); /** @var Context $journal */
+
+        //RqcDevHelper::writeObjectToConsole($submission, "submission", true);
 		$data = array();
 		$truncationOmissionInfo = array();
 
@@ -72,7 +82,7 @@ class RqcData
 
 		$data['visible_uid'] = $this->getUid($journal, $submission, $reviewroundN);  // user-facing pseudo ID
 		$data['external_uid'] = $this->getUid($journal, $submission, $reviewroundN, true); // URL-friendly version.
-		$data['title'] = $this->getTitle($submission->getTitle(null));
+		$data['title'] = $this->getTitle($submission->getCurrentPublication()->getTitles());
 		$data['submitted'] = rqcifyDatetime($submission->getData('dateSubmitted'));
 
 		//----- authors, editor assignments, reviews, decision:
@@ -80,7 +90,7 @@ class RqcData
 		$data['author_set'] = limitToSizeArray($authorSetWithAdditionalInfo['data'], RQC_AUTHOR_LIST_SIZE_LIMIT);
 		$editorAssignmentSetWithAdditionalInfo = $this->getEditorAssignmentSet($submissionId);
 		$data['edassgmt_set'] = limitToSizeArray($editorAssignmentSetWithAdditionalInfo['data']);
-		$reviewSetWithAdditionalInfo = $this->getReviewSet($submissionId, $lastReviewRound, $contextId);
+		$reviewSetWithAdditionalInfo = $this->getReviewSet($submissionId, $lastReviewRound, $journal->getId());
 		$data['review_set'] = limitToSizeArray($reviewSetWithAdditionalInfo['data']);
 		$data['decision'] = $this->getDecision($lastReviewRound);
 
@@ -114,10 +124,10 @@ class RqcData
 		$truncationOmissionInfo = array(); // if something is left out or truncated or else
 		//RqcDevHelper::writeToConsole("\nReviewer: ".$reviewerSubmission->getReviewerFullName()." with Id: ".$reviewerSubmission->getReviewerId()."\n");
 
-		$submissionFilesIterator = Services::get('submissionFile')->getMany(
-			['submissionIds'   => [$reviewerSubmission->getId()],
-			 'uploaderUserIds' => [$reviewerSubmission->getReviewerId()],
-			]);
+		$submissionFilesIterator = Repo::submissionFile()->getCollector()
+            ->filterBySubmissionIds([$reviewerSubmission->getId()])
+            ->filterByUploaderUserIds([$reviewerSubmission->getReviewerId()])
+            ->getMany();
 		foreach ($submissionFilesIterator as $submissionFile) {
 			$attachment = array();
 			$submissionFileName = englishest($submissionFile->getData('name'), false);
@@ -127,20 +137,17 @@ class RqcData
 				$truncationOmissionInfo[] = "$submissionFileName could not be included because the file extension $ext is not supported by RQC. Supported file extensions: " . implode(", ", RQC_AllOWED_FILE_EXTENSIONS);
 				continue;
 			}
-			$fileId = $submissionFile->getData('fileId'); // !! not the submissionFileId
-			//RqcDevHelper::writeToConsole("SubmissionFile: ".$submissionFileName." with FileId: ".$fileId."\n");
-			$fileService = Services::get('file'); /** @var PKPFileService $fileService */
-			$file = $fileService->get($fileId);
-			$fileContent = $fileService->fs->read($file->path);
+            $file = app()->get('file')->get($submissionFile->getData('fileId'));
+            $fileContent = file_get_contents($file->path);
 			if ($fileContent === false) {
 				$truncationOmissionInfo[] = $file->path . " could not be found";
 				continue;
 			}
-			$fileSize = $fileService->fs->getSize($file->path);
+			$fileSize = filesize($file->path);
 			//RqcDevHelper::writeToConsole("File: " . $file->id . " " . $file->path . " ($fileSize bytes) with mimeType: " . $file->mimetype . "\nContent: ##BeginOfFile##\n$fileContent##EndOfFile##\n\n");
 
 			if ($fileSize > RQC_ATTACHMENTS_SIZE_LIMIT) {
-				$truncationOmissionInfo[] = "$submissionFileName could not be included because the file size exceeds the size limit of RQC: " . $fileService->getNiceFileSize(RQC_ATTACHMENTS_SIZE_LIMIT);
+				$truncationOmissionInfo[] = "$submissionFileName could not be included because the file size exceeds the size limit of RQC: " . Number::fileSize(RQC_ATTACHMENTS_SIZE_LIMIT, 2);
 				continue;
 			}
 
@@ -156,17 +163,13 @@ class RqcData
 	 * Build a linear array of RQC-ish author objects.
 	 * returns 'data' (the author objects) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
-	protected static function getAuthorSet($submission): array
+	protected static function getAuthorSet(Submission $submission): array
 	{
-		$authorDao = DAORegistry::getDAO('AuthorDAO');
-		/** @var $authorDao AuthorDAO */
-
-		$publicationId = $submission->getLatestPublication()->getId();
-		$authorObjects = $authorDao->getByPublicationId($publicationId); // querying the authors separately because of this bug: https://github.com/pkp/pkp-lib/issues/7844
+        $authorObjects = $submission->getLatestPublication()->getData('authors');
 
 		$authors = array(); // the real result
 		$truncationOmissionInfo = array(); // if something is left out or truncated or else
-		foreach ($authorObjects as $authorObject) { /** @var $authorObject PKPAuthor */
+		foreach ($authorObjects as $authorObject) { /** @var $authorObject Author */
 			// TODO if issue is closed: https://github.com/pkp/pkp-lib/issues/6178
 			if (false) // if (!(bool)$authorObject->isCorrespondingAuthor()) // currently not available AND (primaryAuthor or includeInBrowse don't suffice/fulfill that role!)
 				continue;  // skip non-corresponding authors
@@ -189,15 +192,17 @@ class RqcData
 	 * We use decisions only and return an 'unknown' if there are only recommendations.
 	 * We simply use the first decision we see.
 	 */
-	protected function getDecision($reviewRound): string
+	protected function getDecision(ReviewRound $reviewRound): string
 	{
 		// See EditDecisionDAO->getEditorDecisions, $this->rqcDecision
-		$editDecisionDao = DAORegistry::getDAO('EditDecisionDAO');
-		$rr = $reviewRound;
-		$editorDecisions = $editDecisionDao->getEditorDecisions(
-			$rr->getSubmissionId(), $rr->getStageId(), $rr->getRound()); // all decisions are stored in the database like a history
-		for ($i = sizeof($editorDecisions) - 1; $i >= 0; $i--) { // ordered by ASC Date: most recent decision last
-			$result = $this->rqcDecision("editor", $editorDecisions[$i]['decision']);
+        $reviewRoundDecisions = Repo::decision()->getCollector()
+            ->filterBySubmissionIds([$reviewRound->getSubmissionId()])
+            ->filterByStageIds([$reviewRound->getStageId()])
+            ->filterByReviewRoundIds([$reviewRound->getId()])
+            ->getMany();
+
+		for ($i = sizeof($reviewRoundDecisions) - 1; $i >= 0; $i--) { // ordered by ASC Date: most recent decision last
+			$result = $this->rqcDecision("editor", $reviewRoundDecisions[$i]->getData('decision'));
 			if ($result) {  // use the last non-undefined decision
 				return $result;
 			}
@@ -207,29 +212,27 @@ class RqcData
 
 	/**
 	 * Build a linear array of RQC editorship descriptor objects.
-	 * returns 'data' (the editorship descriptor objects) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
+	 * returns 'data' (the editorship descriptor objects)
+     * and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
-	protected function getEditorAssignmentSet($submissionId): array
+	protected function getEditorAssignmentSet(int $submissionId): array
 	{
-		$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /** @var $stageAssignmentDao StageAssignmentDAO */
-		$userDao = DAORegistry::getDAO('UserDAO'); /** @var $userDao UserDAO */
-		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');  /** @var $userGroupDao UserGroupDAO */
-
 		$editorAssignments = array();  // the real result
 		$truncationOmissionInfo = array();  // if something is left out or truncated or else
 
-		$iter = $stageAssignmentDao->getBySubmissionAndStageId($submissionId,
-			WORKFLOW_STAGE_ID_EXTERNAL_REVIEW);
+        $stageAssignments = StageAssignment::with(['userGroup'])
+            ->withSubmissionIds([$submissionId])
+            ->withStageIds([WORKFLOW_STAGE_ID_EXTERNAL_REVIEW])
+            ->get();
 		$level1N = 0;
-		foreach ($iter->toArray() as $stageAssign) {
+		foreach ($stageAssignments as $stageAssignment) {
 			$assignment = array();
-			$user = $userDao->getById($stageAssign->getUserId());
-			$userGroup = $userGroupDao->getById($stageAssign->getUserGroupId());
-			$role = $userGroup->getRoleId();
-			$levelMap = array(ROLE_ID_MANAGER    => 3,  // OJS 3.4: use prefix Role:: to find the constants
-							  ROLE_ID_SUB_EDITOR => 1
+			$user = Repo::user()->get($stageAssignment->userId);
+            $userGroup = Repo::userGroup()->get($stageAssignment->userGroupId);
+			$levelMap = array(Role::ROLE_ID_MANAGER    => 3,
+                              Role::ROLE_ID_SUB_EDITOR => 1
 			);
-			$level = $levelMap[$role] ?? 0;
+			$level = $levelMap[$userGroup->roleId] ?? 0;
 			if (!$level)
 				continue;  // irrelevant role, skip stage assignment entry
 			elseif ($level == 1)
@@ -252,7 +255,7 @@ class RqcData
 	 * Return emailaddress of current user or "" if this is not an interactive call.
 	 * The adapter needs to hope this same address is registered with RQC as well.
 	 */
-	protected static function getInteractiveUser($request): string
+	protected static function getInteractiveUser(PKPRequest $request): string
 	{
 		$user = $request->getUser();
 		return $user ? $user->getEmail() : "";
@@ -280,18 +283,20 @@ class RqcData
 	 */
 	protected function getReviewSet(int $submissionId, $reviewRound, int $contextId): array
 	{
-		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
 		$userDao = DAORegistry::getDAO('UserDAO');
 
 		$reviews = array(); // the real result
 		$truncationOmissionInfo = array(); // if something is left out or truncated or else
 
-		$assignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $reviewRound->getId());
+        $assignments = Repo::reviewAssignment()->getCollector()
+            ->filterBySubmissionIds([$submissionId])
+            ->filterByReviewRoundIds([$reviewRound->getId()])
+            ->filterByStageId(WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
+            ->filterByCompleted(true)
+            ->getMany();
 		foreach ($assignments as $reviewId => $reviewAssignment) { /** @var $reviewAssignment ReviewAssignment */
-			if ($reviewAssignment->getRound() != $reviewRound->getRound() ||
-				$reviewAssignment->getStageId() != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW ||
-				$reviewAssignment->getDateCompleted() == null)
+			if ($reviewAssignment->getRound() != $reviewRound->getRound())
 				continue;  // irrelevant record, skip it.
 			$rqcReview = array();  // will become one entry in the result set
 			$reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewId);
@@ -374,7 +379,7 @@ class RqcData
 	 * </div>
 	 * ...
 	 */
-	protected function getReviewTextFromForm(ReviewerSubmission $reviewerSubmission, int $reviewFormId): string
+	protected function getReviewTextFromForm(ReviewerSubmission $reviewerSubmission, int $reviewFormId): string // TODO 1: ReviewerSubmission is something else?
 	{
 		$reviewFormElementDao = DAORegistry::getDAO('ReviewFormElementDAO');
 		$reviewFormResponseDao = DAORegistry::getDAO('ReviewFormResponseDAO');
@@ -384,9 +389,11 @@ class RqcData
 		while ($reviewFormElement = $reviewFormElements->next()) {
 			RqcDevHelper::writeToConsole("### reviewFormElement.elementType=" . $reviewFormElement->getElementType() .
 				"  included='" . $reviewFormElement->getIncluded() . "'\n");
-			if (in_array($reviewFormElement->getElementType(), array(REVIEW_FORM_ELEMENT_TYPE_SMALL_TEXT_FIELD,
-					REVIEW_FORM_ELEMENT_TYPE_TEXT_FIELD, REVIEW_FORM_ELEMENT_TYPE_TEXTAREA
-				)) &&
+			if (in_array($reviewFormElement->getElementType(),
+                    array(ReviewFormElement::REVIEW_FORM_ELEMENT_TYPE_SMALL_TEXT_FIELD,
+                        ReviewFormElement::REVIEW_FORM_ELEMENT_TYPE_TEXT_FIELD,
+                        ReviewFormElement::REVIEW_FORM_ELEMENT_TYPE_TEXTAREA)
+                ) &&
 				$reviewFormElement->getIncluded()) {
 				$reviewFormElementId = $reviewFormElement->getId();
 
@@ -429,7 +436,7 @@ class RqcData
 			$reviewAssignment->getReviewerId(), $reviewAssignment->getId(), $viewableOnly);
 		$result = "";
 		while ($submissionComment = $submissionComments->next()) {
-			if ($submissionComment->getCommentType() != COMMENT_TYPE_PEER_REVIEW) {
+			if ($submissionComment->getCommentType() != SubmissionComment::COMMENT_TYPE_PEER_REVIEW) {
 				continue;  // irrelevant record, skip it
 			}
 			$title = $submissionComment->getCommentTitle() ?: "Text field without a specific question";  // will be empty but for safety-reasons we let it in there
@@ -479,28 +486,28 @@ class RqcData
 		$reviewerMap = array(
 			// see lib.pkp.classes.submission.reviewAssignment.ReviewAssignment
 			// the values are 1,2,3,4,5,6
-			0                                                     => "",
-			SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT             => "ACCEPT",
-			SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS  => "MINORREVISION",
-			SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE      => "MAJORREVISION",
-			SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE => "REJECT",
-			SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE            => "REJECT",
-			SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS       => "MAJORREVISION",  // generic guess!!!
+			0                                                                       => "",
+            ReviewAssignment::SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT             => "ACCEPT",
+            ReviewAssignment::SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS  => "MINORREVISION",
+            ReviewAssignment::SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_HERE      => "MAJORREVISION",
+            ReviewAssignment::SUBMISSION_REVIEWER_RECOMMENDATION_RESUBMIT_ELSEWHERE => "REJECT",
+            ReviewAssignment::SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE            => "REJECT",
+            ReviewAssignment::SUBMISSION_REVIEWER_RECOMMENDATION_SEE_COMMENTS       => "MAJORREVISION",  // generic guess!!!
 		);
 		$editorMap = array(
 			// see classes.workflow.EditorDecisionActionsManager
-			0                                             => "",
-			SUBMISSION_EDITOR_RECOMMEND_ACCEPT            => "",
-			SUBMISSION_EDITOR_RECOMMEND_DECLINE           => "",
-			SUBMISSION_EDITOR_RECOMMEND_PENDING_REVISIONS => "",
-			SUBMISSION_EDITOR_RECOMMEND_RESUBMIT          => "",
-			SUBMISSION_EDITOR_DECISION_ACCEPT             => "ACCEPT",
-			SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION => "ACCEPT",
-			SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE    => "REJECT",  // probably never relevant
-			SUBMISSION_EDITOR_DECISION_DECLINE            => "REJECT",
-			SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS  => "MINORREVISION",
-			SUBMISSION_EDITOR_DECISION_RESUBMIT           => "MAJORREVISION",
-			SUBMISSION_EDITOR_DECISION_NEW_ROUND          => "MAJORREVISION",
+			0                                     => "",
+			Decision::RECOMMEND_ACCEPT            => "",
+            Decision::RECOMMEND_DECLINE           => "",
+            Decision::RECOMMEND_PENDING_REVISIONS => "",
+            Decision::RECOMMEND_RESUBMIT          => "",
+			Decision::ACCEPT                      => "ACCEPT",
+            Decision::SEND_TO_PRODUCTION          => "ACCEPT",
+            Decision::INITIAL_DECLINE             => "REJECT",  // probably never relevant
+            Decision::DECLINE                     => "REJECT",
+            Decision::PENDING_REVISIONS           => "MINORREVISION",
+            Decision::RESUBMIT                    => "MAJORREVISION",
+            Decision::NEW_EXTERNAL_ROUND          => "MAJORREVISION",
 		);
 		if ($role == "reviewer")
 			return $reviewerMap[$ojsDecision];
@@ -551,13 +558,13 @@ class RqcOjsData // TODO Q: why this construct?
 	 * Helper: Discriminate decisions from recommendations.
 	 */
 	public static function isDecision($ojsDecision): bool
-	{ // TODO 2: use the new constants
+	{
 		return match ($ojsDecision) {
-			SUBMISSION_EDITOR_DECISION_ACCEPT,
-			SUBMISSION_EDITOR_DECISION_DECLINE,
-			SUBMISSION_EDITOR_DECISION_INITIAL_DECLINE,
-			SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS,
-			SUBMISSION_EDITOR_DECISION_RESUBMIT => true,
+            Decision::ACCEPT,
+            Decision::DECLINE,
+            Decision::INITIAL_DECLINE,
+            Decision::PENDING_REVISIONS,
+            Decision::RESUBMIT => true,
 			default => false, // everything else isn't
 		};
 	}
