@@ -7,17 +7,25 @@ use APP\core\Application;
 use APP\core\PageRouter;
 use APP\facades\Repo;
 use APP\submission\Submission;
+use ErrorException;
 use Illuminate\Support\Number;
+use PKP\config\Config;
 use PKP\context\Context;
 use PKP\context\ContextDAO;
+use PKP\core\PKPApplication;
 use PKP\core\PKPRequest;
+use PKP\core\PKPString;
 use PKP\decision\Decision;
 use PKP\reviewForm\ReviewFormElement;
+use PKP\reviewForm\ReviewFormElementDAO;
+use PKP\reviewForm\ReviewFormResponse;
+use PKP\reviewForm\ReviewFormResponseDAO;
 use PKP\security\Role;
 use PKP\stageAssignment\StageAssignment;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 use PKP\submission\reviewRound\ReviewRound;
 use PKP\submission\SubmissionComment;
+use PKP\submissionFile\SubmissionFile;
 use Random\RandomException;
 use PKP\db\DAORegistry;
 use PKP\plugins\PluginRegistry;
@@ -118,44 +126,63 @@ class RqcData
 	 * Build a linear array of RQC-ish attachment objects.
 	 * returns 'data' (the attachment objects) and 'truncation_omission_info' (an array of strings: messages which data was truncated or omitted; useful for logging or printing in a popup)
 	 */
-	protected static function getAttachmentSet($reviewerSubmission): array
+	protected static function getAttachmentSet(ReviewAssignment $reviewAssignment): array
 	{
 		$attachmentSet = array(); // the real result
 		$truncationOmissionInfo = array(); // if something is left out or truncated or else
-		//RqcDevHelper::writeToConsole("\nReviewer: ".$reviewerSubmission->getReviewerFullName()." with Id: ".$reviewerSubmission->getReviewerId()."\n");
+		//RqcDevHelper::writeToConsole("\nReviewer: ".$reviewAssignment->getReviewerFullName()." with Id: ".$reviewAssignment->getReviewerId()."\n");
 
-		$submissionFilesIterator = Repo::submissionFile()->getCollector()
-            ->filterBySubmissionIds([$reviewerSubmission->getId()])
-            ->filterByUploaderUserIds([$reviewerSubmission->getReviewerId()])
+        $attachments = Repo::submissionFile()->getCollector()
+            ->filterBySubmissionIds([$reviewAssignment->getSubmissionId()])
+            ->filterByReviewRoundIds([$reviewAssignment->getReviewRoundId()])
+            ->filterByUploaderUserIds([$reviewAssignment->getReviewerId()])
+            ->filterByFileStages([SubmissionFile::SUBMISSION_FILE_REVIEW_ATTACHMENT])
+            ->filterByAssoc(PKPApplication::ASSOC_TYPE_REVIEW_ASSIGNMENT, [$reviewAssignment->getId()])
             ->getMany();
-		foreach ($submissionFilesIterator as $submissionFile) {
+
+
+        /** @var SubmissionFile $submissionFile */
+        foreach ($attachments as $submissionFile) {
 			$attachment = array();
 			$submissionFileName = englishest($submissionFile->getData('name'), false);
-
 			$ext = pathinfo($submissionFileName, PATHINFO_EXTENSION);
 			if (!in_array($ext, RQC_AllOWED_FILE_EXTENSIONS)) {
 				$truncationOmissionInfo[] = "$submissionFileName could not be included because the file extension $ext is not supported by RQC. Supported file extensions: " . implode(", ", RQC_AllOWED_FILE_EXTENSIONS);
 				continue;
 			}
-            $file = app()->get('file')->get($submissionFile->getData('fileId'));
-            $fileContent = file_get_contents($file->path);
-			if ($fileContent === false) {
-				$truncationOmissionInfo[] = $file->path . " could not be found";
+
+            $fullPath = rtrim(Config::getVar('files', 'files_dir'), '/') . '/' . $submissionFile->getData('path');
+            //RqcDevHelper::writeToConsole($fullPath);
+
+            set_error_handler(function ($severity, $message, $file, $line) {
+                throw new \ErrorException($message, $severity, $severity, $file, $line);
+            }); // file_get_contents may throw an warning. Warnings aren't try-catchable => convert to error to catch and then reset the error handler
+            try {
+                $fileContent = file_get_contents($fullPath);
+            } catch (ErrorException $e) {
+                $fileContent = false;
+            } finally {
+                restore_error_handler();
+            }
+			if ($fileContent === false) { // it may throw a warning as a not halting error or return false
+				$truncationOmissionInfo[] = $fullPath . " could not be found";
 				continue;
 			}
-			$fileSize = filesize($file->path);
-			//RqcDevHelper::writeToConsole("File: " . $file->id . " " . $file->path . " ($fileSize bytes) with mimeType: " . $file->mimetype . "\nContent: ##BeginOfFile##\n$fileContent##EndOfFile##\n\n");
 
+			$fileSize = filesize($fullPath);
 			if ($fileSize > RQC_ATTACHMENTS_SIZE_LIMIT) {
 				$truncationOmissionInfo[] = "$submissionFileName could not be included because the file size exceeds the size limit of RQC: " . Number::fileSize(RQC_ATTACHMENTS_SIZE_LIMIT, 2);
 				continue;
 			}
 
+            //RqcDevHelper::writeObjectToConsole($fileContent, $submissionFileName);
 			$attachment['filename'] = $submissionFileName;
 			$attachment['data'] = base64_encode($fileContent);
 			$attachmentSet[] = $attachment;
 		}
-		//RqcDevHelper::writeToConsole("\n".print_r($attachmentSet, true)."\n");
+        //RqcDevHelper::writeObjectToConsole($attachmentSet);
+        //RqcDevHelper::writeObjectToConsole($truncationOmissionInfo);
+        $attachmentSet = []; // TODO 3: base64_encoded content gives me an error 500 from the server (til then I only give empty attachment sets)
 		return array('data' => $attachmentSet, 'truncation_omission_info' => $truncationOmissionInfo);
 	}
 
@@ -283,9 +310,6 @@ class RqcData
 	 */
 	protected function getReviewSet(int $submissionId, $reviewRound, int $contextId): array
 	{
-		$reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
-		$userDao = DAORegistry::getDAO('UserDAO');
-
 		$reviews = array(); // the real result
 		$truncationOmissionInfo = array(); // if something is left out or truncated or else
 
@@ -299,7 +323,6 @@ class RqcData
 			if ($reviewAssignment->getRound() != $reviewRound->getRound())
 				continue;  // irrelevant record, skip it.
 			$rqcReview = array();  // will become one entry in the result set
-			$reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewId);
 			//--- review metadata:
 			$rqcReview['visible_id'] = $reviewId; // int: no need for limitToSize()
 			$rqcReview['invited'] = rqcifyDatetime($reviewAssignment->getDateNotified());
@@ -309,22 +332,22 @@ class RqcData
 			//--- review text:
 			$reviewFormId = $reviewAssignment->getReviewFormId();
 			$reviewText = ($reviewFormId) ?
-				$this->getReviewTextFromForm($reviewerSubmission, $reviewFormId) : // case 1
+				$this->getReviewTextFromForm($reviewAssignment) : // case 1
 				$this->getReviewTextDefault($reviewAssignment); // case 2
 			$rqcReview['text'] = limitToSize($reviewText, RQC_MULTI_LINE_STRING_SIZE_LIMIT);
 			$rqcReview['is_html'] = true;
-			$attachmentSetWithAdditionalInfo = $this->getAttachmentSet($reviewerSubmission);
-			$rqcReview['attachment_set'] = array(); // limitToSizeArray($attachmentSetWithAdditionalInfo['data']); // TODO 3: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
+			$attachmentSetWithAdditionalInfo = $this->getAttachmentSet($reviewAssignment);
+			$rqcReview['attachment_set'] = limitToSizeArray($attachmentSetWithAdditionalInfo['data']);
 			$recommendation = $reviewAssignment->getRecommendation();
 			$rqcReview['suggested_decision'] = ($recommendation ? $this->rqcDecision("reviewer", $recommendation) : "");
 
 			//--- reviewer:
-			$reviewerObject = $userDao->getById($reviewAssignment->getReviewerId());
+			$reviewerObject = Repo::user()->get($reviewAssignment->getReviewerId(), true);
 			// rqcOptIn or rqcOptOut
 			$reviewAssignmentYear = date('Y', strtotime($reviewAssignment->getDateCompleted()));
 			$status = (new ReviewerOpting())->getStatus($contextId, $reviewerObject, !RQC_PRELIM_OPTING, $reviewAssignmentYear); // get opting decision for the year the assignment was submitted
 			$rqcReviewer = array();
-			if ($status == RQC_OPTING_STATUS_IN) {
+			if ($status == RQC_OPTING_STATUS_IN) { // TODO 1: switch to RQC_OPTING_STATUS_OUT (both in 3.3 and 3.5)
 				$rqcReviewer['email'] = $reviewerObject->getEmail();
 				$rqcReviewer['firstname'] = getNonlocalizedAttr($reviewerObject, "getGivenName");
 				$rqcReviewer['lastname'] = getNonlocalizedAttr($reviewerObject, "getFamilyName");
@@ -335,11 +358,11 @@ class RqcData
 					$truncationOmissionInfo[] = "The review text of the reviewer " . $reviewerObject->getEmail() . " was truncated. Original size: " .
 						strlen($reviewText) . ". Truncated to: " . strlen($rqcReview['text']) . ". The size limit for the review text is: " . RQC_MULTI_LINE_STRING_SIZE_LIMIT;
 				}
-				// TODO 3: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
-//				if ($rqcReview['attachment_set'] != $attachmentSetWithAdditionalInfo['data']) {
-//					$truncationOmissionInfo[] = "The review attachments set of the reviewer " . $reviewerObject->getEmail() . " was truncated. Original size: " .
-//						count($attachmentSetWithAdditionalInfo['data']) . ". Truncated to: " . count($rqcReview['attachment_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;
-//				}
+
+                if ($rqcReview['attachment_set'] != $attachmentSetWithAdditionalInfo['data']) {
+					$truncationOmissionInfo[] = "The review attachments set of the reviewer " . $reviewerObject->getEmail() . " was truncated. Original size: " .
+						count($attachmentSetWithAdditionalInfo['data']) . ". Truncated to: " . count($rqcReview['attachment_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;
+				}
 			} else {
 				$rqcReviewer['email'] = generatePseudoEmail($reviewerObject->getEmail(), $this->getSaltAndGenerateIfNotSet($contextId));
 				$rqcReviewer['firstname'] = "";
@@ -379,39 +402,53 @@ class RqcData
 	 * </div>
 	 * ...
 	 */
-	protected function getReviewTextFromForm(ReviewerSubmission $reviewerSubmission, int $reviewFormId): string // TODO 1: ReviewerSubmission is something else?
+	protected function getReviewTextFromForm(ReviewAssignment $reviewAssignment): string // see Reviewercomments::getReviewFormComments()
 	{
-		$reviewFormElementDao = DAORegistry::getDAO('ReviewFormElementDAO');
-		$reviewFormResponseDao = DAORegistry::getDAO('ReviewFormResponseDAO');
-		$reviewId = $reviewerSubmission->getReviewId();
-		$reviewFormElements = $reviewFormElementDao->getByReviewFormId($reviewFormId);
-		$result = "";
+        if (!$reviewAssignment->getReviewFormId()) {
+            return '';
+        }
+
+        $reviewFormElementDao = DAORegistry::getDAO('ReviewFormElementDAO'); /** @var ReviewFormElementDAO $reviewFormElementDao */
+        $reviewFormResponseDao = DAORegistry::getDAO('ReviewFormResponseDAO'); /** @var ReviewFormResponseDAO $reviewFormResponseDao */
+        $reviewFormElements = $reviewFormElementDao->getByReviewFormId($reviewAssignment->getReviewFormId());
+
+        if ($reviewFormElements->wasEmpty()) {
+            return '';
+        }
+
+		$comments = [];
 		while ($reviewFormElement = $reviewFormElements->next()) {
+            if (!$reviewFormElement->getIncluded()) {
+                continue;
+            }
+            if (in_array($reviewFormElement->getElementType(),
+                array(ReviewFormElement::REVIEW_FORM_ELEMENT_TYPE_SMALL_TEXT_FIELD,
+                    ReviewFormElement::REVIEW_FORM_ELEMENT_TYPE_TEXT_FIELD,
+                    ReviewFormElement::REVIEW_FORM_ELEMENT_TYPE_TEXTAREA))) {
+                continue; // we want only the textual elements
+            }
 			RqcDevHelper::writeToConsole("### reviewFormElement.elementType=" . $reviewFormElement->getElementType() .
 				"  included='" . $reviewFormElement->getIncluded() . "'\n");
-			if (in_array($reviewFormElement->getElementType(),
-                    array(ReviewFormElement::REVIEW_FORM_ELEMENT_TYPE_SMALL_TEXT_FIELD,
-                        ReviewFormElement::REVIEW_FORM_ELEMENT_TYPE_TEXT_FIELD,
-                        ReviewFormElement::REVIEW_FORM_ELEMENT_TYPE_TEXTAREA)
-                ) &&
-				$reviewFormElement->getIncluded()) {
-				$reviewFormElementId = $reviewFormElement->getId();
 
-				$elementTitle = getNonlocalizedAttr($reviewFormElement, "getQuestion"); //use englishest to be safe // is in HTML-format (in <p> tags)
-				$elementTitle = $elementTitle ? "<h3>" . $elementTitle . "</h3>" : "";
-				$elementDescription = getNonlocalizedAttr($reviewFormElement, "getDescription"); //use englishest to be safe // is in HTML-format (in <p> tags)
-				$elementDescription = $elementDescription ? "<p>Description: <i>" . $elementDescription . "</i></p>" : "";
+            $elementTitle = PKPString::stripUnsafeHtml(getNonlocalizedAttr($reviewFormElement, "getQuestion")); //use englishest to be safe // is in HTML-format (in <p> tags)
+            $elementTitle = $elementTitle ? "<h3>" . $elementTitle . "</h3>" : "";
+            $elementDescription = PKPString::stripUnsafeHtml(getNonlocalizedAttr($reviewFormElement, "getDescription")); //use englishest to be safe // is in HTML-format (in <p> tags)
+            $elementDescription = $elementDescription ? "<p>Description: <i>" . $elementDescription . "</i></p>" : "";
 
-				$responseElement = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElementId);
-				$responseText = htmlspecialchars($this->cleanPlaintextTextarea($responseElement->getValue())); // encode the special chars (that would be interpreted as html structure in some way)
-				$responseText = $responseText ? "<p>Answer: <br>" . $responseText . "</p>" : "";
+            /** @var ReviewFormResponse|null $reviewFormResponse */
+            $reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewAssignment->getId(), $reviewFormElement->getId());
+            if (!$reviewFormResponse) {
+                continue;
+            }
 
-				if (!preg_match(self::CONFIDENTIAL_FIELD_REGEXP, $elementTitle)) {
-					$result .= "<div>$elementTitle$elementDescription$responseText</div>";  // format the element in the structure described above
-				}
-			}
+            $responseText = htmlspecialchars($this->cleanPlaintextTextarea($reviewFormResponse->getValue())); // encode the special chars (that would be interpreted as html structure in some way)
+            $responseText = $responseText ? "<p>Answer: <br>" . $responseText . "</p>" : "";
+
+            if (!preg_match(self::CONFIDENTIAL_FIELD_REGEXP, $elementTitle)) {
+                $comments[] = "<div>$elementTitle$elementDescription$responseText</div>";  // format the element in the structure described above
+            }
 		}
-		return $result;
+		return join('', $comments);
 	}
 
 	/**
@@ -434,16 +471,17 @@ class RqcData
 		$submissionComments = $submissionCommentDao->getReviewerCommentsByReviewerId(
 			$reviewAssignment->getSubmissionId(),
 			$reviewAssignment->getReviewerId(), $reviewAssignment->getId(), $viewableOnly);
-		$result = "";
-		while ($submissionComment = $submissionComments->next()) {
+		$comments = [];
+        /** @var SubmissionComment $submissionComment */
+        while ($submissionComment = $submissionComments->next()) {
 			if ($submissionComment->getCommentType() != SubmissionComment::COMMENT_TYPE_PEER_REVIEW) {
 				continue;  // irrelevant record, skip it
 			}
 			$title = $submissionComment->getCommentTitle() ?: "Text field without a specific question";  // will be empty but for safety-reasons we let it in there
 			$body = $submissionComment->getComments(); // will be in HTML structure already
-			$result .= ("<div><h3>$title</h3>$body</div>");   // format the element in the structure described above
+			$comments[] = "<div><h3>$title</h3>$body</div>";   // format the element in the structure described above
 		}
-		return str_replace("\r", '', $result);  // may contain CR LF, we want only LF
+		return str_replace("\r", '', join('', $comments));  // may contain CR LF, we want only LF
 	}
 
 	/**
