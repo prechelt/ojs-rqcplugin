@@ -610,7 +610,7 @@ class RqcData
  * the entry of the alphabetically first locale otherwise.
  * @param array $allEntries mapping from locale name to string
  */
-function englishest(array $allEntries, $elseAll = false) // en/us moved to en // TODO 1: did that change something?
+function englishest(array $allEntries, $elseAll = false)
 {
 	$allNonenglishLocales = array();
 	foreach ($allEntries as $locale => $entry) {
