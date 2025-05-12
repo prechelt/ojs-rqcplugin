@@ -254,8 +254,7 @@ class RqcData
 		$level1N = 0;
 		foreach ($stageAssignments as $stageAssignment) {
 			$assignment = array();
-			$user = Repo::user()->get($stageAssignment->userId);
-            $userGroup = Repo::userGroup()->get($stageAssignment->userGroupId);
+            $userGroup = $stageAssignment->userGroup;
 			$levelMap = array(Role::ROLE_ID_MANAGER    => 3,
                               Role::ROLE_ID_SUB_EDITOR => 1
 			);
@@ -264,7 +263,9 @@ class RqcData
 				continue;  // irrelevant role, skip stage assignment entry
 			elseif ($level == 1)
 				$level1N++;
-			$assignment['level'] = $level;
+            $user = Repo::user()->get($stageAssignment->userId);
+            //RqcDevHelper::writeObjectToConsole($user);
+            $assignment['level'] = $level;
 			$assignment['email'] = $user->getEmail();
 			$assignment['firstname'] = getNonlocalizedAttr($user, "getGivenName");
 			$assignment['lastname'] = getNonlocalizedAttr($user, "getFamilyName");
@@ -275,6 +276,7 @@ class RqcData
 			// there must be at least one level-1 editor:
 			$editorAssignments[0]['level'] = 1; // TODO 3: maybe understand it better but until then let it be: try different editors for that
 		}
+        // TODO 1: if there is only a journal/section editor that is not assigned => assign because (s)he doesn't need to assigned to do things
 		return array('data' => $editorAssignments, 'truncation_omission_info' => $truncationOmissionInfo);
 	}
 
