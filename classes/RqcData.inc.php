@@ -247,7 +247,7 @@ class RqcData
 		}
 		if (!$level1N && count($editorAssignments)) {
 			// there must be at least one level-1 editor:
-			$editorAssignments[0]['level'] = 1; // TODO 3: maybe understand it better but until then let it be
+			$editorAssignments[0]['level'] = 1; // TODO 3: maybe understand it better but until then let it be: try different editors for that
 		}
 		return array('data' => $editorAssignments, 'truncation_omission_info' => $truncationOmissionInfo);
 	}

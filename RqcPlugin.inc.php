@@ -18,6 +18,7 @@ import('lib.pkp.classes.plugins.GenericPlugin');
 import('lib.pkp.classes.linkAction.LinkAction');
 import('lib.pkp.classes.linkAction.request.AjaxModal');
 import('classes.core.Application');
+import('lib.pkp.classes.db.DAORegistry');
 import('plugins.generic.rqc.RqcSettingsForm');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.classes.EditorActions');

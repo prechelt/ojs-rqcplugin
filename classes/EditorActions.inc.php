@@ -11,9 +11,7 @@ import('lib.pkp.classes.submission.reviewAssignment.ReviewAssignmentDAO');
 import('lib.pkp.classes.submission.reviewAssignment.ReviewAssignment');
 
 import('plugins.generic.rqc.pages.RqcCallHandler');
-import('plugins.generic.rqc.classes.RqcData');
 import('plugins.generic.rqc.classes.RqcDevHelper');
-import('plugins.generic.rqc.classes.RqcLogger');
 
 /**
  * RQC adapter parts revolving around editorial decisions using the hooking mechanism.
