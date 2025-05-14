@@ -2,9 +2,9 @@
 
 namespace APP\plugins\generic\rqc\pages;
 
+use APP\facades\Repo;
 use APP\handler\Handler;
 use PKP\db\DAORegistry;
-use PKP\plugins\PluginRegistry;
 
 use Composer\Semver\Semver; // used by x()
 
@@ -17,6 +17,7 @@ use APP\plugins\generic\rqc\classes\ReviewerOpting;
 use APP\plugins\generic\rqc\classes\RqcLogger;
 use APP\plugins\generic\rqc\pages\RqcCallHandler;
 use APP\plugins\generic\rqc\RqcPlugin;
+use PKP\submission\reviewAssignment\ReviewAssignment;
 
 
 /**
@@ -82,7 +83,7 @@ class RqcDevHelperHandler extends Handler
 
 		$hasId = $this->plugin->getSetting($contextId, 'rqcJournalId');
 		$hasKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
-		print("Id: $hasId <br>Key: $hasKey<br>Returns: ValidKeyPair " . (PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair() ? "true" : "false"));
+		print("Id: $hasId <br>Key: $hasKey<br>Returns: ValidKeyPair " . ($this->plugin->hasValidRqcIdKeyPair() ? "true" : "false"));
 	}
 
 	/**
@@ -92,13 +93,19 @@ class RqcDevHelperHandler extends Handler
 	{
 		$submissionId =& $args[0];
 		$userId = $request->getUser()->getId();
-		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-		$ra = $reviewAssignmentDao->getLastReviewRoundReviewAssignmentByReviewer($submissionId, $userId);
-		$raId = $ra->getId();
-		$ra->setRecommendation(null);
-		$ra->setDateCompleted(null);
-		$reviewAssignmentDao->updateObject($ra);
-		return ("raReset $raId (submission $submissionId, reviewer $userId)<br>");
+
+        $reviewAssignment = Repo::reviewAssignment()
+            ->getCollector()
+            ->filterBySubmissionIds([$submissionId])
+            ->filterByReviewerIds([$userId])
+            ->getMany()->first(); /**@var ReviewAssignment $reviewAssignment * */
+
+        Repo::reviewAssignment()->edit($reviewAssignment, [
+            'step' => 3,
+            'dateCompleted' => null,
+            'recommendation' => null,
+        ]);
+		return ("raReset " . $reviewAssignment->getId() . "(submission $submissionId, reviewer $userId)<br>");
 	}
 
 	/**
