@@ -3,15 +3,15 @@
 namespace APP\plugins\generic\rqc\pages;
 
 use APP\pages\workflow\WorkflowHandler;
+use PKP\core\Core;
 use PKP\db\DAORegistry;
 use PKP\plugins\Plugin;
 use PKP\plugins\PluginRegistry;
 use PKP\security\Role;
 
-use APP\plugins\generic\rqc\RqcPlugin;
 use APP\plugins\generic\rqc\classes\RqcCall;
-use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
-use APP\plugins\generic\rqc\classes\DelayedRqcCall;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCall;
 use APP\plugins\generic\rqc\classes\RqcLogger;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 

@@ -1,14 +1,14 @@
 <?php
 
-namespace APP\plugins\generic\rqc\classes;
+namespace APP\plugins\generic\rqc\classes\DelayedRqcCall;
 
+use APP\plugins\generic\rqc\classes\Core;
+use APP\plugins\generic\rqc\classes\RqcLogger;
 use PKP\core\DataObject;
-use PKP\db\SchemaDAO;
 use PKP\db\DAOResultFactory;
+use PKP\db\SchemaDAO;
 use PKP\plugins\Hook;
 
-use APP\plugins\generic\rqc\RqcPlugin;
-use APP\plugins\generic\rqc\classes\DelayedRqcCall;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 

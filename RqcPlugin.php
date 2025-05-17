@@ -9,7 +9,6 @@ use PKP\core\PKPRequest;
 use PKP\linkAction\LinkAction;
 use PKP\linkAction\request\AjaxModal;
 use PKP\db\DAORegistry;
-use PKP\linkAction\request\OpenWindowAction;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 
@@ -17,7 +16,7 @@ use APP\plugins\generic\rqc\classes\ReviewerOpting;
 use APP\plugins\generic\rqc\classes\EditorActions;
 use APP\plugins\generic\rqc\pages\RqcDevHelperHandler;
 use APP\plugins\generic\rqc\classes\RqcPluginMigrations;
-use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCallDAO;
 use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOptingDAO;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 

@@ -9,10 +9,10 @@ use PKP\db\DAORegistry;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 use Composer\Semver\Semver; // used by x()
 
-use APP\plugins\generic\rqc\classes\DelayedRqcCallSchemaMigration;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCallSchemaMigration;
 use APP\plugins\generic\rqc\classes\DelayedRqcCallSender;
-use APP\plugins\generic\rqc\classes\DelayedRqcCall;
-use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCall;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCallDAO;
 use APP\plugins\generic\rqc\classes\RqcData;
 use APP\plugins\generic\rqc\classes\ReviewerOpting;
 use APP\plugins\generic\rqc\classes\RqcLogger;

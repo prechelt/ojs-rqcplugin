@@ -2,8 +2,10 @@
 
 namespace APP\plugins\generic\rqc\classes;
 
-use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOptingSchemaMigration;
 use Illuminate\Database\Migrations\Migration;
+
+use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOptingSchemaMigration;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCallSchemaMigration;
 
 
 /**

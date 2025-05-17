@@ -1,13 +1,12 @@
 <?php
 
-namespace APP\plugins\generic\rqc\classes;
+namespace APP\plugins\generic\rqc\classes\DelayedRqcCall;
 
 use APP\core\Application;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-use APP\plugins\generic\rqc\classes\RqcDevHelper;
 use APP\plugins\generic\rqc\classes\RqcLogger;
 
 

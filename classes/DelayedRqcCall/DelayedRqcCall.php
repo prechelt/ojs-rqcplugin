@@ -1,6 +1,6 @@
 <?php
 
-namespace APP\plugins\generic\rqc\classes;
+namespace APP\plugins\generic\rqc\classes\DelayedRqcCall;
 
 use PKP\core\DataObject;
 

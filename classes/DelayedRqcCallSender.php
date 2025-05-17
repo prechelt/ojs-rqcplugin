@@ -4,13 +4,14 @@ namespace APP\plugins\generic\rqc\classes;
 
 use PKP\db\DAORegistry;
 use PKP\scheduledTask\ScheduledTask;
+use PKP\scheduledTask\ScheduledTaskHelper;
 use PKP\core\Core;
 
-use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
-use APP\plugins\generic\rqc\classes\DelayedRqcCall;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCall;
 use APP\plugins\generic\rqc\pages\RqcCallHandler;
-use APP\plugins\generic\rqc\classes\RqcDevHelper;
 use APP\plugins\generic\rqc\RqcPlugin;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 
 /**
@@ -60,7 +61,7 @@ class DelayedRqcCallSender extends ScheduledTask
 			// If that assumption is false because we are "unlucky" we continue next time executeActions() is executed anyway. So no big problem
 			if ($lastNRetriesFailed >= $this->_NRetriesToAbort) {
 				$logMessage = "Abort retrying other delayed RQC call in the queue for now";
-				$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
+				$this->addExecutionLogEntry($logMessage, ScheduledTaskHelper::SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
 				RqcLogger::logWarning($logMessage);
 				break;
 			}
@@ -75,7 +76,7 @@ class DelayedRqcCallSender extends ScheduledTask
 					$lastNRetriesFailed = 0; // reset counter
 					$logMessage = "Successfully send the delayed RQC call from from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
 						") originally send at " . $call->getOriginalTryTs() . " with http status code " . $rqcResult['status'] . " and response body " . json_encode($rqcResult['response']) . "\n";
-					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_NOTICE);
+					$this->addExecutionLogEntry($logMessage, ScheduledTaskHelper::SCHEDULED_TASK_MESSAGE_TYPE_NOTICE);
 					RqcLogger::logInfo($logMessage);
 					break;
 				case in_array($rqcResult['status'], RQC_CALL_STATUS_CODES_TO_RESEND): // error: probably not an implementation error
@@ -83,7 +84,7 @@ class DelayedRqcCallSender extends ScheduledTask
 					$lastNRetriesFailed += 1;
 					$logMessage = "Delayed RQC call error: Tried to send data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
 						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\n";
-					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
+					$this->addExecutionLogEntry($logMessage, ScheduledTaskHelper::SCHEDULED_TASK_MESSAGE_TYPE_WARNING);
 					RqcLogger::logWarning($logMessage);
 					break;
 				default:    // something else went wrong (implementation error or else)
@@ -91,7 +92,7 @@ class DelayedRqcCallSender extends ScheduledTask
 					$lastNRetriesFailed += 1;
 					$logMessage = "Delayed RQC call error: Tried to send (probably faulty) data from submission " . $call->getSubmissionId() . " (contextId: " . $call->getContextId() .
 						") originally send at " . $call->getOriginalTryTs() . " resulted in http status code " . $rqcResult['status'] . " with response body " . json_encode($rqcResult['response']) . "\nThe original post request body: " . json_encode($rqcResult['request']) . "\n";
-					$this->addExecutionLogEntry($logMessage, SCHEDULED_TASK_MESSAGE_TYPE_ERROR);
+					$this->addExecutionLogEntry($logMessage, ScheduledTaskHelper::SCHEDULED_TASK_MESSAGE_TYPE_ERROR);
 					RqcLogger::logError($logMessage);
 					break;
 			}
