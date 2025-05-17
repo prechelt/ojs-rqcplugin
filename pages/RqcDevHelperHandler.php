@@ -4,8 +4,9 @@ namespace APP\plugins\generic\rqc\pages;
 
 use APP\facades\Repo;
 use APP\handler\Handler;
+use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOpting;
 use PKP\db\DAORegistry;
-
+use PKP\submission\reviewAssignment\ReviewAssignment;
 use Composer\Semver\Semver; // used by x()
 
 use APP\plugins\generic\rqc\classes\DelayedRqcCallSchemaMigration;
@@ -17,7 +18,9 @@ use APP\plugins\generic\rqc\classes\ReviewerOpting;
 use APP\plugins\generic\rqc\classes\RqcLogger;
 use APP\plugins\generic\rqc\pages\RqcCallHandler;
 use APP\plugins\generic\rqc\RqcPlugin;
-use PKP\submission\reviewAssignment\ReviewAssignment;
+use APP\plugins\generic\rqc\classes\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOptingDAO;
+use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOptingSchemaMigration;
 
 
 /**
@@ -109,16 +112,18 @@ class RqcDevHelperHandler extends Handler
 	}
 
 	/**
-	 * Make the reviewers rqcOptInStatus invalid so that it has to be set again
+	 * remove the reviewers opting status for a submission
 	 */
 	public function rqcOptingStatusReset($args, $request)
 	{
-		$year =& $args[0];
+		$submissionId =& $args[0];
 		$contextId = $request->getContext()->getId();
 		$user = $request->getUser();
 		$userId = $user->getId();
-		$user->updateSetting(ReviewerOpting::$statusName . $year, null, 'int', $contextId);
-		return ("rqcOptingStatusReset for reviewer $userId in journal $contextId for year $year");
+        $rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO'); /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+        $rqcReviewerOpting = $rqcReviewerOptingDAO->getReviewerOptingForSubmission($submissionId, $user->getId()) ;  /** @var $rqcReviewerOpting RqcReviewerOpting */
+        $rqcReviewerOptingDAO->deleteObject($rqcReviewerOpting);
+        return ("rqcOptingStatusReset for reviewer $userId in submission $submissionId");
 	}
 
 	/**
@@ -130,6 +135,16 @@ class RqcDevHelperHandler extends Handler
 		$migration->down();
 		$migration->up();
 	}
+
+    /**
+     * to create/delete the table in the database (usually done after installation of the plugin)
+     */
+    public function updateRqcReviewerOpting($args, $request)
+    {
+        $migration = new RqcReviewerOptingSchemaMigration();
+        $migration->down();
+        $migration->up();
+    }
 
 	public function test($args, $request)
 	{

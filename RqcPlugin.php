@@ -16,8 +16,9 @@ use PKP\plugins\Hook;
 use APP\plugins\generic\rqc\classes\ReviewerOpting;
 use APP\plugins\generic\rqc\classes\EditorActions;
 use APP\plugins\generic\rqc\pages\RqcDevHelperHandler;
-use APP\plugins\generic\rqc\classes\DelayedRqcCallSchemaMigration;
+use APP\plugins\generic\rqc\classes\RqcPluginMigrations;
 use APP\plugins\generic\rqc\classes\DelayedRqcCallDAO;
+use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOptingDAO;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 
@@ -59,6 +60,7 @@ class RqcPlugin extends GenericPlugin
 				(new ReviewerOpting())->register();
 				(new EditorActions())->register();
 				DAORegistry::registerDAO('DelayedRqcCallDAO', new DelayedRqcCallDAO());
+                DAORegistry::registerDAO('RqcReviewerOptingDAO', new RqcReviewerOptingDAO());
 			}
 			if (RqcPlugin::hasDeveloperFunctions()) {  // register the devFunctions independent of RQC-ID-Key-Pair
 				Hook::add('LoadHandler', $this->callbackSetupRqcDevHelperHandler(...));
@@ -178,9 +180,9 @@ class RqcPlugin extends GenericPlugin
 	/**
 	 * @copydoc Plugin::getInstallMigration()
 	 */
-	public function getInstallMigration(): DelayedRqcCallSchemaMigration
+	public function getInstallMigration(): RqcPluginMigrations
 	{
-		return new DelayedRqcCallSchemaMigration();
+		return new RqcPluginMigrations();
 	}
 
 	//========== Callbacks ==========

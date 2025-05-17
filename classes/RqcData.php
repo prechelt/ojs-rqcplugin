@@ -345,11 +345,9 @@ class RqcData
 
 			//--- reviewer:
 			$reviewerObject = Repo::user()->get($reviewAssignment->getReviewerId(), true);
-			// rqcOptIn or rqcOptOut
-			$reviewAssignmentYear = date('Y', strtotime($reviewAssignment->getDateCompleted()));
-			$status = (new ReviewerOpting())->getStatus($contextId, $reviewerObject, !RQC_PRELIM_OPTING, $reviewAssignmentYear); // get opting decision for the year the assignment was submitted
+            $submission = Repo::submission()->get($submissionId, $contextId);
 			$rqcReviewer = array();
-			if ($status == RQC_OPTING_STATUS_IN) { // TODO 1: switch to RQC_OPTING_STATUS_OUT (both in 3.3 and 3.5)
+			if (!(new ReviewerOpting())->isOptedOut($submission, $reviewerObject)) { // TODO 1: switch to RQC_OPTING_STATUS_OUT (both in 3.3 and 3.5)
 				$rqcReviewer['email'] = $reviewerObject->getEmail();
 				$rqcReviewer['firstname'] = getNonlocalizedAttr($reviewerObject, "getGivenName");
 				$rqcReviewer['lastname'] = getNonlocalizedAttr($reviewerObject, "getFamilyName");

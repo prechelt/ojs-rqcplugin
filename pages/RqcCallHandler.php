@@ -3,9 +3,9 @@
 namespace APP\plugins\generic\rqc\pages;
 
 use APP\pages\workflow\WorkflowHandler;
+use PKP\db\DAORegistry;
 use PKP\plugins\Plugin;
 use PKP\plugins\PluginRegistry;
-use APP\submission\DAO;
 use PKP\security\Role;
 
 use APP\plugins\generic\rqc\RqcPlugin;
