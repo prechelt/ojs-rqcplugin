@@ -2,6 +2,7 @@
 
 namespace APP\plugins\generic\rqc\pages;
 
+use APP\core\Application;
 use APP\facades\Repo;
 use APP\pages\workflow\WorkflowHandler;
 use PKP\core\Core;
@@ -119,8 +120,8 @@ class RqcCallHandler extends WorkflowHandler
 				print(__('plugins.generic.rqc.editoraction.grade.notRedirect')); // show message that no redirect is needed for explicit call // TODO Q: is the message right?
 				RqcLogger::logInfo("Explicit call to RQC for submission $submissionId successful: Redirect not needed!");
 			} else if ($explicitCall && $statusCode == 303) {
-				header("HTTP/1.1 303 See Other");
-				header("Location: " . $responseBodyArray['redirect_target']);
+                $request = Application::get()->getRequest();
+                $request->redirectUrl($responseBodyArray['redirect_target']);
 				RqcLogger::logInfo("Explicit call to RQC for submission $submissionId successfully redirected");
 			} else { // implicit call is successful for both statusCodes (because it doesn't redirect)
 				RqcLogger::logInfo("Implicit call to RQC for submission $submissionId successful");

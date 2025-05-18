@@ -418,6 +418,8 @@ class RqcData
 
 		$comments = [];
 		while ($reviewFormElement = $reviewFormElements->next()) {
+            RqcDevHelper::writeToConsole("### reviewFormElement.elementType=" . $reviewFormElement->getElementType() .
+                "  included='" . $reviewFormElement->getIncluded() . "'\n");
             if (!$reviewFormElement->getIncluded()) {
                 continue;
             }

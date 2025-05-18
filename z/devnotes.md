@@ -289,6 +289,7 @@ other typical identifiers for such objects):
 - at the end (after my bachelors thesis is finished)
 	- put in all open issues into the issues
 	- elaborate on "ask your publisher" in locale.po
+- ScheduledTask has changed. Test it.
 
 - wait for other people
 	- Added an issue for adding the hook. If the issue https://github.com/pkp/pkp-lib/issues/11305 is closed and merged
