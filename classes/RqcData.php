@@ -347,7 +347,7 @@ class RqcData
 			$reviewerObject = Repo::user()->get($reviewAssignment->getReviewerId(), true);
             $submission = Repo::submission()->get($submissionId, $contextId);
 			$rqcReviewer = array();
-			if (!(new ReviewerOpting())->isOptedOut($submission, $reviewerObject)) { // TODO 1: switch to RQC_OPTING_STATUS_OUT (both in 3.3 and 3.5)
+			if (!(new ReviewerOpting())->isOptedOut($submission, $reviewerObject)) { // TODO 1: switch to RQC_OPTING_STATUS_OUT (in 3.3)
 				$rqcReviewer['email'] = $reviewerObject->getEmail();
 				$rqcReviewer['firstname'] = getNonlocalizedAttr($reviewerObject, "getGivenName");
 				$rqcReviewer['lastname'] = getNonlocalizedAttr($reviewerObject, "getFamilyName");
