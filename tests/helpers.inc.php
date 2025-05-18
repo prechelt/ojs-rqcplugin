@@ -6,11 +6,11 @@
  * @ingroup plugins_generic_rqc
  */
 
-import('lib.pkp.classes.user.User');
-import('classes.submission.Submission');
+use APP\facades\Repo;
+use PKP\submission\PKPSubmission;
 
-import('plugins.generic.rqc.classes.ReviewerOpting');
-import('plugins.generic.rqc.RqcPlugin');
+use APP\plugins\generic\rqc\RqcPlugin;
+use APP\plugins\generic\rqc\classes\ReviewerOpting;
 
 function make_reviewable_submission($context, $authors, $reviewers): Submission
 {
@@ -67,11 +67,11 @@ function make_publication($newSubmission, $authors)
 
 function make_submission($context)
 {
-	$submission = DAORegistry::getDAO('SubmissionDAO')->newDataObject();
+    $submission = Repo::submission()->newDataObject();
 	$submission->_data = [
 		'contextId'          => $context,
 		'stageId'            => WORKFLOW_STAGE_ID_EXTERNAL_REVIEW,
-		'status'             => STATUS_QUEUED,  // as in manually created case
+		'status'             => PKPSubmission::STATUS_QUEUED,  // as in manually created case
 		'submissionProgress' => 0  // as in manually created case
 	];
 	$newSubmission = Services::get('submission')->add(

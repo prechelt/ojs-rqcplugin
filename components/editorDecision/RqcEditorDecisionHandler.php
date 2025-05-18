@@ -4,9 +4,11 @@ namespace APP\plugins\generic\rqc\components\editorDecision;
 
 use APP\core\Application;
 use APP\core\PageRouter;
+use APP\facades\Repo;
 use PKP\core\JSONMessage;
 use PKP\db\DAORegistry;
 use PKP\handler\PKPHandler;
+use PKP\plugins\Plugin;
 use PKP\plugins\PluginRegistry;
 
 use APP\plugins\generic\rqc\RqcPlugin;
@@ -37,8 +39,8 @@ class RqcEditorDecisionHandler extends PKPHandler
 		//----- prepare processing:
 		$requestArgs = $this->plugin->getQueryArray($request);
 		$submissionId = $requestArgs['submissionId'];
-		$submission = DAORegistry::getDAO('SubmissionDAO')->getById($submissionId);
-		//----- modal dialog:
+        $submission = Repo::submission()->get((int) $submissionId);
+        //----- modal dialog:
 		$pageRouter = new PageRouter();
 		$pageRouter->setApplication(Application::get());  // so that url() will find context
 		$target = $pageRouter->url($request, null, 'rqccall', 'submit', null,

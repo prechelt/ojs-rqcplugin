@@ -2,6 +2,7 @@
 
 namespace APP\plugins\generic\rqc\pages;
 
+use APP\facades\Repo;
 use APP\pages\workflow\WorkflowHandler;
 use PKP\core\Core;
 use PKP\db\DAORegistry;
@@ -83,9 +84,8 @@ class RqcCallHandler extends WorkflowHandler
 	 */
 	function sendToRqc($request, int $submissionId): array
 	{
-		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
-		$submission = $submissionDao->getById($submissionId);
-		$contextId = $submission->getContextId();
+        $submission = Repo::submission()->get((int) $submissionId);
+        $contextId = $submission->getData('contextId');
 		$rqcJournalId = $this->plugin->getSetting($contextId, 'rqcJournalId');
 		$rqcJournalAPIKey = $this->plugin->getSetting($contextId, 'rqcJournalAPIKey');
 		return RqcCall::callMhsSubmission($this->plugin->rqcServer(), $rqcJournalId, $rqcJournalAPIKey,
@@ -152,9 +152,8 @@ class RqcCallHandler extends WorkflowHandler
 	public function putCallIntoQueue(int $submissionId): int
 	{
 		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
-		$submissionDao = DAORegistry::getDAO('SubmissionDAO');
-		$submission = $submissionDao->getById($submissionId);
-		$contextId = $submission->getContextId();
+        $submission = Repo::submission()->get($submissionId);
+        $contextId = $submission->getData('contextId');
 		$delayedRqcCallDao->deleteCallsBySubmissionId($submissionId); // if there is already a call in the queue for this submission: Delete to not have multiple delayed calls for the same submission
 		$delayedRqcCall = $delayedRqcCallDao->newDataObject();
 		$delayedRqcCall->setSubmissionId($submissionId);
