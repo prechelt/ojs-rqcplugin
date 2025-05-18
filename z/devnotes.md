@@ -141,6 +141,8 @@ with:
 	  "Can only recommend decision, authorized editor must record it."
 	- Maybe-helpful items from the code:
 	  _callbackHandleCustomNavigationMenuItems
+- Example Plugin:
+      - https://github.com/pkp/staticPages
 
 ### OJS data model (the relevant parts)
 
@@ -192,7 +194,7 @@ other typical identifiers for such objects):
 	  `ReviewAssignmentDAO::getBySubmissionId`).
 	  This returns an array. Its indices are the review IDs!.
 
-### OJS 3.4
+### OJS 3.5
 
 - List all hooks: `php lib/pkp/tools/getHooks.php | tr , '\n'`
   Many hooks live in lib/pkp, not in ojs.
@@ -276,8 +278,6 @@ other typical identifiers for such objects):
 	- same email is needed for both services (RQC login and OJS user) (that is the "id" that identifies the people)
 	- try one explicit call the first time so that they can test if the system works with immediate feedback
 - rewrite some things here in the devnodes (some are old and I don't know what they mean)
-- which patches are applied, which aren't
-	- delete patches that are applied at the code base (3.3 is fully accepted!; 3.4 I haven't looked)
 - go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??;
   go through the whole OJS data model) if there are some logical errors there)
 - at the end (if no tasks are left)
@@ -294,6 +294,7 @@ other typical identifiers for such objects):
 	- Added an issue for adding the hook. If the issue https://github.com/pkp/pkp-lib/issues/11305 is closed and merged
 	  these changes will take effect. Until then ReviewerOpting::getAndSaveOptingStatus() can stay inside but does
 	  noting.
+    - https://forum.pkp.sfu.ca/t/development-of-a-plugin-for-ojs-3-5-how-to-add-a-button-to-the-editorial-workflow-page/95832
     - if attachment sets are supported by the server: uncomment the place where its called
 
 - TODOs in the files

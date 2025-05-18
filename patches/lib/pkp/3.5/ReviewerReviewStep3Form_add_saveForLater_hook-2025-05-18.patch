@@ -1,0 +1,24 @@
+Index: classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php b/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php
+--- a/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php	(revision f835ab96f2527f2dd0b058d87154d7613a90ec95)
++++ b/classes/submission/reviewer/form/PKPReviewerReviewStep3Form.php	(revision 7dc0f0595726d21a22bf71a7f2bb38ca858c43e3)
+@@ -22,6 +22,7 @@
+ use APP\submission\Submission;
+ use APP\template\TemplateManager;
+ use Illuminate\Support\Facades\Mail;
++use PKP\plugins\Hook;
+ use PKP\controllers\confirmationModal\linkAction\ViewReviewGuidelinesLinkAction;
+ use PKP\core\Core;
+ use PKP\core\PKPApplication;
+@@ -277,6 +278,7 @@
+             'recommendation' => (int) $this->getData('recommendation'), // save the recommendation to the review assignment
+         ]);
+ 
++        Hook::call(strtolower_codesafe(get_class($this)) . '::saveForLater', array($this));
+         return true;
+     }
+ 
