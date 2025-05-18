@@ -68,7 +68,7 @@ php -S localhost:8001
 #php tools/upgrade.php upgrade # register the plugin
 
 # sudo nano /etc/crontab # that needs reviewing! TODO 1
-# to insert * * * * * bluecube php /your_path_to_ojs/ojs/tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml > "/your_path_to_ojs/files/your_scheduled_task_log.log" 2>&1
+# to insert * * * * * yourUserAccount php /your_path_to_ojs/ojs/lib/pkp/tools/scheduler.php run > "/your_path_to_ojs/files/your_scheduled_task_log.log" 2>&1
 ```
 
 for my custom setup for the config.inc.php see https://docs.pkp.sfu.ca/dev/documentation/3.3/en/getting-started together
@@ -77,7 +77,6 @@ with:
 - [general]:
 	- base_url = "http://localhost:8000"
 	- allowed_hosts = "[\"localhost\"]"
-	- scheduled_tasks = On (Off currently doesn't work? I think its always On TODO 2)
 - [database]:
 	- driver = postgres9
 	- name = "your_ojs_database"
@@ -96,7 +95,7 @@ with:
 - perform the steps described under _Install_ manually.
 - set remotes as described under _Remotes_
 - Retrieve the previous `config.inc.php` and/or adjust `config.inc.php` to the following settings:
-- [general]: installed = Off; base_url, scheduled_tasks
+- [general]: installed = Off; base_url
 - [debug]: show_stacktrace = On; display_errors = Off  (display_errors breaks Ajax functions when it kicks in)
 - [database]: host, port, name, username, password, persistent
 - [email]: smtp_server, smtp_port, smtp_auth, smtp_username, smtp_password
@@ -264,8 +263,8 @@ other typical identifiers for such objects):
   template uses `$attrname`.
 - OJS review rounds must create successive submission ids for RQC.
 - Cronjob via an own crontab
-	- test what the cronjob does with php tools/runScheduledTasks.php plugins/generic/rqc/scheduledTasks.xml
-- Delayed-call storage via Migration and own DAO that extends SchemaDAO?
+	- test what the cronjob does with php ojs/lib/pkp/tools/scheduler.php run (the plugin hooks into the scheduler of whole system)
+
 
 ### TO DO and status
 
@@ -289,7 +288,6 @@ other typical identifiers for such objects):
 - at the end (after my bachelors thesis is finished)
 	- put in all open issues into the issues
 	- elaborate on "ask your publisher" in locale.po
-- ScheduledTask has changed. Test it.
 
 - wait for other people
 	- Added an issue for adding the hook. If the issue https://github.com/pkp/pkp-lib/issues/11305 is closed and merged

@@ -11,6 +11,8 @@ use PKP\linkAction\request\AjaxModal;
 use PKP\db\DAORegistry;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
+use PKP\plugins\interfaces\HasTaskScheduler;
+use PKP\scheduledTask\PKPScheduler;
 
 use APP\plugins\generic\rqc\classes\ReviewerOpting;
 use APP\plugins\generic\rqc\classes\EditorActions;
@@ -18,6 +20,7 @@ use APP\plugins\generic\rqc\pages\RqcDevHelperHandler;
 use APP\plugins\generic\rqc\classes\RqcPluginMigrations;
 use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCallDAO;
 use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOptingDAO;
+use APP\plugins\generic\rqc\classes\DelayedRqcCallSender;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 
@@ -40,7 +43,7 @@ define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
  *
  * @ingroup plugins_generic_rqc
  */
-class RqcPlugin extends GenericPlugin
+class RqcPlugin extends GenericPlugin implements HasTaskScheduler
 {
 	/**
 	 * @copydoc Plugin::register()
@@ -240,16 +243,28 @@ class RqcPlugin extends GenericPlugin
 	 * returns true if the RQC-Key and ID are set in the db
 	 * these should only be set if the check for the id-key pair was successfully done in the past (else the entry shouldn't be there or empty)
 	 */
-	public function hasValidRqcIdKeyPair(): bool
+	public function hasValidRqcIdKeyPair(int $contextId = null): bool
 	{
 		// PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair()
 		$request = Application::get()->getRequest();
-		$contextId = $request->getContext()->getId();
+        $contextId = $contextId ?: $request->getContext()->getId();
 		$hasId = $this->getSetting($contextId, 'rqcJournalId');
 		$hasKey = $this->getSetting($contextId, 'rqcJournalAPIKey');
 		// RqcDevHelper::writeToConsole("\nhasValidRqcIdKeyPair\nId: ".$hasId."\t\tKey: ".$hasKey."\nReturns: ValidkeyPair ".(($hasId and $hasKey) ? "True" : "False")."\n\n");
 		return ($hasId and $hasKey);
 	}
+
+    /**
+     * @copydoc \PKP\plugins\interfaces\HasTaskScheduler::registerSchedules()
+     */
+    public function registerSchedules(PKPScheduler $scheduler): void
+    {
+        $scheduler
+            ->addSchedule(new DelayedRqcCallSender())
+            ->everyMinute()
+            ->name(DelayedRqcCallSender::class)
+            ->withoutOverlapping();
+    }
 }
 
 if (!PKP_STRICT_MODE) {
