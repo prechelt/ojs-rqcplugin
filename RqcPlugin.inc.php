@@ -133,18 +133,6 @@ class RqcPlugin extends GenericPlugin
 			__('manager.plugins.settings'),
 			null
 		);
-		//----- perhaps add development-only stuff:
-		if (RqcPlugin::hasDeveloperFunctions()) {
-			//		import('lib.pkp.classes.linkAction.request.OpenWindowAction');
-			//		$additions[] = new LinkAction(
-			//			'example_request2',
-			//			new OpenWindowAction(
-			//				$router->url($request, /*Application::*/ ROUTE_PAGE, 'MySuperHandler', 'myop', null, ['my', 'array'])
-			//			),
-			//			'(example_request2)',
-			//			null
-			//		);
-		}
 		//----- return:
 		$actions = array_merge($additions, $actions);
 		return $actions;

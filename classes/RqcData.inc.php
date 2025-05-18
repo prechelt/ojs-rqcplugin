@@ -153,6 +153,7 @@ class RqcData
 			$attachmentSet[] = $attachment;
 		}
 		//RqcDevHelper::writeToConsole("\n".print_r($attachmentSet, true)."\n");
+		$attachmentSet = []; // TODO 3: base64_encoded content gives me an error 500 from the server (til then I only give empty attachment sets)
 		return array('data' => $attachmentSet, 'truncation_omission_info' => $truncationOmissionInfo);
 	}
 
@@ -313,7 +314,7 @@ class RqcData
 			$rqcReview['text'] = limitToSize($reviewText, RQC_MULTI_LINE_STRING_SIZE_LIMIT);
 			$rqcReview['is_html'] = true;
 			$attachmentSetWithAdditionalInfo = $this->getAttachmentSet($reviewerSubmission);
-			$rqcReview['attachment_set'] = array(); // limitToSizeArray($attachmentSetWithAdditionalInfo['data']); // TODO 3: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
+			$rqcReview['attachment_set'] = limitToSizeArray($attachmentSetWithAdditionalInfo['data']);
 			$recommendation = $reviewAssignment->getRecommendation();
 			$rqcReview['suggested_decision'] = ($recommendation ? $this->rqcDecision("reviewer", $recommendation) : "");
 
@@ -334,11 +335,10 @@ class RqcData
 					$truncationOmissionInfo[] = "The review text of the reviewer " . $reviewerObject->getEmail() . " was truncated. Original size: " .
 						strlen($reviewText) . ". Truncated to: " . strlen($rqcReview['text']) . ". The size limit for the review text is: " . RQC_MULTI_LINE_STRING_SIZE_LIMIT;
 				}
-				// TODO 3: base64_encoded content gives me an error 500 from the server (til then I leave it commented out)
-//				if ($rqcReview['attachment_set'] != $attachmentSetWithAdditionalInfo['data']) {
-//					$truncationOmissionInfo[] = "The review attachments set of the reviewer " . $reviewerObject->getEmail() . " was truncated. Original size: " .
-//						count($attachmentSetWithAdditionalInfo['data']) . ". Truncated to: " . count($rqcReview['attachment_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;
-//				}
+				if ($rqcReview['attachment_set'] != $attachmentSetWithAdditionalInfo['data']) {
+					$truncationOmissionInfo[] = "The review attachments set of the reviewer " . $reviewerObject->getEmail() . " was truncated. Original size: " .
+						count($attachmentSetWithAdditionalInfo['data']) . ". Truncated to: " . count($rqcReview['attachment_set']) . ". The size limit of this set is: " . RQC_OTHER_LIST_SIZE_LIMIT;
+				}
 			} else {
 				$rqcReviewer['email'] = generatePseudoEmail($reviewerObject->getEmail(), $this->getSaltAndGenerateIfNotSet($contextId));
 				$rqcReviewer['firstname'] = "";
