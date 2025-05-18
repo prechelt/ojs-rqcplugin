@@ -143,6 +143,8 @@ with:
 	  "Can only recommend decision, authorized editor must record it."
 	- Maybe-helpful items from the code:
 	  _callbackHandleCustomNavigationMenuItems
+- Example Plugin:
+  - https://github.com/pkp/staticPages
 
 ### OJS data model (the relevant parts)
 
@@ -266,8 +268,6 @@ other typical identifiers for such objects):
 	- same email is needed for both services (RQC login and OJS user) (that is the "id" that identifies the people)
 	- try one explicit call the first time so that they can test if the system works with immediate feedback
 - rewrite some things here in the devnodes (some are old and I don't know what they mean)
-- which patches are applied, which aren't
-	- delete patches that are applied at the code base (3.3 is fully accepted!; 3.4 I haven't looked)
 - go through all the already written functions (especially RqcData and "how many rounds does the manuscript have?" (??;
   go through the whole OJS data model) if there are some logical errors there)
 - at the end (if no tasks are left)
