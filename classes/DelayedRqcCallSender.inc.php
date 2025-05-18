@@ -43,16 +43,18 @@ class DelayedRqcCallSender extends ScheduledTask
 	public function executeActions(): bool
 	{
 		$rqcPlugin = new RqcPlugin();
-		if (!$rqcPlugin->hasValidRqcIdKeyPair()) { // execute only if the credentials for sending the data to RQC are present
-			return false;
-		}
+		$delayedRqcCallDao = new DelayedRqcCallDAO();
+		DAORegistry::registerDAO('DelayedRqcCallDAO', $delayedRqcCallDao);
 
 		$lastNRetriesFailed = 0;
 
-		$delayedRqcCallDao = new DelayedRqcCallDAO();
 		$allDelayedCallsToBeRetriedNow = $delayedRqcCallDao->getCallsToRetry()->toArray(); // grab all delayed calls that should be retried now
 		//RqcDevHelper::writeObjectToConsole($allDelayedCallsToBeRetriedNow, "all delayed calls");
 		foreach ($allDelayedCallsToBeRetriedNow as $call) { /** @var $call DelayedRqcCall */
+			if (!$rqcPlugin->hasValidRqcIdKeyPair($call->getContextId())) { // execute only if the credentials for sending the data to RQC are present
+				continue;
+			}
+
 			if ($call->getRemainingRetries() <= 0) {  // throw away!
 				$delayedRqcCallDao->deleteById($call->getId());
 				continue;

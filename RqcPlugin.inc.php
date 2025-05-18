@@ -248,11 +248,11 @@ class RqcPlugin extends GenericPlugin
 	 * returns true if the RQC-Key and ID are set in the db
 	 * these should only be set if the check for the id-key pair was successfully done in the past (else the entry shouldn't be there or empty)
 	 */
-	public function hasValidRqcIdKeyPair(): bool
+	public function hasValidRqcIdKeyPair(int $contextId = null): bool
 	{
 		// PluginRegistry::getPlugin('generic', 'rqcplugin')->hasValidRqcIdKeyPair()
 		$request = Application::get()->getRequest();
-		$contextId = $request->getContext()->getId();
+		$contextId = $contextId ?: $request->getContext()->getId();
 		$hasId = $this->getSetting($contextId, 'rqcJournalId');
 		$hasKey = $this->getSetting($contextId, 'rqcJournalAPIKey');
 		// RqcDevHelper::writeToConsole("\nhasValidRqcIdKeyPair\nId: ".$hasId."\t\tKey: ".$hasKey."\nReturns: ValidkeyPair ".(($hasId and $hasKey) ? "True" : "False")."\n\n");
