@@ -187,8 +187,9 @@ class RqcDevHelperHandler extends Handler
 		$submissionId = $args[0];
 		$rqcCallHandler = new RqcCallHandler();
 		$delayedRqcCallId = $rqcCallHandler->putCallIntoQueue($submissionId);
+        /** @var $delayedRqcCallDao DelayedRqcCallDAO */
 		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
-		$delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
+		$delayedRqcCall = $delayedRqcCallDao->get($delayedRqcCallId);
 		print_r($delayedRqcCall);
 	}
 
@@ -199,8 +200,9 @@ class RqcDevHelperHandler extends Handler
 	{
 		header("Content-Type: text/plain; charset=utf-8");
 		$delayedRqcCallId = $args[0];
-		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
-		$delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
+        /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+        $delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
+		$delayedRqcCall = $delayedRqcCallDao->get($delayedRqcCallId);
 		$delayedRqcCallDao->updateCall($delayedRqcCall);
 		print_r($delayedRqcCall);
 	}
@@ -212,8 +214,9 @@ class RqcDevHelperHandler extends Handler
 	{
 		header("Content-Type: text/plain; charset=utf-8");
 		$delayedRqcCallId = $args[0];
-		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
-		$delayedRqcCall = $delayedRqcCallDao->getById($delayedRqcCallId);
+        /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+        $delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
+		$delayedRqcCall = $delayedRqcCallDao->get($delayedRqcCallId);
 		$delayedRqcCallDao->deleteById($delayedRqcCallId);
 		print_r($delayedRqcCall);
 	}

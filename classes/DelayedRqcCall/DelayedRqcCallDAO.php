@@ -2,14 +2,16 @@
 
 namespace APP\plugins\generic\rqc\classes\DelayedRqcCall;
 
-use APP\plugins\generic\rqc\classes\Core;
-use APP\plugins\generic\rqc\classes\RqcLogger;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\LazyCollection;
+use PKP\core\Core;
 use PKP\core\DataObject;
-use PKP\db\DAOResultFactory;
-use PKP\db\SchemaDAO;
+use PKP\core\EntityDAO;
 use PKP\plugins\Hook;
+use PKP\services\PKPSchemaService;
 
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
+use APP\plugins\generic\rqc\classes\RqcLogger;
 
 
 /**
@@ -19,17 +21,17 @@ use APP\plugins\generic\rqc\classes\RqcDevHelper;
  * @see     rqcDelayedCall.json
  * @ingroup plugins_generic_rqc
  */
-class DelayedRqcCallDAO extends SchemaDAO
+class DelayedRqcCallDAO extends EntityDAO
 {
 	/** @copydoc SchemaDAO::$schemaName */
-	public $schemaName = 'rqcDelayedCall';
+	public $schema = 'rqcDelayedCall';
 
 	/** @copydoc SchemaDAO::$tableName */
-	public $tableName = 'rqc_delayed_calls';
+	public $table = 'rqc_delayed_calls';
 
 	/** @copydoc SchemaDAO::$settingsTableName */
 	// create the settings table (even if it will be empty for sure) because its to big of an error source to not have it
-	public $settingsTableName = 'rqc_delayed_calls_settings';
+	public $settingsTable = 'rqc_delayed_call_settings';
 
 	/** @copydoc SchemaDAO::$primaryKeyColumn */
 	public $primaryKeyColumn = 'rqc_delayed_call_id';
@@ -56,10 +58,10 @@ class DelayedRqcCallDAO extends SchemaDAO
 	{
 		// used to inject the schema into the SchemaDAO
 		Hook::add(
-			'Schema::get::' . $this->schemaName,
+			'Schema::get::' . $this->schema,
 			array($this, 'callbackInsertSchema')
 		);
-		parent::__construct();
+		parent::__construct(new PKPSchemaService());
 	}
 
 	/**
@@ -75,7 +77,7 @@ class DelayedRqcCallDAO extends SchemaDAO
 	public function callbackInsertSchema(string $hookName, array $params): bool
 	{
 		$schema =& $params[0]; // calculations affect the $schema variable in the service
-		$schemaFile = sprintf('%s/plugins/generic/rqc/schemas/%s.json', BASE_SYS_DIR, $this->schemaName);
+		$schemaFile = sprintf('%s/plugins/generic/rqc/schemas/%s.json', BASE_SYS_DIR, $this->schema);
 		$schema = json_decode(file_get_contents($schemaFile));
 		// RqcDevHelper::writeObjectToConsole($schemaFile, "schemaFile ");
 		// RqcDevHelper::writeObjectToConsole($schema, "schema ");
@@ -87,41 +89,24 @@ class DelayedRqcCallDAO extends SchemaDAO
 	 * @param $contextId int  which calls to get, or 0 for all calls
 	 * @param $horizon   int|null  unix timestamp. Get all calls not retried since this time.
 	 *                   Defaults to 23.8 hours ago (so that it's not always retried at the same time)
-	 * @return DAOResultFactory
+	 * @return LazyCollection
 	 */
-	public function getCallsToRetry(int $contextId = 0, int $horizon = null): DAOResultFactory
+	public function getCallsToRetry(int $contextId = 0, int $horizon = null): LazyCollection
 	{
 		if (is_null($horizon)) {
 			$horizon = time() - 23 * 3600 - 48 * 60;  // 23.8 hours ago
 		}
-		$result = $this->retrieve(
-			'SELECT	* FROM ' . $this->tableName .
-			' WHERE (context_id = ? OR ? = 0) AND
-			      (last_try_ts <= ? OR last_try_ts IS NULL)
-		  	ORDER BY last_try_ts ASC', // this makes it a queue
-			array(
-				$contextId, $contextId,
-				$this->datetimeToDB($horizon)
-			)
-		);
-		return new DAOResultFactory($result, $this, '_fromRow');
-	}
+        $rows = DB::table($this->table)
+            ->whereRaw('context_id = ? OR ? = 0', [$contextId, $contextId])
+            ->whereRaw('last_try_ts <= ? OR last_try_ts IS NULL', [$this->convertToDB($horizon, 'date')])
+            ->orderBy('last_try_ts') // this makes it a queue
+            ->get();
 
-	/**
-	 * Return a DelayedRqcCall from a result row
-	 *
-	 * @param $primaryRow array The result row from the primary table lookup
-	 */
-	public function _fromRow($primaryRow): DelayedRqcCall
-	{
-		$delayedRqcCall = $this->newDataObject();
-		$delayedRqcCall->setId((int)$primaryRow['rqc_delayed_call_id']);
-		$delayedRqcCall->setSubmissionId((int)$primaryRow['submission_id']);
-		$delayedRqcCall->setContextId((int)$primaryRow['context_id']);
-		$delayedRqcCall->setLastTryTs($this->datetimeFromDB($primaryRow['last_try_ts']));
-		$delayedRqcCall->setOriginalTryTs($this->datetimeFromDB($primaryRow['original_try_ts']));
-		$delayedRqcCall->setRemainingRetries((int)$primaryRow['remaining_retries']);
-		return $delayedRqcCall;
+        return LazyCollection::make(function () use ($rows) {
+            foreach ($rows as $row) {
+                yield $row->rqc_delayed_call_id => $this->fromRow($row);
+            }
+        });
 	}
 
 	/**
@@ -144,18 +129,44 @@ class DelayedRqcCallDAO extends SchemaDAO
 			}
 			$call->setRemainingRetries($remainingRetries);
 			$call->setLastTryTs(Core::getCurrentDate($now));
-			$this->updateObject($call);
+			$this->update($call);
 		}
 	}
 
 	public function deleteCallsBySubmissionId(int $submissionId): void
 	{
-		$result = $this->retrieve('SELECT * FROM ' . $this->tableName . 'WHERE (submission_id = ?)', array($submissionId)); // result is an array of arrays and not of rqcDelayedCall-objects!
-		if (count($result) != 0) {
-			RqcLogger::logWarning("A delayed rqc call for submission $submissionId was already in the db. Deleted that delayed call in the queue.");
-			foreach ($result as $rqcDelayedCallArray) {
-				$this->deleteById($rqcDelayedCallArray['rqc_delayed_call_id']);
-			}
-		}
+        $result = DB::table($this->table)
+            ->where('submission_id', "=", $submissionId)
+            ->get();
+
+        if (count($result) != 0) {
+            RqcLogger::logWarning("A delayed rqc call for submission $submissionId was already in the db. Deleted that delayed call in the queue.");
+            foreach ($result as $rqcDelayedCallArray) {
+                $this->deleteById($rqcDelayedCallArray->rqc_delayed_call_id);
+            }
+        }
 	}
+
+    public function insert(DelayedRqcCall $highlight): int
+    {
+        return parent::_insert($highlight);
+    }
+
+    public function update(DelayedRqcCall $highlight)
+    {
+        parent::_update($highlight);
+    }
+
+    public function delete(DelayedRqcCall $highlight)
+    {
+        parent::_delete($highlight);
+    }
+
+    public function get(int $id): ?DelayedRqcCall
+    {
+        $row = DB::table($this->table)
+            ->where($this->primaryKeyColumn, $id)
+            ->first();
+        return $row ? $this->fromRow($row) : null;
+    }
 }

@@ -12,7 +12,6 @@ use PKP\security\Role;
 
 use APP\plugins\generic\rqc\classes\RqcCall;
 use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCallDAO;
-use APP\plugins\generic\rqc\classes\DelayedRqcCall\DelayedRqcCall;
 use APP\plugins\generic\rqc\classes\RqcLogger;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
@@ -151,7 +150,8 @@ class RqcCallHandler extends WorkflowHandler
 	 */
 	public function putCallIntoQueue(int $submissionId): int
 	{
-		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO'); /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+        /** @var $delayedRqcCallDao DelayedRqcCallDAO */
+		$delayedRqcCallDao = DAORegistry::getDAO('DelayedRqcCallDAO');
         $submission = Repo::submission()->get($submissionId);
         $contextId = $submission->getData('contextId');
 		$delayedRqcCallDao->deleteCallsBySubmissionId($submissionId); // if there is already a call in the queue for this submission: Delete to not have multiple delayed calls for the same submission
@@ -162,7 +162,7 @@ class RqcCallHandler extends WorkflowHandler
 		$delayedRqcCall->setLastTryTs(Core::getCurrentDate());
 		$delayedRqcCall->setRemainingRetries($this->_maxRetriesToResend);
 		//RqcDevHelper::writeObjectToConsole($delayedRqcCall);
-		return $delayedRqcCallDao->insertObject($delayedRqcCall);
+		return $delayedRqcCallDao->insert($delayedRqcCall);
 	}
 }
 
