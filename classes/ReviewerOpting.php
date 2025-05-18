@@ -9,7 +9,6 @@ use APP\submission\reviewer\form\ReviewerReviewStep3Form;
 use APP\submission\Submission;
 use APP\template\TemplateManager;
 use PKP\db\DAORegistry;
-use PKP\db\DAOResultFactory;
 use PKP\plugins\Hook;
 use PKP\user\User;
 
@@ -184,9 +183,11 @@ class ReviewerOpting
 		if ($year == null) {
 			$year = date('Y');
 		}
-        $rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO'); /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
-        $rqcReviewerOptings = $rqcReviewerOptingDAO->getReviewerOptingsForContextAndYear($contextId, $user->getId(), $year); /** @var $rqcReviewerOptings DAOResultFactory<RqcReviewerOpting> */
-        $rqcReviewerOpting = $rqcReviewerOptings->next(); // just get the fist opting status as all of them store the same value for the year
+        /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+        $rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO');
+        $rqcReviewerOptings = $rqcReviewerOptingDAO->getReviewerOptingsForContextAndYear($contextId, $user->getId(), $year);
+        /** @var $rqcReviewerOpting RqcReviewerOpting */
+        $rqcReviewerOpting = $rqcReviewerOptings->first(); // just get the fist opting status as all of them store the same value for the year
         if (!$rqcReviewerOpting) {
             return RQC_OPTING_STATUS_UNDEFINED;
         }
@@ -227,7 +228,7 @@ class ReviewerOpting
         }
         $rqcReviewerOpting = new RqcReviewerOpting($contextId, $submission->getId(), $user->getId(), $status, $year);
         $rqcReviewerOptingDAO = $rqcReviewerOpting->getDAO();
-        $rqcReviewerOptingDAO->insertObject($rqcReviewerOpting);
+        $rqcReviewerOptingDAO->insert($rqcReviewerOpting);
 	}
 
     /**

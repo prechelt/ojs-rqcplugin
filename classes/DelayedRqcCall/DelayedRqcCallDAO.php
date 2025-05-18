@@ -2,6 +2,7 @@
 
 namespace APP\plugins\generic\rqc\classes\DelayedRqcCall;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 use PKP\core\Core;
@@ -97,7 +98,7 @@ class DelayedRqcCallDAO extends EntityDAO
 			$horizon = time() - 23 * 3600 - 48 * 60;  // 23.8 hours ago
 		}
         $rows = DB::table($this->table)
-            ->whereRaw('context_id = ? OR ? = 0', [$contextId, $contextId])
+            ->when($contextId != 0, fn (Builder $query) => $query->where('context_id', '=', $contextId))
             ->whereRaw('last_try_ts <= ? OR last_try_ts IS NULL', [$this->convertToDB($horizon, 'date')])
             ->orderBy('last_try_ts') // this makes it a queue
             ->get();
@@ -135,14 +136,14 @@ class DelayedRqcCallDAO extends EntityDAO
 
 	public function deleteCallsBySubmissionId(int $submissionId): void
 	{
-        $result = DB::table($this->table)
+        $rows = DB::table($this->table)
             ->where('submission_id', "=", $submissionId)
             ->get();
 
-        if (count($result) != 0) {
+        if (count($rows) != 0) {
             RqcLogger::logWarning("A delayed rqc call for submission $submissionId was already in the db. Deleted that delayed call in the queue.");
-            foreach ($result as $rqcDelayedCallArray) {
-                $this->deleteById($rqcDelayedCallArray->rqc_delayed_call_id);
+            foreach ($rows as $rqcDelayedCallObject) {
+                $this->deleteById($rqcDelayedCallObject->rqc_delayed_call_id);
             }
         }
 	}
@@ -152,12 +153,12 @@ class DelayedRqcCallDAO extends EntityDAO
         return parent::_insert($highlight);
     }
 
-    public function update(DelayedRqcCall $highlight)
+    public function update(DelayedRqcCall $highlight): void
     {
         parent::_update($highlight);
     }
 
-    public function delete(DelayedRqcCall $highlight)
+    public function delete(DelayedRqcCall $highlight): void
     {
         parent::_delete($highlight);
     }

@@ -2,11 +2,12 @@
 
 namespace APP\plugins\generic\rqc\classes\RqcReviewerOpting;
 
-use PKP\db\SchemaDAO;
-use PKP\db\DAOResultFactory;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\LazyCollection;
+use PKP\core\EntityDAO;
 use PKP\plugins\Hook;
+use PKP\services\PKPSchemaService;
 
-use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOpting;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 
@@ -17,17 +18,17 @@ use APP\plugins\generic\rqc\classes\RqcDevHelper;
  * @see     rqcReviewerOpting.json
  * @ingroup plugins_generic_rqc
  */
-class RqcReviewerOptingDAO extends SchemaDAO
+class RqcReviewerOptingDAO extends EntityDAO
 {
     /** @copydoc SchemaDAO::$schemaName */
-    public $schemaName = 'rqcReviewerOpting';
+    public $schema = 'rqcReviewerOpting';
 
     /** @copydoc SchemaDAO::$tableName */
-    public $tableName = 'rqc_reviewer_opting';
+    public $table = 'rqc_reviewer_opting';
 
     /** @copydoc SchemaDAO::$settingsTableName */
     // create the settings table (even if it will be empty for sure) because its to big of an error source to not have it
-    public $settingsTableName = 'rqc_reviewer_opting_settings';
+    public $settingsTable = 'rqc_reviewer_opting_settings';
 
     /** @copydoc SchemaDAO::$primaryKeyColumn */
     public $primaryKeyColumn = 'rqc_reviewer_opting_id';
@@ -54,10 +55,10 @@ class RqcReviewerOptingDAO extends SchemaDAO
     {
         // used to inject the schema into the SchemaDAO
         Hook::add(
-            'Schema::get::' . $this->schemaName,
+            'Schema::get::' . $this->schema,
             array($this, 'callbackInsertSchema')
         );
-        parent::__construct();
+        parent::__construct(new PKPSchemaService());
     }
 
     /**
@@ -73,7 +74,7 @@ class RqcReviewerOptingDAO extends SchemaDAO
     public function callbackInsertSchema(string $hookName, array $params): bool
     {
         $schema =& $params[0]; // calculations affect the $schema variable in the service
-        $schemaFile = sprintf('%s/plugins/generic/rqc/schemas/%s.json', BASE_SYS_DIR, $this->schemaName);
+        $schemaFile = sprintf('%s/plugins/generic/rqc/schemas/%s.json', BASE_SYS_DIR, $this->schema);
         $schema = json_decode(file_get_contents($schemaFile));
         // RqcDevHelper::writeObjectToConsole($schemaFile, "schemaFile ");
         // RqcDevHelper::writeObjectToConsole($schema, "schema ");
@@ -81,40 +82,26 @@ class RqcReviewerOptingDAO extends SchemaDAO
     }
 
     /**
-     * Return a RqcReviewerOpting from a result row
-     *
-     * @param $primaryRow array The result row from the primary table lookup
-     */
-    public function _fromRow($primaryRow): RqcReviewerOpting
-    {
-        $rqcReviewerOpting = $this->newDataObject();
-        $rqcReviewerOpting->setId((int)$primaryRow['rqc_reviewer_opting_id']);
-        $rqcReviewerOpting->setSubmissionId((int)$primaryRow['context_id']);
-        $rqcReviewerOpting->setContextId((int)$primaryRow['submission_id']);
-        $rqcReviewerOpting->setUserId((int)$primaryRow['user_id']);
-        $rqcReviewerOpting->setOptingStatus((int)$primaryRow['opting_status']);
-        $rqcReviewerOpting->setYear((int)$primaryRow['year']);
-        return $rqcReviewerOpting;
-    }
-
-    /**
      * Retrieve all reviewer optings by context id, user id and year.
      * @param $contextId int
      * @param $userId    int
      * @param $year      int
-     * @return DAOResultFactory
+     * @return LazyCollection
      */
-    public function getReviewerOptingsForContextAndYear(int $contextId, int $userId, int $year): DAOResultFactory
+    public function getReviewerOptingsForContextAndYear(int $contextId, int $userId, int $year): LazyCollection
     {
-        $result = $this->retrieve(
-            'SELECT	* FROM ' . $this->tableName .
-            ' WHERE (context_id = ?) AND (user_id = ?) AND (year = ?)
-		  	ORDER BY year DESC', // most current year first
-            array(
-                $contextId, $userId, $year
-            )
-        );
-        return new DAOResultFactory($result, $this, '_fromRow');
+        $rows = DB::table($this->table)
+            ->where('context_id', "=", $contextId)
+            ->where('user_id', "=", $userId)
+            ->where('year', "=", $year)
+            ->orderByDesc('year') // this makes it a queue
+            ->get();
+
+        return LazyCollection::make(function () use ($rows) {
+            foreach ($rows as $row) {
+                yield $row->rqc_reviewer_opting_id => $this->fromRow($row);
+            }
+        });
     }
 
     /**
@@ -125,17 +112,33 @@ class RqcReviewerOptingDAO extends SchemaDAO
      */
     public function getReviewerOptingForSubmission(int $submissionId, int $userId): RqcReviewerOpting|null
     {
-        $result = $this->retrieve(
-            'SELECT	* FROM ' . $this->tableName .
-            ' WHERE (submission_id = ?) AND (user_id = ?)',
-            array(
-                $submissionId, $userId
-            )
-        );
-        $results = (new DAOResultFactory($result, $this, '_fromRow'))->toArray();
-        if ($results == null | count($results) == 0) {
-            return null;
-        }
-        return $results[0]; // there can be just one or no reviewerOptings for a submission-user-pair
+        $row = DB::table($this->table)
+            ->where('submission_id', "=", $submissionId)
+            ->where('user_id', "=", $userId)
+            ->first(); // there can be just one or no reviewerOptings for a submission-user-pair
+        return $row ? $this->fromRow($row) : null;
+    }
+
+    public function insert(RqcReviewerOpting $highlight): int
+    {
+        return parent::_insert($highlight);
+    }
+
+    public function update(RqcReviewerOpting $highlight): void
+    {
+        parent::_update($highlight);
+    }
+
+    public function delete(RqcReviewerOpting $highlight): void
+    {
+        parent::_delete($highlight);
+    }
+
+    public function get(int $id): ?RqcReviewerOpting
+    {
+        $row = DB::table($this->table)
+            ->where($this->primaryKeyColumn, $id)
+            ->first();
+        return $row ? $this->fromRow($row) : null;
     }
 }

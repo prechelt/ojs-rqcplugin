@@ -120,9 +120,10 @@ class RqcDevHelperHandler extends Handler
 		$contextId = $request->getContext()->getId();
 		$user = $request->getUser();
 		$userId = $user->getId();
-        $rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO'); /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
-        $rqcReviewerOpting = $rqcReviewerOptingDAO->getReviewerOptingForSubmission($submissionId, $user->getId()) ;  /** @var $rqcReviewerOpting RqcReviewerOpting */
-        $rqcReviewerOptingDAO->deleteObject($rqcReviewerOpting);
+        /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+        $rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO');
+        $rqcReviewerOpting = $rqcReviewerOptingDAO->getReviewerOptingForSubmission($submissionId, $user->getId());
+        $rqcReviewerOptingDAO->delete($rqcReviewerOpting);
         return ("rqcOptingStatusReset for reviewer $userId in submission $submissionId");
 	}
 
