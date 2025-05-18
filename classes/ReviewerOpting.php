@@ -246,7 +246,7 @@ class ReviewerOpting
         $rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO'); /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
         $rqcReviewerOpting = $rqcReviewerOptingDAO->getReviewerOptingForSubmission($submission->getId(), $user->getId()) ;  /** @var $rqcReviewerOpting RqcReviewerOpting */
         if ($rqcReviewerOpting == null) { // shouldn't happen but failsafe
-            return RQC_OPTING_STATUS_OUT;
+            return false;
         }
         return ($rqcReviewerOpting->getOptingStatus() == RQC_OPTING_STATUS_OUT);
     }
