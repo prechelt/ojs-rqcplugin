@@ -5,8 +5,8 @@ import('classes.submission.SubmissionDAO');
 
 import('plugins.generic.rqc.classes.RqcCall');
 import('plugins.generic.rqc.RqcPlugin');
-import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
-import('plugins.generic.rqc.classes.DelayedRqcCall');
+import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCallDAO');
+import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCall');
 import('plugins.generic.rqc.classes.RqcLogger');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 

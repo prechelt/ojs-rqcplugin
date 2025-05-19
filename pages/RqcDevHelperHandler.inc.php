@@ -4,8 +4,8 @@ use Composer\Semver\Semver; // used by x()
 
 import('plugins.generic.rqc.classes.RqcPluginMigrations');
 import('plugins.generic.rqc.classes.DelayedRqcCallSender');
-import('plugins.generic.rqc.classes.DelayedRqcCall');
-import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
+import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCall');
+import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCallDAO');
 import('plugins.generic.rqc.classes.RqcData');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.classes.RqcLogger');

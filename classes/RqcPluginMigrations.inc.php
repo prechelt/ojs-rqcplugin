@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 
 import('plugins.generic.rqc.classes.RqcReviewerOpting.RqcReviewerOptingSchemaMigration');
-import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
+import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCallSchemaMigration');
 import('plugins.generic.rqc.classes.RqcLogger');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 

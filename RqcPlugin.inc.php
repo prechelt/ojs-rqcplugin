@@ -23,7 +23,7 @@ import('plugins.generic.rqc.RqcSettingsForm');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.classes.EditorActions');
 import('plugins.generic.rqc.classes.RqcDevHelper');
-import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
+import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCallDAO');
 import('plugins.generic.rqc.classes.RqcReviewerOpting.RqcReviewerOptingDAO');
 import('plugins.generic.rqc.classes.RqcPluginMigrations');
 

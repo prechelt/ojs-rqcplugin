@@ -4,8 +4,10 @@ import('lib.pkp.classes.plugins.HookRegistry');
 import('lib.pkp.classes.db.SchemaDAO');
 import('lib.pkp.classes.db.DAOResultFactory');
 import('lib.pkp.classes.core.DataObject');
+//import Core
 
-import('plugins.generic.rqc.classes.DelayedRqcCall');
+import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCall');
+import('plugins.generic.rqc.classes.RqcLogger');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
 /**

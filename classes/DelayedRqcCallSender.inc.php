@@ -3,8 +3,8 @@
 import('lib.pkp.classes.core.Core');
 import('lib.pkp.classes.scheduledTask.ScheduledTask');
 import('lib.pkp.classes.db.DAORegistry');
-import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
-import('plugins.generic.rqc.classes.DelayedRqcCall');
+import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCallDAO');
+import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCall');
 import('plugins.generic.rqc.pages.RqcCallHandler');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 import('plugins.generic.rqc.RqcPlugin');
