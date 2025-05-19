@@ -144,8 +144,9 @@ class ReviewerOpting
 	}
 
 	/**
-	 * @param bool $optingStatus enum for the opting status to be converted into a readable message
-	 * @param bool $prelimOpting if false the status is "undefined" else its "preliminary opted in/out"
+	 * @param $optingStatus int  enum for the opting status to be converted into a readable message
+	 * @param $prelimOpting bool if false the status is "undefined" else its "preliminary opted in/out"
+     * @return string
 	 */
 	public function statusEnumToString(int $optingStatus, bool $prelimOpting = !RQC_PRELIM_OPTING): string
 	{
@@ -163,11 +164,15 @@ class ReviewerOpting
 	 * True iff opting is missing, outdated, or preliminary.
 	 * @param $contextId  int the ID of the context
 	 * @param $user       User the user to check (typically the logged-in user)
-	 * @returns $status: one of RQC_OPTING_STATUS_* except *_PRELIM
+	 * @param $year       string|null the year which to check
+     * @returns $status: one of RQC_OPTING_STATUS_* except *_PRELIM
 	 */
-	public function userOptingRequired(int $contextId, User $user): bool
+    public function userOptingRequired(int $contextId, User $user, string $year = null): bool
 	{
-		return $this->getUserOptingStatus($contextId, $user) == RQC_OPTING_STATUS_UNDEFINED;
+        if ($year == null) {
+            $year = date('Y');
+        }
+		return $this->getUserOptingStatus($contextId, $user, !RQC_PRELIM_OPTING, $year) == RQC_OPTING_STATUS_UNDEFINED;
 	}
 
 	/**
@@ -227,19 +232,16 @@ class ReviewerOpting
             $status = RQC_OPTING_STATUS_IN_PRELIM;
         }
         $rqcReviewerOpting = new RqcReviewerOpting($contextId, $submission->getId(), $user->getId(), $status, $year);
-        $rqcReviewerOptingDAO = $rqcReviewerOpting->getDAO();
+        /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+        $rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO');
         $rqcReviewerOptingDAO->insert($rqcReviewerOpting);
 	}
 
     /**
-     * Retrieve valid opting status or return RQC_OPTING_STATUS_UNDEFINED.
-     * Assumptions for the list in submission_settings:
-     * - it is a list of user-ids (reviewers) which have opted out
-     * @param $contextId       int the ID of the context
-     * @param $user            User the user to check (typically the logged-in user)
-     * @param $preliminary     bool whether to return preliminary statuses (else return ...UNKNOWN then)
-     * @param $year            string|null the year which to check
-     * @returns $status: one of RQC_OPTING_STATUS_* except *_PRELIM
+     * Retrieve if the reviewer $user is opted out at the Submission $submission
+     * @param $submission  Submission the submission to check
+     * @param $user        User the user to check (typically the logged-in user)
+     * @returns bool iff the opting is preliminary, OPT_IN, _UNDEFINED or no record in the database then isOptedOut() gives false
      */
     public function isOptedOut(Submission $submission, User $user): bool
     {
