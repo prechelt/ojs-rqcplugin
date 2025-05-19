@@ -19,6 +19,7 @@ import('lib.pkp.classes.submission.reviewRound.ReviewRoundDAO');
 import('classes.submission.SubmissionDAO');
 import('classes.core.Services');
 
+import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.pages.RqcDevHelperHandler');
 import('plugins.generic.rqc.classes.RqcDevHelper');
 
@@ -320,11 +321,8 @@ class RqcData
 
 			//--- reviewer:
 			$reviewerObject = $userDao->getById($reviewAssignment->getReviewerId());
-			// rqcOptIn or rqcOptOut
-			$reviewAssignmentYear = date('Y', strtotime($reviewAssignment->getDateCompleted()));
-			$status = (new ReviewerOpting())->getStatus($contextId, $reviewerObject, !RQC_PRELIM_OPTING, $reviewAssignmentYear); // get opting decision for the year the assignment was submitted
 			$rqcReviewer = array();
-			if ($status == RQC_OPTING_STATUS_IN) {
+			if (!(new ReviewerOpting())->isOptedOut($reviewerSubmission, $reviewerObject)) { // TODO 1: switch to RQC_OPTING_STATUS_OUT (in 3.3)
 				$rqcReviewer['email'] = $reviewerObject->getEmail();
 				$rqcReviewer['firstname'] = getNonlocalizedAttr($reviewerObject, "getGivenName");
 				$rqcReviewer['lastname'] = getNonlocalizedAttr($reviewerObject, "getFamilyName");

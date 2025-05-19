@@ -78,12 +78,12 @@ class ReviewerOpting
 		$request = Application::get()->getRequest();
 		$user = $request->getUser();
 		$contextId = $request->getContext()->getId();
-		$optingRequired = $this->optingRequired($contextId, $user);
+		$optingRequired = $this->userOptingRequired($contextId, $user);
 		RqcDevHelper::writeToConsole("##### rqcOptingRequired = '$optingRequired'\n");
 		$step3Form->setData('rqcOptingRequired', $optingRequired);
 
 		// if a preliminary Opt In or Out is stored then preselect that value in the gui. Else preselect the empty select
-		$preliminaryRqcOptIn = $this->getStatus($contextId, $user, RQC_PRELIM_OPTING);
+		$preliminaryRqcOptIn = $this->getUserOptingStatus($contextId, $user, RQC_PRELIM_OPTING);
 		$rqcPreselectedOptIn = in_array($preliminaryRqcOptIn, [RQC_OPTING_STATUS_IN, RQC_OPTING_STATUS_OUT]) ?
 			$preliminaryRqcOptIn : "";
 		$step3Form->setData('rqcPreselectedOptIn', $rqcPreselectedOptIn);
@@ -144,8 +144,9 @@ class ReviewerOpting
 	}
 
 	/**
-	 * @param bool $optingStatus enum for the opting status to be converted into a readable message
-	 * @param bool $prelimOpting if false the status is "undefined" else its "preliminary opted in/out"
+	 * @param $optingStatus int  enum for the opting status to be converted into a readable message
+	 * @param $prelimOpting bool if false the status is "undefined" else its "preliminary opted in/out"
+	 * @return string
 	 */
 	public function statusEnumToString(int $optingStatus, bool $prelimOpting = !RQC_PRELIM_OPTING): string
 	{
@@ -166,12 +167,12 @@ class ReviewerOpting
 	 * @param $year		  string|null the year which to check
 	 * @returns $status: one of RQC_OPTING_STATUS_* except *_PRELIM
 	 */
-	public function optingRequired(int $contextId, User $user, string $year = null): bool
+	public function userOptingRequired(int $contextId, User $user, string $year = null): bool
 	{
 		if ($year == null) {
 			$year = date('Y');
 		}
-		return $this->getStatus($contextId, $user, !RQC_PRELIM_OPTING, $year) == RQC_OPTING_STATUS_UNDEFINED;
+		return $this->getUserOptingStatus($contextId, $user, !RQC_PRELIM_OPTING, $year) == RQC_OPTING_STATUS_UNDEFINED;
 	}
 
 	/**
@@ -182,43 +183,74 @@ class ReviewerOpting
 	 * @param $year            string|null the year which to check
 	 * @returns $status: one of RQC_OPTING_STATUS_* except *_PRELIM
 	 */
-	public function getStatus(int $contextId, User $user, bool $preliminary = !RQC_PRELIM_OPTING, string $year = null): int
+	public function getUserOptingStatus(int $contextId, User $user, bool $preliminary = !RQC_PRELIM_OPTING, string $year = null): int
 	{
 		if ($year == null) {
 			$year = date('Y');
 		}
-		$optingStatus = $user->getSetting(self::$statusName . $year, $contextId); // one of ...IN/OUT/IN_PRELIM/OUT_PRELIM
-		if ($optingStatus == null) {
-			return RQC_OPTING_STATUS_UNDEFINED;  // no opting entry found for that year
+		/** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+		$rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO');
+		$rqcReviewerOptings = $rqcReviewerOptingDAO->getReviewerOptingsForContextAndYear($contextId, $user->getId(), $year);
+		/** @var $rqcReviewerOpting RqcReviewerOpting */
+		$rqcReviewerOpting = $rqcReviewerOptings->toArray()[0]; // just get the fist opting status as all of them store the same value for the year
+		if (!$rqcReviewerOpting) {
+			return RQC_OPTING_STATUS_UNDEFINED;
 		}
+		$optingStatus = $rqcReviewerOpting->getOptingStatus();
+
 		if ($optingStatus == RQC_OPTING_STATUS_OUT_PRELIM) {
 			return $preliminary ? RQC_OPTING_STATUS_OUT : RQC_OPTING_STATUS_UNDEFINED;
 		} else if ($optingStatus == RQC_OPTING_STATUS_IN_PRELIM) {
 			return $preliminary ? RQC_OPTING_STATUS_IN : RQC_OPTING_STATUS_UNDEFINED;
 		}
+
 		return $optingStatus;  // ...IN or ...OUT
 	}
 
 	/**
-	 * Store opting status into the DB for this user and journal (for each year separately).
+	 * Store a new opting status into the db
 	 * @param $contextId     int the ID of the context
+	 * @param $submission    Submission the submission
 	 * @param $user          User the user to set the status (typically the logged-in user)
 	 * @param $status        int RQC_OPTING_STATUS_(IN/OUT)
 	 * @param $preliminary   bool whether to store status as _PRELIM
-	 * @param $year          string|null the year for which the status is stored
+	 * @param $year          string|null the year for which the status is stored (!= null just for testing)
 	 */
-	public function setStatus(int $contextId, User $user, int $status, bool $preliminary = !RQC_PRELIM_OPTING, string $year = null): void
+	public function setOptingStatus(int $contextId, Submission $submission, User $user, int $status, bool $preliminary = !RQC_PRELIM_OPTING, string $year = null): void
 	{
-		if ($year == null) {
+		if ($year == null) { // just for testing
 			$year = date('Y');
 		}
-		if ($status != RQC_OPTING_STATUS_IN and $status != RQC_OPTING_STATUS_OUT) {
+		if (!in_array($status, [RQC_OPTING_STATUS_OUT_PRELIM, RQC_OPTING_STATUS_IN_PRELIM, RQC_OPTING_STATUS_OUT, RQC_OPTING_STATUS_IN])) {
 			RqcLogger::logError("Invalid opting status $status");
+			$status = RQC_OPTING_STATUS_UNDEFINED;
 		}
-		if ($preliminary) {
-			$status = ($status == RQC_OPTING_STATUS_OUT) ? RQC_OPTING_STATUS_OUT_PRELIM : RQC_OPTING_STATUS_IN_PRELIM;
+
+		if ($preliminary && $status == RQC_OPTING_STATUS_OUT) {
+			$status = RQC_OPTING_STATUS_OUT_PRELIM;
+		} else if ($preliminary && $status == RQC_OPTING_STATUS_IN) {
+			$status = RQC_OPTING_STATUS_IN_PRELIM;
 		}
-		$user->updateSetting(self::$statusName . $year, $status, 'int', $contextId);
+		$rqcReviewerOpting = new RqcReviewerOpting($contextId, $submission->getId(), $user->getId(), $status, $year);
+		/** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+		$rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO');
+		$rqcReviewerOptingDAO->insertObject($rqcReviewerOpting);
+	}
+
+	/**
+	 * Retrieve if the reviewer $user is opted out at the Submission $submission
+	 * @param $submission  Submission the submission to check
+	 * @param $user        User the user to check (typically the logged-in user)
+	 * @returns bool iff the opting is preliminary, OPT_IN, _UNDEFINED or no record in the database then isOptedOut() gives false
+	 */
+	public function isOptedOut(Submission $submission, User $user): bool
+	{
+		$rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO'); /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+		$rqcReviewerOpting = $rqcReviewerOptingDAO->getReviewerOptingForSubmission($submission->getId(), $user->getId()) ;  /** @var $rqcReviewerOpting RqcReviewerOpting */
+		if ($rqcReviewerOpting == null) { // shouldn't happen but failsafe
+			return false;
+		}
+		return ($rqcReviewerOpting->getOptingStatus() == RQC_OPTING_STATUS_OUT);
 	}
 
 	/**
@@ -229,26 +261,35 @@ class ReviewerOpting
 	 */
 	public function getAndSaveOptingStatus($args, bool $preliminary): false
 	{
-		$step3Form =& $args[0];
+		$step3Form =& $args[0]; /** @var ReviewerReviewStep3Form $step3Form */
+		$submission = $step3Form->getReviewerSubmission();
 		$request = Application::get()->getRequest();
 		$user = $request->getUser();
 		$contextId = $request->getContext()->getId();
-		$optingRequired = $this->optingRequired($contextId, $user);
-		RqcDevHelper::writeToConsole("##### callbackStep3execute: optingRequired=$optingRequired\n");
-		if (!$optingRequired)
-			return false;  // nothing to do because form field was not shown
+		$userOptingRequired = $this->userOptingRequired($contextId, $user);
+		RqcDevHelper::writeToConsole("##### callbackStep3execute: optingRequired=$userOptingRequired\n");
 		$preliminaryMessage = $preliminary ? "(preliminary)" : "";
 		$rqcOptIn = $step3Form->getData('rqcOptIn');
-		$previousYear = (string) (((int) date('Y')) - 1);
-		$previousRqcOptIn = $this->getStatus($contextId, $user, $preliminary, $previousYear);
-		RqcDevHelper::writeToConsole("##### callbackStep3execute: previous $preliminaryMessage rqcOptIn=$previousRqcOptIn\n");
-		if ($rqcOptIn) {
-			$this->setStatus($contextId, $user, $rqcOptIn, $preliminary); // for the current year
+		if (!$userOptingRequired) { // get the opting status from other submissions in the same context in the same year and store to the new submission
+			$rqcOptIn = $this->getUserOptingStatus($contextId, $user);
+			RqcDevHelper::writeToConsole("##### callbackStep3execute: reuse the $preliminaryMessage opting status rqcOptIn=$rqcOptIn\n");
+		} else {
+			if ($rqcOptIn == null) {
+				return false;
+			}
+			$previousYear = (string) (((int) date('Y')) - 1);
+			$previousRqcOptIn = $this->getUserOptingStatus($contextId, $user, $preliminary, $previousYear);
+			RqcDevHelper::writeToConsole("##### callbackStep3execute: previous $preliminaryMessage rqcOptIn=$previousRqcOptIn\n");
 			RqcLogger::logInfo("Stored a new $preliminaryMessage RQC opting status for user with ID " . $user->getId() .
 				" for context $contextId: rqcOptIn=" . $this->statusEnumToString($rqcOptIn, $preliminary) .
 				" (representation: $rqcOptIn) previous $preliminaryMessage rqcOptIn=" . $this->statusEnumToString($previousRqcOptIn, $preliminary));
-			//RqcDevHelper::writeToConsole("##### callbackStep3execute stored rqcOptIn=$rqcOptIn\n");
 		}
+		$rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO'); /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+		$rqcReviewerOpting = $rqcReviewerOptingDAO->getReviewerOptingForSubmission($submission->getId(), $user->getId()) ;  /** @var $rqcReviewerOpting RqcReviewerOpting */
+		if ($rqcReviewerOpting != null) { // shouldn't happen but failsafe because other assumptions would be broken then
+			return false;
+		}
+		$this->setOptingStatus($contextId, $submission, $user, $rqcOptIn, $preliminary); // for the current year
 		return false;
 	}
 }

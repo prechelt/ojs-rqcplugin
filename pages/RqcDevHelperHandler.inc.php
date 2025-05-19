@@ -1,15 +1,8 @@
 <?php
 
-/* for OJS 3.4:
-namespace APP\plugins\generic\rqc;
-use APP\handler\Handler;
-use PKP\db\DAORegistry;
-use PKP\plugins\PluginRegistry;
-*/
-
 use Composer\Semver\Semver; // used by x()
 
-import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
+import('plugins.generic.rqc.classes.RqcPluginMigrations');
 import('plugins.generic.rqc.classes.DelayedRqcCallSender');
 import('plugins.generic.rqc.classes.DelayedRqcCall');
 import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
@@ -118,9 +111,9 @@ class RqcDevHelperHandler extends Handler
 	/**
 	 * to create/delete the table in the database (usually done after installation of the plugin)
 	 */
-	public function updateRqcDelayedCallsTable($args, $request)
+	public function updateRqcTables($args, $request)
 	{
-		$migration = new DelayedRqcCallSchemaMigration();
+		$migration = new RqcPluginMigrations();
 		$migration->down();
 		$migration->up();
 	}

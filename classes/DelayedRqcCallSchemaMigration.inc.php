@@ -46,9 +46,9 @@ class DelayedRqcCallSchemaMigration extends Migration
 	 */
 	public function down(): void
 	{
-		Capsule::schema()->drop('rqc_delayed_calls');
 		Capsule::schema()->drop('rqc_delayed_calls_settings');
-		RqcLogger::logInfo("Dropped table 'rqc_delayed_calls' in the database");
 		RqcLogger::logInfo("Dropped table 'rqc_delayed_calls_settings' in the database");
+		Capsule::schema()->drop('rqc_delayed_calls');
+		RqcLogger::logInfo("Dropped table 'rqc_delayed_calls' in the database");
 	}
 }

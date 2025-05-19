@@ -23,8 +23,9 @@ import('plugins.generic.rqc.RqcSettingsForm');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.classes.EditorActions');
 import('plugins.generic.rqc.classes.RqcDevHelper');
-import('plugins.generic.rqc.classes.DelayedRqcCallSchemaMigration');
 import('plugins.generic.rqc.classes.DelayedRqcCallDAO');
+import('plugins.generic.rqc.classes.RqcReviewerOpting.RqcReviewerOptingDAO');
+import('plugins.generic.rqc.classes.RqcPluginMigrations');
 
 define('RQC_API_VERSION', '2023-09-06');  // the API documentation version last used during development
 define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
@@ -174,9 +175,9 @@ class RqcPlugin extends GenericPlugin
 	/**
 	 * @copydoc Plugin::getInstallMigration()
 	 */
-	public function getInstallMigration(): DelayedRqcCallSchemaMigration
+	public function getInstallMigration(): RqcPluginMigrations
 	{
-		return new DelayedRqcCallSchemaMigration();
+		return new RqcPluginMigrations();
 	}
 
 	//========== Callbacks ==========
