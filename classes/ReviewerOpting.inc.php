@@ -192,7 +192,7 @@ class ReviewerOpting
 		$rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO');
 		$rqcReviewerOptings = $rqcReviewerOptingDAO->getReviewerOptingsForContextAndYear($contextId, $user->getId(), $year);
 		/** @var $rqcReviewerOpting RqcReviewerOpting */
-		$rqcReviewerOpting = $rqcReviewerOptings->toArray()[0]; // just get the fist opting status as all of them store the same value for the year
+		$rqcReviewerOpting = $rqcReviewerOptings->next(); // just get the fist opting status as all of them store the same value for the year
 		if (!$rqcReviewerOpting) {
 			return RQC_OPTING_STATUS_UNDEFINED;
 		}
