@@ -1,0 +1,33 @@
+{
+	"title": "Reviewer Opting for RQC",
+	"description": "Whether a reviewer does opt in/out of sending the data with full name (and not anonymized)",
+	"type": "object",
+	"required": [
+		"contextId",
+		"submissionId",
+		"userId",
+		"optingStatus",
+		"year"
+	],
+	"properties": {
+		"id": {
+			"type": "integer",
+			"readOnly": true
+		},
+		"contextId": {
+			"type": "integer"
+		},
+		"submissionId": {
+			"type": "integer"
+		},
+		"userId": {
+			"type": "integer"
+		},
+		"optingStatus": {
+			"type": "integer"
+		},
+		"year": {
+			"type": "integer"
+		}
+	}
+}

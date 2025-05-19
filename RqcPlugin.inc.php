@@ -65,6 +65,7 @@ class RqcPlugin extends GenericPlugin
 				(new ReviewerOpting())->register();
 				(new EditorActions())->register();
 				DAORegistry::registerDAO('DelayedRqcCallDAO', new DelayedRqcCallDAO());
+				DAORegistry::registerDAO('RqcReviewerOptingDAO', new RqcReviewerOptingDAO());
 			}
 			if (RqcPlugin::hasDeveloperFunctions()) {  // register the devFunctions independent of RQC-ID-Key-Pair
 				HookRegistry::register(
