@@ -1,13 +1,5 @@
 <?php
 
-/* for OJS 3.4:
-namespace APP\plugins\generic\rqc;
-use APP\core\Application;
-use APP\template\TemplateManager;
-use PKP\plugins\Hook;
-use PKP\user\User;
-*/
-
 import('lib.pkp.classes.plugins.HookRegistry');
 
 import('plugins.generic.rqc.RqcPlugin');

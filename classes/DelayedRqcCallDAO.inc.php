@@ -1,11 +1,5 @@
 <?php
 
-/* for OJS 3.4:
-namespace APP\plugins\generic\rqc;
-use \PKP\db\DAO;
-use \PKP\db\DAOResultFactory;
-*/
-
 import('lib.pkp.classes.plugins.HookRegistry');
 import('lib.pkp.classes.db.SchemaDAO');
 import('lib.pkp.classes.db.DAOResultFactory');

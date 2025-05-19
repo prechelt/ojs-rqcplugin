@@ -1,10 +1,5 @@
 <?php
 
-/* for OJS 3.4:
-namespace APP\plugins\generic\rqc;
-use PKP\plugins\PluginRegistry;
-*/
-
 import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.RqcData');
 import('plugins.generic.rqc.classes.RqcDevHelper');

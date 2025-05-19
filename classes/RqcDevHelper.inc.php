@@ -1,7 +1,5 @@
 <?php
 
-// namespace APP\plugins\generic\rqc;
-
 import('plugins.generic.rqc.RqcPlugin');
 
 /**

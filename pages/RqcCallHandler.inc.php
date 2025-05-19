@@ -1,11 +1,5 @@
 <?php
 
-/* for OJS 3.4:
-namespace APP\plugins\generic\rqc;
-use APP\pages\workflow\WorkflowHandler;
-use PKP\plugins\PluginRegistry;
-*/
-
 import('pages.workflow.WorkflowHandler');
 import('classes.submission.SubmissionDAO');
 

@@ -1,15 +1,5 @@
 <?php
 
-/* for OJS 3.4:
-namespace APP\plugins\generic\rqc;
-use APP\core\Application;
-use APP\core\PageRouter;
-use PKP\core\JSONMessage;
-use PKP\db\DAORegistry;
-use PKP\handler\PKPHandler;
-use PKP\plugins\PluginRegistry;
-*/
-
 import('classes.handler.Handler');
 import('classes.core.PageRouter');
 import('lib.pkp.classes.handler.PKPHandler');

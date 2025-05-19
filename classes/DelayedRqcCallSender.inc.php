@@ -1,11 +1,5 @@
 <?php
 
-/* for OJS 3.4:
-namespace APP\plugins\generic\rqc;
-use PKP\db\DAORegistry;
-use PKP\scheduledTask\ScheduledTask;
-*/
-
 import('lib.pkp.classes.core.Core');
 import('lib.pkp.classes.scheduledTask.ScheduledTask');
 import('lib.pkp.classes.db.DAORegistry');

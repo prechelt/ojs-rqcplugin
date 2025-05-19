@@ -1,10 +1,5 @@
 <?php
 
-/* for OJS 3.4:
-namespace APP\plugins\generic\rqc;
-use PKP\plugins\Hook;
-*/
-
 import('lib.pkp.classes.plugins.HookRegistry');
 import('lib.pkp.classes.submission.reviewRound.ReviewRoundDAO');
 import('lib.pkp.classes.submission.reviewAssignment.ReviewAssignmentDAO');

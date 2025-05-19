@@ -1,14 +1,5 @@
 <?php
 
-/* for OJS 3.4:
-namespace APP\plugins\generic\rqc;
-use PKP\db\DAORegistry;
-use PKP\plugins\PluginRegistry;
-use PKP\security\Role;
-use PKP\site\VersionCheck;
-*/
-
-// needed in OJS 3.3:
 use PKP\Services\PKPFileService;
 use Random\RandomException;
 
