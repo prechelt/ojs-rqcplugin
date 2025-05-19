@@ -63,9 +63,9 @@ class RqcReviewerOptingSchemaMigration extends Migration
      */
     public function down(): void
     {
-        Schema::drop('rqc_reviewer_opting');
         Schema::drop('rqc_reviewer_opting_settings');
-        RqcLogger::logInfo("Dropped table 'rqc_reviewer_opting' in the database");
         RqcLogger::logInfo("Dropped table 'rqc_reviewer_opting_settings' in the database");
+        Schema::drop('rqc_reviewer_opting');
+        RqcLogger::logInfo("Dropped table 'rqc_reviewer_opting' in the database");
     }
 }
