@@ -10,6 +10,7 @@ import('lib.pkp.classes.submission.reviewRound.ReviewRoundDAO');
 import('classes.submission.SubmissionDAO');
 import('classes.core.Services');
 
+import('plugins.generic.rqc.RqcPlugin');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.pages.RqcDevHelperHandler');
 import('plugins.generic.rqc.classes.RqcDevHelper');
@@ -590,7 +591,7 @@ function englishest(array $allEntries, $elseAll = false)
  */
 function getNonlocalizedAttr($obj, $functionname): string
 {
-	$result = $obj->$functionname(RQC_LOCALE);  // get preferred value
+	$result = $obj->$functionname(RqcPlugin::RQC_LOCALE);  // get preferred value
 	if (!$result) {  // get random first value from full localized list of attribute values
 		$allLocalizedAttrs = $obj->$functionname(null);
 		// $result = $allLocalizedAttrs[array_key_first($allLocalizedAttrs)];

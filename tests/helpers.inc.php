@@ -87,8 +87,8 @@ function make_user($username): User
 	$user = $userDao->newDataObject();
 	$user->setUsername($username);
 	$user->setPassword('1234');
-	$user->setGivenname($username[0], RQC_LOCALE);
-	$user->setFamilyname($username, RQC_LOCALE);
+	$user->setGivenname($username[0], RqcPlugin::RQC_LOCALE);
+	$user->setFamilyname($username, RqcPlugin::RQC_LOCALE);
 	$user->setEmail($username . '@some.where');
 	$userDao->insertObject($user);
 	return $user;
