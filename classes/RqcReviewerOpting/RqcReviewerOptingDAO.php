@@ -110,28 +110,45 @@ class RqcReviewerOptingDAO extends EntityDAO
      * @param $userId       int
      * @return RqcReviewerOpting|null
      */
-    public function getReviewerOptingForSubmission(int $submissionId, int $userId): RqcReviewerOpting|null
+    public function getReviewerOptingForSubmission(int $submissionId, int $userId): ?RqcReviewerOpting
     {
         $row = DB::table($this->table)
             ->where('submission_id', "=", $submissionId)
             ->where('user_id', "=", $userId)
-            ->first(); // there can be just one or no reviewerOptings for a submission-user-pair
+            ->first(); // there can be just one or no reviewerOpting for a submission-user-pair
         return $row ? $this->fromRow($row) : null;
     }
 
-    public function insert(RqcReviewerOpting $highlight): int
+    /**
+     * Retrieve a reviewer opting by context id, submission id, user id and year (so all possible information)
+     * @param $submissionId int
+     * @param $userId       int
+     * @return RqcReviewerOpting|null
+     */
+    public function getReviewerOpting(int $contextId, int $submissionId, int $userId, int $year): ?RqcReviewerOpting
     {
-        return parent::_insert($highlight);
+        $row = DB::table($this->table)
+            ->where('context_id', "=", $contextId)
+            ->where('submission_id', "=", $submissionId)
+            ->where('user_id', "=", $userId)
+            ->where('year', "=", $year)
+            ->first(); // there can be just one or no reviewerOpting
+        return $row ? $this->fromRow($row) : null;
     }
 
-    public function update(RqcReviewerOpting $highlight): void
+    public function insert(RqcReviewerOpting $rqcReviewerOpting): int
     {
-        parent::_update($highlight);
+        return parent::_insert($rqcReviewerOpting);
     }
 
-    public function delete(RqcReviewerOpting $highlight): void
+    public function update(RqcReviewerOpting $rqcReviewerOpting): void
     {
-        parent::_delete($highlight);
+        parent::_update($rqcReviewerOpting);
+    }
+
+    public function delete(RqcReviewerOpting $rqcReviewerOpting): void
+    {
+        parent::_delete($rqcReviewerOpting);
     }
 
     public function get(int $id): ?RqcReviewerOpting

@@ -234,6 +234,10 @@ class ReviewerOpting
         $rqcReviewerOpting = new RqcReviewerOpting($contextId, $submission->getId(), $user->getId(), $status, $year);
         /** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
         $rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO');
+        $currentOpting = $rqcReviewerOptingDAO->getReviewerOpting($contextId, $submission->getId(), $user->getId(), $year);
+        if ($currentOpting != null) { // delete the old one (shouldn't happen but as a failsafe)
+            $rqcReviewerOptingDAO->delete($currentOpting);
+        }
         $rqcReviewerOptingDAO->insert($rqcReviewerOpting);
 	}
 
