@@ -23,15 +23,6 @@ use APP\plugins\generic\rqc\classes\RqcReviewerOpting\RqcReviewerOptingDAO;
 use APP\plugins\generic\rqc\classes\DelayedRqcCallSender;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
-
-define('RQC_API_VERSION', '2023-09-06');  // the API documentation version last used during development
-define('RQC_MHS_ADAPTER', 'https://github.com/prechelt/ojs-rqcplugin');  // the OJS version for which this code should work
-define('RQC_PLUGIN_VERSION', '3.3.0');  // the OJS version for which this code should work
-define('RQC_SERVER', 'https://reviewqualitycollector.org');
-define('RQC_LOCALE', 'en');  // Plugin will enforce this locale internally
-define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
-
-
 /**
  * Review Quality Collector (RQC) plugin class:
  * Provides a settings dialog (for RQC journal ID and Key);
@@ -45,7 +36,14 @@ define('SUBMISSION_EDITOR_TRIGGER_RQCGRADE', 21);  // pseudo-decision option
  */
 class RqcPlugin extends GenericPlugin implements HasTaskScheduler
 {
-	/**
+    public const RQC_API_VERSION = '2023-09-06'; // the API documentation version last used during development
+    public const RQC_MHS_ADAPTER = 'https://github.com/prechelt/ojs-rqcplugin'; // the OJS version for which this code should work
+    public const RQC_PLUGIN_VERSION = '3.3.0';  // the OJS version for which this code should work
+    public const RQC_SERVER = 'https://reviewqualitycollector.org';
+    public const RQC_LOCALE = 'en';  // Plugin will enforce this locale internally
+
+
+    /**
 	 * @copydoc Plugin::register()
 	 *
 	 * @param null|mixed $mainContextId
@@ -141,7 +139,7 @@ class RqcPlugin extends GenericPlugin implements HasTaskScheduler
 
 	public static function rqcServer(): string
 	{
-		return Config::getVar('rqc', 'rqc_server', RQC_SERVER);
+		return Config::getVar('rqc', 'rqc_server', RqcPlugin::RQC_SERVER);
 	}
 
 	/**

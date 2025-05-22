@@ -71,9 +71,9 @@ class RqcCall
 		$cc = curl_init($url);
 		$http_headers = array(
 			'Authorization: Bearer ' . $rqcJournalAPIKey,  // a la https://datatracker.ietf.org/doc/html/rfc6750
-			'X-RQC-API-VERSION: ' . RQC_API_VERSION,
-			'X-RQC-MHS-ADAPTER: ' . RQC_MHS_ADAPTER,  // imprecise: lacking a version
-			'X-RQC-MHS-VERSION: ' . RQC_PLUGIN_VERSION,  // precise for plugin, questionable for OJS itself
+			'X-RQC-API-VERSION: ' . RqcPlugin::RQC_API_VERSION,
+			'X-RQC-MHS-ADAPTER: ' . RqcPlugin::RQC_MHS_ADAPTER,  // imprecise: lacking a version
+			'X-RQC-MHS-VERSION: ' . RqcPlugin::RQC_PLUGIN_VERSION,  // precise for plugin, questionable for OJS itself
 			'X-RQC-TIME: ' . (new DateTime())->format('Y-m-d\TH:i:s\Z'),
 		);
 		if ($mode == "POST") {

@@ -251,13 +251,13 @@ class RqcDevHelperHandler extends Handler
 		//----- make submission:
 		$article = new Article();
 		$article->setJournalId($contextId);
-		$article->setTitle("Test submission " . date('Y-m-d H:i:s'), RQC_LOCALE);
+		$article->setTitle("Test submission " . date('Y-m-d H:i:s'), RqcPlugin::RQC_LOCALE);
 		//$article->sub
 		$this->articleDao->insertObject($article);
 		//----- make authors:
 		$author = new Author();
-		$author->setGivenName("Anabel", RQC_LOCALE);
-		$author->setFamilyName("Author1", RQC_LOCALE);
+		$author->setGivenName("Anabel", RqcPlugin::RQC_LOCALE);
+		$author->setFamilyName("Author1", RqcPlugin::RQC_LOCALE);
 		$author->setEmail("author1@prechelt.dialup.fu-berlin.de");
 		$author->setSubmissionId($article->getId());
 		$this->authorDao->insertObject($author);

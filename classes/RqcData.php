@@ -32,6 +32,7 @@ use PKP\plugins\PluginRegistry;
 use PKP\submission\reviewRound\ReviewRoundDAO;
 use PKP\plugins\Plugin;
 
+use APP\plugins\generic\rqc\RqcPlugin;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 define("RQC_AllOWED_FILE_EXTENSIONS", array(
@@ -636,11 +637,11 @@ function englishest(array $allEntries, $elseAll = false)
 
 /**
  * Helper: Obtain an attribute value in the most sensible localized version we can identify:
- * RQC_LOCALE if possible, the englishest available one otherwise.
+ * RqcPlugin::RQC_LOCALE if possible, the englishest available one otherwise.
  */
 function getNonlocalizedAttr($obj, $functionname): string
 {
-	$result = $obj->$functionname(RQC_LOCALE);  // get preferred value
+	$result = $obj->$functionname(RqcPlugin::RQC_LOCALE);  // get preferred value
 	if (!$result) {  // get random first value from full localized list of attribute values
 		$allLocalizedAttrs = $obj->$functionname(null);
 		// $result = $allLocalizedAttrs[array_key_first($allLocalizedAttrs)];
