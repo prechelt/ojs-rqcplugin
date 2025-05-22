@@ -116,9 +116,8 @@ with:
 - tests/backup.sh backup
   so you can quickly restore the review case during testing
 - http://localhost:<port>/index.php/rqctest/rqcdevhelper/1/?viewonly=1
-- Perhaps apply patches to OJS codebase from `ojspatches`.
+- Perhaps apply patches to OJS codebase from `ojspatches`. TODO Q: patches?
 - For OJS to talk to RQC, start the Django dev server
-- used https://github.com/pkp/staticPages as a template for DelayedRqcSchemaMigration
 
 ## OJS knowledge
 
@@ -286,7 +285,7 @@ other typical identifiers for such objects):
 		- maybe then redirect for grading?
 	- package the plugin, submit it for publication in OJS plugin gallery
 - at the end (after my bachelors thesis is finished)
-	- put in all open issues into the issues
+	- put in all open issues into the GitHub issues
 	- elaborate on "ask your publisher" in locale.po
 
 - wait for other people
@@ -306,6 +305,7 @@ other typical identifiers for such objects):
 	- logging: Are all the places really needed?
 	- logging the body of Received an unexpected non-JSON response from RQC while making a .. That can be really large
 	  and we don't have to do that or do we?
+    -
 
 ## OJS versions
 
