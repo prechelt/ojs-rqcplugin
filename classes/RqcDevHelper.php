@@ -3,6 +3,7 @@
 namespace APP\plugins\generic\rqc\classes;
 
 use APP\plugins\generic\rqc\RqcPlugin;
+use Exception;
 
 
 /**
