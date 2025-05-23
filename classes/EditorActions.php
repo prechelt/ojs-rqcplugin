@@ -2,15 +2,32 @@
 
 namespace APP\plugins\generic\rqc\classes;
 
+use APP\decision\Decision;
+use APP\decision\types\Accept;
+use APP\facades\Repo;
+use APP\submission\Submission;
+use Illuminate\Validation\Validator;
+use PKP\context\Context;
+use PKP\db\DAORegistry;
+use PKP\decision\DecisionType;
+use PKP\decision\Steps;
+use PKP\decision\steps\Email;
+use PKP\decision\steps\PromoteFiles;
+use PKP\decision\types\SendToProduction;
+use PKP\decision\types\traits\InExternalReviewRound;
+use PKP\decision\types\traits\NotifyAuthors;
+use PKP\mail\mailables\DecisionNewReviewRoundNotifyAuthor;
+use PKP\plugins\Hook;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Event;
 use PKP\observers\events\DecisionAdded;
-use PKP\plugins\Hook;
-use APP\facades\Repo;
+use PKP\security\Role;
+use PKP\submission\reviewRound\ReviewRound;
+use PKP\submission\reviewRound\ReviewRoundDAO;
 
 use APP\plugins\generic\rqc\pages\RqcCallHandler;
-use APP\plugins\generic\rqc\classes\RqcData;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
+use PKP\user\User;
 
 
 /**
@@ -59,12 +76,19 @@ class EditorActions
 	 */
 	public function callbackModifyDecisionOptions($hookName, $args): bool
 	{
+        // e.g. test with http://localhost:8001/index.php/test/dashboard/editorial?currentViewId=external-review&workflowSubmissionId=1&workflowMenuKey=workflow_3_1
+
         $decisionTypes = &$args[0];
         $stageId = $args[1];
-        //$submission = $args[2]; // maybe add that to the hook
+        //$submission = $args[2]; // maybe add that to the hook?
 
-        //$decisionTypes[] = new RQCGrade();
+        RqcDevHelper::writeObjectToConsole($decisionTypes);
 
+        $decisionTypes[] = new RQCGrade();
+
+        RqcDevHelper::writeObjectToConsole($decisionTypes);
+
+        // the old way
 //		$completedAssignments = Repo::reviewAssignment()->getCollector()
 //            ->filterBySubmissionIds([$submission->getId()])
 //            ->filterByLastReviewRound(true)
@@ -123,5 +147,71 @@ class EditorActions
         $rqcResult = $caller->sendToRqc(null, $submissionId); // Implicit call
         $caller->processRqcResponse($rqcResult, $submissionId, false);
         // RqcDevHelper::writeObjectToConsole($rqcResult);
+    }
+}
+
+
+
+class RQCGrade extends DecisionType
+{
+    public function getDecision(): int
+    {
+        RqcDevHelper::writeObjectToConsole("hi", "hi", true);
+        return Decision::NEW_EXTERNAL_ROUND;
+    }
+
+    public function getNewStageId(Submission $submission, ?int $reviewRoundId): ?int
+    {
+        return null;
+    }
+
+    public function getNewStatus(): ?int
+    {
+        return null;
+    }
+
+    public function getNewReviewRoundStatus(): ?int
+    {
+        return null;
+    }
+
+    public function getLabel(?string $locale = null): string
+    {
+        return "RQC-Grade the reviews"; // __('editor.submission.decision.newReviewRound', [], $locale);
+    }
+
+    public function getDescription(?string $locale = null): string
+    {
+        return "RQC-Grade the reviews"; // __('editor.submission.decision.newReviewRound', [], $locale);
+    }
+
+    public function getLog(): string
+    {
+        return "RQC-Grade the reviews"; // __('editor.submission.decision.newReviewRound', [], $locale);
+    }
+
+    public function getCompletedLabel(): string
+    {
+        return "RQC-Grade the reviews"; // __('editor.submission.decision.newReviewRound', [], $locale);
+    }
+
+    public function getCompletedMessage(Submission $submission): string
+    {
+        return "RQC-Grade the reviews"; // __('editor.submission.decision.newReviewRound', [], $locale);
+    }
+
+    public function validate(array $props, Submission $submission, Context $context, Validator $validator, ?int $reviewRoundId = null)
+    {
+
+    }
+
+    public function runAdditionalActions(Decision $decision, Submission $submission, User $editor, Context $context, array $actions)
+    {
+
+    }
+
+    public function getStageId(): int
+    {
+        return 3;
     }
 }
