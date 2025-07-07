@@ -147,11 +147,23 @@ class RqcDevHelperHandler extends Handler
 	/**
 	 * to create/delete the table in the database (usually done after installation of the plugin)
 	 * No constraints with which user to be logged in
-	 * open with:	https://base.url/context/rqcdevhelper/updateRqcTables
+	 * open with:   https://base.url/context/rqcdevhelper/updateRqcDelayedCallsTable
 	 */
-	public function updateRqcTables($args, $request)
+	public function updateRqcDelayedCallsTable($args, $request)
 	{
-		$migration = new RqcPluginMigrations();
+		$migration = new DelayedRqcCallSchemaMigration();
+		$migration->down();
+		$migration->up();
+	}
+
+	/**
+	 * to create/delete the table in the database (usually done after installation of the plugin)
+	 * No constraints with which user to be logged in
+	 * open with:   https://base.url/context/rqcdevhelper/updateRqcReviewerOpting
+	 */
+	public function updateRqcReviewerOpting($args, $request)
+	{
+		$migration = new RqcReviewerOptingSchemaMigration();
 		$migration->down();
 		$migration->up();
 	}
