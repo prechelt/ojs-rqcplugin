@@ -32,7 +32,10 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * Show RQC request corresponding to a given submissionId (args[0]) (with ?viewonly=1) or
-	 * make the RQC request and show errors or perform the RQC redirect (with ?viewonly=0&stageId=3).
+	 * make the RQC request and show errors or perform the RQC redirect (with ?viewonly=0 or no query parameter).
+	 * Only constraint is when performing an actual RQC request. Then the user logged in is the one submitting the request
+	 * open with:	https://base.url/context/rqcdevhelper/rqcCall/someSubmissionId?viewonly=1
+	 * or:			https://base.url/context/rqcdevhelper/rqcCall/someSubmissionId
 	 */
 	function rqcCall($args, $request)
 	{
@@ -57,10 +60,12 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * reset/delete the RQC API-key and ID to test if the plugin responds correctly
+	 * Open from a window where a user is logged in so that journal-context is used
+	 * open with:	https://base.url/context/rqcdevhelper/resetRqcAPIKeyAndId/set/someRqcId/someRqcApiKey
+	 * or: 			https://base.url/context/rqcdevhelper/resetRqcAPIKeyAndId/delete
 	 */
 	public function resetRqcAPIKeyAndId($args, $request): void
 	{
-		// http://localhost:8000/index.php/test/rqcdevhelper/resetRqcAPIKeyAndId/reset
 		if ($args[0] == "set") {
 			$this->setRqcAPIKeyAndId($request, $args[1], $args[2]);
 		} elseif ($args[0] == "delete") {
@@ -70,7 +75,7 @@ class RqcDevHelperHandler extends Handler
 		}
 	}
 
-	public function setRqcAPIKeyAndId($request, string $rqcId, string $rqcAPIKey): void
+	private function setRqcAPIKeyAndId($request, string $rqcId, string $rqcAPIKey): void
 	{
 		$contextId = $request->getContext()->getId();
 		$this->plugin->updateSetting($contextId, 'rqcJournalId', $rqcId, 'string');
@@ -83,6 +88,8 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * Make a previously submitted OJS reviewing case RQC-submittable again.
+	 * Open from a window where the reviewer is logged in
+	 * open with:	https://base.url/context/rqcdevhelper/raReset/someSubmissionId
 	 */
 	public function raReset($args, $request)
 	{
@@ -98,12 +105,36 @@ class RqcDevHelperHandler extends Handler
 	}
 
 	/**
-	 * Make the reviewers rqcOptInStatus invalid so that it has to be set again
+	 * Make the reviewers rqcOptInStatus invalid for all submissions and years.
+	 * So that the select will appear as all entries of that year and context for the user are deleted.
+	 * Open from a window where the reviewer is logged in
+	 * open with:	https://base.url/context/rqcdevhelper/rqcOptingStatusReset/someYear
 	 */
 	public function rqcOptingStatusReset($args, $request)
 	{
-		$submissionId =& $args[0];
+		$year =& $args[0];
 		$contextId = $request->getContext()->getId();
+		$user = $request->getUser();
+		$userId = $user->getId();
+		/** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+		$rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO');
+		$rqcReviewerOptings = $rqcReviewerOptingDAO->getReviewerOptingsForContextAndYear($contextId, $userId, $year)->toArray();
+		RqcDevHelper::writeObjectToConsole($rqcReviewerOptings);
+		foreach ($rqcReviewerOptings as $rqcReviewerOpting) {
+			$rqcReviewerOptingDAO->deleteObject($rqcReviewerOpting);
+		}
+		return ("rqcOptingStatusReset for reviewer $userId in $contextId and $year");
+	}
+
+	/**
+	 * Make the reviewers rqcOptInStatus invalid so that it has to be set again for that submission.
+	 * The select may still not appear as there could be other entries of that year and context for the user.
+	 * Open from a window where the reviewer is logged in
+	 * open with:	https://base.url/context/rqcdevhelper/rqcSingleOptingStatusReset/someSubmissionId
+	 */
+	public function rqcSingleOptingStatusReset($args, $request)
+	{
+		$submissionId =& $args[0];
 		$user = $request->getUser();
 		$userId = $user->getId();
 		/** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
@@ -115,6 +146,8 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * to create/delete the table in the database (usually done after installation of the plugin)
+	 * No constraints with which user to be logged in
+	 * open with:	https://base.url/context/rqcdevhelper/updateRqcTables
 	 */
 	public function updateRqcTables($args, $request)
 	{
@@ -123,19 +156,10 @@ class RqcDevHelperHandler extends Handler
 		$migration->up();
 	}
 
-	public function test($args, $request)
-	{
-		print(limitToSize("Test", 2));
-//		$rqcCall = new DelayedRqcCall();
-//		$rqcCall->setSubmissionId(1);
-//		$rqcCall->setContextId(9);
-//		RqcLogger::logError(print_r($rqcCall, true));
-//		RqcLogger::logInfo(print_r($rqcCall, true));
-//		RqcLogger::logWarning(print_r($rqcCall, true));
-	}
-
 	/**
 	 * Sandbox operation for trying this out.
+	 * No constraints with which user to be logged in
+	 * open with:	https://base.url/context/rqcdevhelper/x/someVersion/someVersionSpec
 	 */
 	public function x($args, $request)
 	{
@@ -148,6 +172,8 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * simulate one execution called by the cronjob
+	 * No constraints with which user to be logged in
+	 * open with:	https://base.url/context/rqcdevhelper/executeQueue
 	 */
 	public function executeQueue($args, $request)
 	{
@@ -157,6 +183,8 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * Enqueue a new delayedCall with a given submissionId (args[0])
+	 * No constraints with which user to be logged in
+	 * open with:	https://base.url/context/rqcdevhelper/enqueueDelayedRqcCall/someSubmissionId
 	 */
 	public function enqueueDelayedRqcCall($args, $request)
 	{
@@ -171,6 +199,8 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * Update an delayedRqcCall with a given delayedRqcCallId (args[0])
+	 * No constraints with which user to be logged in
+	 * open with:	https://base.url/context/rqcdevhelper/updateDelayedRqcCallById/someDelayedRqcCallId
 	 */
 	public function updateDelayedRqcCallById($args, $request)
 	{
@@ -184,6 +214,8 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * Delete an delayedRqcCall with a given delayedRqcCallId (args[0])
+	 * No constraints with which user to be logged in
+	 * open with:	https://base.url/context/rqcdevhelper/deleteDelayedCallById/someDelayedRqcCallId
 	 */
 	public function deleteDelayedCallById($args, $request)
 	{
@@ -197,6 +229,8 @@ class RqcDevHelperHandler extends Handler
 
 	/**
 	 * Print the content of the queue right now
+	 * No constraints with which user to be logged in
+	 * open with:	https://base.url/context/rqcdevhelper/printDelayedRqcCallQueue
 	 */
 	public function printDelayedRqcCallQueue($args, $request)
 	{
