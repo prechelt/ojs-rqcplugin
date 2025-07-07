@@ -69,6 +69,10 @@ class EditorActions
 
 		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
 		$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submission->getId());
+		if ($stageId != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW || $lastReviewRound == null) {
+			// RqcDevHelper::writeToConsole("### no rqcGrade Button added: wrong stage");
+			return false;
+		}
 		//RqcDevHelper::writeObjectToConsole($lastReviewRound->determineStatus(), "### Lastreviewroundstatus: ");
 
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
@@ -86,16 +90,16 @@ class EditorActions
 					break 1; // only break out of switch
 			}
 		}
-		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $atLeastOneReviewSubmitted) { // stage 3 && at least one review has been submitted
+		if ($atLeastOneReviewSubmitted) { // stage 3 && at least one review has been submitted
 			//----- add button for RQC grading:
-			$decisionOpts[SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = [
+			$decisionOpts[RqcPlugin::SUBMISSION_EDITOR_TRIGGER_RQCGRADE] = [
 				'operation' => 'rqcGrade',
 				'name'      => 'rqcGradeName',
 				'title'     => 'plugins.generic.rqc.editoraction.grade.button',
 			];
 			// RqcDevHelper::writeToConsole("### rqcGrade Button added");
 		} else {
-			// RqcDevHelper::writeToConsole("### no rqcGrade Button added: wrong stage");
+			// RqcDevHelper::writeToConsole("### no rqcGrade Button added: no review submitted");
 		}
 		return false;  // proceed with other callbacks, if any
 	}

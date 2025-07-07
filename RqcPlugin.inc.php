@@ -46,6 +46,7 @@ class RqcPlugin extends GenericPlugin
 	public const RQC_PLUGIN_VERSION = '3.3.0';  // the OJS version for which this code should work
 	public const RQC_SERVER = 'https://reviewqualitycollector.org';
 	public const RQC_LOCALE = 'en';  // Plugin will enforce this locale internally
+	public const SUBMISSION_EDITOR_TRIGGER_RQCGRADE = 21; // pseudo-decision option
 
 	/**
 	 * @copydoc Plugin::register()
