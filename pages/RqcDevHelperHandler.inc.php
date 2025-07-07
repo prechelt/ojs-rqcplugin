@@ -6,6 +6,8 @@ import('plugins.generic.rqc.classes.RqcPluginMigrations');
 import('plugins.generic.rqc.classes.DelayedRqcCallSender');
 import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCall');
 import('plugins.generic.rqc.classes.DelayedRqcCall.DelayedRqcCallDAO');
+import('plugins.generic.rqc.classes.RqcReviewerOpting.RqcReviewerOpting');
+import('plugins.generic.rqc.classes.RqcReviewerOpting.RqcReviewerOptingDAO');
 import('plugins.generic.rqc.classes.RqcData');
 import('plugins.generic.rqc.classes.ReviewerOpting');
 import('plugins.generic.rqc.classes.RqcLogger');
@@ -100,12 +102,15 @@ class RqcDevHelperHandler extends Handler
 	 */
 	public function rqcOptingStatusReset($args, $request)
 	{
-		$year =& $args[0];
+		$submissionId =& $args[0];
 		$contextId = $request->getContext()->getId();
 		$user = $request->getUser();
 		$userId = $user->getId();
-		$user->updateSetting(ReviewerOpting::$statusName . $year, null, 'int', $contextId);
-		return ("rqcOptingStatusReset for reviewer $userId in journal $contextId for year $year");
+		/** @var $rqcReviewerOptingDAO RqcReviewerOptingDAO */
+		$rqcReviewerOptingDAO = DAORegistry::getDAO('RqcReviewerOptingDAO');
+		$rqcReviewerOpting = $rqcReviewerOptingDAO->getReviewerOptingForSubmission($submissionId, $user->getId());
+		$rqcReviewerOptingDAO->deleteObject($rqcReviewerOpting);
+		return ("rqcOptingStatusReset for reviewer $userId in submission $submissionId");
 	}
 
 	/**
