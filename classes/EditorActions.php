@@ -2,6 +2,7 @@
 
 namespace APP\plugins\generic\rqc\classes;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Event;
 use PKP\observers\events\DecisionAdded;
@@ -9,7 +10,6 @@ use PKP\plugins\Hook;
 use APP\facades\Repo;
 
 use APP\plugins\generic\rqc\pages\RqcCallHandler;
-use APP\plugins\generic\rqc\classes\RqcData;
 use APP\plugins\generic\rqc\classes\RqcDevHelper;
 
 
@@ -28,6 +28,7 @@ class EditorActions
         Hook::add('LoadComponentHandler', $this->callbackEditorActionRqcGrade(...));
         Hook::add('Workflow::Decisions', $this->callbackModifyDecisionOptions(...)); // TODO 3.5: https://docs.pkp.sfu.ca/dev/release-notebooks/en/3.4-release-notebook#editoraction
         Hook::add('LoadHandler', $this->callbackPageHandlers(...));
+        Hook::add('Decision::types', $this->callbackAddDecisionOption(...));
         Event::subscribe($this);
     }
 
@@ -52,6 +53,17 @@ class EditorActions
 		return false;  // proceed with normal processing
 	}
 
+    /**
+     * Decision::types in Repository::getDecisionTypes()
+     */
+    public function callbackAddDecisionOption($hookName, $args): bool
+    {
+        /** @var Collection $decisionTypes */
+        $decisionTypes = &$args[0];
+        $decisionTypes = $decisionTypes->push(new ExplicitCallDecisionType());
+        return false; // proceed with normal processing
+    }
+
 
 	/**
 	 * Callback for Workflow::Decisions.
@@ -59,30 +71,11 @@ class EditorActions
 	 */
 	public function callbackModifyDecisionOptions($hookName, $args): bool
 	{
-        $decisionTypes = &$args[0];
-        $stageId = $args[1];
-        //$submission = $args[2]; // maybe add that to the hook
+        $decisionTypes = &$args[0]; /** @var $decisionTypes array */
+        $stageId = $args[1]; /** @var $stageId int */
 
-        //$decisionTypes[] = new RQCGrade();
-
-//		$completedAssignments = Repo::reviewAssignment()->getCollector()
-//            ->filterBySubmissionIds([$submission->getId()])
-//            ->filterByLastReviewRound(true)
-//            ->filterByStageId(WORKFLOW_STAGE_ID_EXTERNAL_REVIEW)
-//            ->filterByCompleted(true)
-//            ->getMany(); // TODO 1: right like that?
-//        $atLeastOneReviewSubmitted = !$completedAssignments->isEmpty();
-//		if ($stageId == WORKFLOW_STAGE_ID_EXTERNAL_REVIEW && $atLeastOneReviewSubmitted) { // stage 3 && at least one review has been submitted
-//			//----- add button for RQC grading:
-//            $decisionTypes[] = new RQCGrade(); /*[
-//				'operation' => 'rqcGrade',
-//				'name'      => 'rqcGradeName',
-//				'title'     => 'plugins.generic.rqc.editoraction.grade.button',
-//			];*/
-//			// RqcDevHelper::writeToConsole("### rqcGrade Button added");
-//		} else {
-//			// RqcDevHelper::writeToConsole("### no rqcGrade Button added: wrong stage");
-//		}
+        //array_splice($decisionTypes, 2, 1);
+        $decisionTypes[] = new ExplicitCallDecisionType();
 		return false;  // proceed with other callbacks, if any
 	}
 
@@ -99,29 +92,4 @@ class EditorActions
 		}
 		return false;
 	}
-
-    /**
-     * Handler for DecisionAdded
-     * We send data to RQC like for a non-interactive call and no redirection is performed
-     * in order to give the editors full control over when they want to visit RQC.
-     * (Besides, redirection would be enormously difficult in the OJS control flow.)
-     * @see lib.pkp.classes/decision/Repository::add
-     */
-    public function handleDecisionAdded(DecisionAdded $event): void
-    {
-        $submissionId = $event->submission->getId();
-        $decisionType = $event->decisionType;
-        //--- ignore non-decision:
-        if (Repo::decision()->isRecommendation($decisionType->getDecision()) ||
-            !RqcData::isDecision($decisionType->getDecision())) {
-            // RqcDevHelper::writeToConsole("### callbackRecordDecision ignores the $theDecision|$theStatus call\n");
-            return;
-        }
-        //--- act on decision:
-        // RqcDevHelper::writeToConsole("### callbackRecordDecision calls RQC ($theDecision|$theStatus)\n");
-        $caller = new RqcCallHandler();
-        $rqcResult = $caller->sendToRqc(null, $submissionId); // Implicit call
-        $caller->processRqcResponse($rqcResult, $submissionId, false);
-        // RqcDevHelper::writeObjectToConsole($rqcResult);
-    }
 }
