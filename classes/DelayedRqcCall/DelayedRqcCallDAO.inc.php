@@ -148,11 +148,13 @@ class DelayedRqcCallDAO extends SchemaDAO
 
 	public function deleteCallsBySubmissionId(int $submissionId): void
 	{
-		$result = $this->retrieve('SELECT * FROM ' . $this->tableName . 'WHERE (submission_id = ?)', array($submissionId)); // result is an array of arrays and not of rqcDelayedCall-objects!
-		if (count($result) != 0) {
+		$result = $this->retrieve('SELECT * FROM ' . $this->tableName . ' WHERE (submission_id = ?)', array($submissionId)); // result is an array of arrays and not of rqcDelayedCall-objects!
+		$rqcDelayedCallArray = (new DAOResultFactory($result, $this, '_fromRow'))->toArray();
+		if (count($rqcDelayedCallArray) != 0) {
 			RqcLogger::logWarning("A delayed rqc call for submission $submissionId was already in the db. Deleted that delayed call in the queue.");
-			foreach ($result as $rqcDelayedCallArray) {
-				$this->deleteById($rqcDelayedCallArray['rqc_delayed_call_id']);
+			foreach ($rqcDelayedCallArray as $rqcDelayedCall) {
+				RqcDevHelper::writeObjectToConsole($rqcDelayedCall);
+				$this->deleteById($rqcDelayedCall->getId()); //->key('rqc_delayed_call_id'));
 			}
 		}
 	}
