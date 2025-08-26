@@ -17,6 +17,7 @@ import('plugins.generic.rqc.RqcPlugin');
 
 /**
  * Handle requests to show what OJS-to-RQC requests will look like or make one "by hand"
+ * Only a dev-tool!
  *
  * @ingroup plugins_generic_rqc
  */
