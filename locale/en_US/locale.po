@@ -85,3 +85,9 @@ msgstr "Invalid RQC journal API key. Ask a publisherperson to retrieve the corre
 
 msgid "admin.scheduledTask.delayedRqcCall"
 msgstr "Delayed RQC call"
+
+msgid "plugins.generic.rqc.submission.invalidContext"
+msgstr "The submission isn't in the current context."
+
+msgid "plugins.generic.rqc.submission.invalidStage"
+msgstr "The given stageId doesn't match the submission stageId."

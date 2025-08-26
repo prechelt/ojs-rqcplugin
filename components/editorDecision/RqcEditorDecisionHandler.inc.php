@@ -34,6 +34,9 @@ class RqcEditorDecisionHandler extends PKPHandler
 		$requestArgs = $this->plugin->getQueryArray($request);
 		$submissionId = $requestArgs['submissionId'];
 		$submission = DAORegistry::getDAO('SubmissionDAO')->getById($submissionId);
+		if ($submission->getContextId() != $request->getContext()->getId()) { // submission not in current journal
+			return new JSONMessage(false, __('plugins.generic.rqc.submission.invalidContext'));
+		}
 		//----- modal dialog:
 		$pageRouter = new PageRouter();
 		$pageRouter->setApplication(Application::get());  // so that url() will find context

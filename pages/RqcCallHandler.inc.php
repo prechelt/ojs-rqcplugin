@@ -59,6 +59,16 @@ class RqcCallHandler extends WorkflowHandler
 	{
 		$qargs = $this->plugin->getQueryArray($request);
 		$stageId = $qargs['stageId'];
+		$submissionId = $qargs['submissionId'];
+		$submission = DAORegistry::getDAO('SubmissionDAO')->getById($submissionId);
+		if ($submission->getContextId() != $request->getContext()->getId()) { // submission not in current journal
+			print(__("plugins.generic.rqc.submission.invalidContext"));
+			return;
+		}
+		if ($submission->getStageId() != $stageId) {
+			print(__("plugins.generic.rqc.submission.invalidStage"));
+			return;
+		}
 		if ($stageId != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
 			print("<html><body lang='en'>");
 			print("stageId is $stageId. ");
@@ -66,7 +76,6 @@ class RqcCallHandler extends WorkflowHandler
 			print("</body></html>");
 			return;
 		}
-		$submissionId = $qargs['submissionId'];
 		$rqcResult = $this->sendToRqc($request, $submissionId); // Explicit call
 		$this->processRqcResponse($rqcResult, $submissionId, true);
 	}
