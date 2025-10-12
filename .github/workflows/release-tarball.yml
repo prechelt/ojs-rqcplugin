@@ -50,11 +50,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          CURRENT_BODY=$(gh release view "$TAG_NAME" --json body --jq .body)
-          gh release edit $TAG_NAME --notes $(
+          CURRENT_BODY="$(gh release view "$TAG_NAME" --json body --jq .body)"
+          gh release edit $TAG_NAME --notes "$(
             printf '%s\n\n%s\n\n%s\n' \
             "${CURRENT_BODY}" \
             "## Download Verification" \
             "MD5 Hash for $TARBALL: $MD5"
-          )
+          )"
     
