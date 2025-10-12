@@ -31,8 +31,10 @@ jobs:
             --exclude='.git' \
             --exclude='.idea' \
             --exclude='.github' \
-            --exclude='*.tar.gz' \
-            /home/runner/work/ojs-rqcplugin/ojs-rqcplugin
+            -C /home/runner/work/ojs-rqcplugin \
+            /home/runner/work/ojs-rqcplugin/ojs-rqcplugin \
+            --transform 's^ojs-rqcplugin/rqc/'
+            
           echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
           echo "TARBALL_PATH=${TARBALL_PATH}" >> $GITHUB_ENV
       
