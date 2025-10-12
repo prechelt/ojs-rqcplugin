@@ -56,5 +56,5 @@ jobs:
             "${CURRENT_BODY}" \
             "## Download Verification" \
             "MD5 Hash for $TARBALL: $MD5"
-          ))
+          )
     
