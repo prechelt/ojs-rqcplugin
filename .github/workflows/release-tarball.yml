@@ -2,7 +2,7 @@ name: Build and Upload Release Tarball
 
 on:
   release:
-    types: [published, created]
+    types: [created]
 
 jobs:
   build-tarball:
@@ -12,18 +12,17 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.ref }}
       
       - name: Get tag name
-        id: tag
         run: |
-          echo TAG='${{ github.event.release.tag_name }}' >> $GITHUB_OUTPUT
+          echo "TAG_NAME=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
       
       - name: Create tarball
         run: |
-          TARBALL="release-${{ env.TAG }}.tar.gz"
+          TARBALL="release-$TAG_NAME.tar.gz"
           tar -czf "${TARBALL}" \
             --exclude='tests' \
             --exclude='z' \
@@ -37,7 +36,7 @@ jobs:
       - name: Calculate MD5 hash
         id: hash
         run: |
-          MD5=$(md5sum "${{ env.TARBALL }}" | awk '{print $1}')
+          MD5=$(md5sum "$TARBALL" | awk '{print $1}')
           echo "MD5=${MD5}" >> $GITHUB_OUTPUT
           echo "MD5 Hash: ${MD5}"
       
@@ -45,18 +44,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ env.TAG }} "${{ env.TARBALL }}" --clobber
-      
+          gh release upload $TAG_NAME $TARBALL --clobber
+
       - name: Update release notes with MD5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ env.TAG }}
-          MD5_HASH: ${{ env.MD5 }}
         run: |
-          CURRENT_BODY=$(gh release view "${TAG}" --json body --jq .body)
-          NEW_BODY="${CURRENT_BODY} \
-           \
-          ## Download Verification \
-           \
-          MD5 Hash for \`${TARBALL}\`: \`${MD5_HASH}\`"
-          echo "$NEW_BODY" | gh release edit "${TAG}" --notes-file -
+          gh release edit $TAG_NAME --notes $(
+            printf '%s\n\n%s\n\n%s\n' \
+            "$(gh release view $TAG_NAME --json body --jq .body)" \
+            "## Download Verification" \
+            "MD5 Hash for $TARBALL: $MD5"
+          ))
+    
