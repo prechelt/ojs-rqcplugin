@@ -14,7 +14,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.release.tag_name }}
       
       - name: Get tag name
         run: |
@@ -22,7 +22,7 @@ jobs:
       
       - name: Create tarball
         run: |
-          TARBALL="release-$TAG_NAME.tar.gz"
+          TARBALL="release-${TAG_NAME}.tar.gz"
           tar -czf "${TARBALL}" \
             --exclude='tests' \
             --exclude='z' \
@@ -30,6 +30,7 @@ jobs:
             --exclude='.idea' \
             --exclude='.github' \
             --exclude='*.tar.gz' \
+            --exclude="${TARBALL}" \
             .
           echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
       
@@ -50,9 +51,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          CURRENT_BODY=$(gh release view "${TAG_NAME}" --json body --jq .body)
           gh release edit $TAG_NAME --notes $(
             printf '%s\n\n%s\n\n%s\n' \
-            "$(gh release view $TAG_NAME --json body --jq .body)" \
+            "${CURRENT_BODY}" \
             "## Download Verification" \
             "MD5 Hash for $TARBALL: $MD5"
           ))
