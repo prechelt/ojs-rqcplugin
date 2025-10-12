@@ -27,6 +27,7 @@ jobs:
           TAG_NAME: ${{ steps.tag.outputs.name }}
         run: |
           TARBALL="$RUNNER_TEMP/release-${TAG_NAME}.tar.gz"
+          echo "${TARBALL}"
           tar -czf "${TARBALL}" \
             --exclude='tests' \
             --exclude='z' \
@@ -42,6 +43,7 @@ jobs:
         env:
           TARBALL: ${{ steps.tar.outputs.tarball }}
         run: |
+          echo "${TARBALL}"
           MD5=$(md5sum "$TARBALL" | awk '{print $1}')
           echo "hash=${MD5}" >> $GITHUB_OUTPUT
           echo "MD5 Hash: ${MD5}"
