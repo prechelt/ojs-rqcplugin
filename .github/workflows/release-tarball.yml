@@ -28,7 +28,10 @@ jobs:
                   TAG="${{ steps.release.outputs.tag }}"
                   TARBALL="release-${TAG}.tar.gz"
                   tar -czf "${TARBALL}" \
+                    --exclude tests \
+                    --exclude z
                     --exclude='.git' \
+                    --exclude='.idea' \
                     --exclude='.github' \
                     --exclude='*.tar.gz' \
                     .

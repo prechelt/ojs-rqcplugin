@@ -7,8 +7,8 @@
 <version>
 	<application>rqc</application>
 	<type>plugins.generic</type>
-	<release>2.0.2-33</release>  <!-- major.minor.patch-OJSversion -->
-	<date>2023-09-20</date>
+	<release>2.0.3-33</release>  <!-- major.minor.patch-OJSversion -->
+	<date>2023-10-12</date>
 	<lazy-load>1</lazy-load>
 	<class>RqcPlugin</class>
 </version>
