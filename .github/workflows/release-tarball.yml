@@ -36,7 +36,7 @@ jobs:
             --exclude='.github' \
             --exclude='*.tar.gz' \
             /home/runner/work/ojs-rqcplugin/ojs-rqcplugin
-          echo "tarball=${TARBALL}" >> $GITHUB_ENV
+          echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
       
       - name: Calculate MD5 hash
         id: hash
@@ -44,6 +44,7 @@ jobs:
           TARBALL: ${{ steps.tar.outputs.tarball }}
         run: |
           echo "${TARBALL}"
+          echo "${{ steps.tar.outputs.tarball }}"
           MD5=$(md5sum "$TARBALL" | awk '{print $1}')
           echo "hash=${MD5}" >> $GITHUB_OUTPUT
           echo "MD5 Hash: ${MD5}"
