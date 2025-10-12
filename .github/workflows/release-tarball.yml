@@ -9,22 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.release.tag_name }}
-
+      
       - name: Get tag name
         id: tag
         run: |
-          echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-
+          echo TAG='${{ github.event.release.tag_name }}' >> $GITHUB_OUTPUT
+      
       - name: Create tarball
         run: |
-          TAG="${{ steps.tag.outputs.tag }}"
-          TARBALL="release-${TAG}.tar.gz"
+          TARBALL="release-${{ env.TAG }}.tar.gz"
           tar -czf "${TARBALL}" \
             --exclude='tests' \
             --exclude='z' \
@@ -34,29 +33,30 @@ jobs:
             --exclude='*.tar.gz' \
             .
           echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
-
+      
       - name: Calculate MD5 hash
         id: hash
         run: |
-          MD5=$(md5sum "${TARBALL}" | awk '{print $1}')
-          echo "md5=${MD5}" >> $GITHUB_OUTPUT
+          MD5=$(md5sum "${{ env.TARBALL }}" | awk '{print $1}')
+          echo "MD5=${MD5}" >> $GITHUB_OUTPUT
           echo "MD5 Hash: ${MD5}"
-
+      
       - name: Upload tarball to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ steps.tag.outputs.tag }} "${{ env.TARBALL }}" --clobber
-
+          gh release upload ${{ env.TAG }} "${{ env.TARBALL }}" --clobber
+      
       - name: Update release notes with MD5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ env.TAG }}
+          MD5_HASH: ${{ env.MD5 }}
         run: |
-          CURRENT_BODY=$(gh release view ${{ steps.tag.outputs.tag }} --json body --jq .body)
-          NEW_BODY="${CURRENT_BODY}
-
-## Download Verification
-
-MD5 Hash for \`${{ env.TARBALL }}\`: \`${{ steps.hash.outputs.md5 }}\`"
-
-  echo "$NEW_BODY" | gh release edit ${{ steps.tag.outputs.tag }} --notes-file -
+          CURRENT_BODY=$(gh release view "${TAG}" --json body --jq .body)
+          NEW_BODY="${CURRENT_BODY} \
+           \
+          ## Download Verification \
+           \
+          MD5 Hash for \`${TARBALL}\`: \`${MD5_HASH}\`"
+          echo "$NEW_BODY" | gh release edit "${TAG}" --notes-file -
