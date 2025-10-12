@@ -1,0 +1,74 @@
+name: release-tarball.yml
+
+on:
+    push:
+        tags:
+            -"v*"
+
+jobs:
+    build-tarball:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.ref }}
+
+            - name: Get release info
+              id: release
+              run: |
+                  echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+                  echo "name=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
+
+            - name: Create tarball
+              run: |
+                  TAG="${{ steps.release.outputs.tag }}"
+                  TARBALL="release-${TAG}.tar.gz"
+                  tar -czf "${TARBALL}" \
+                    --exclude='.git' \
+                    --exclude='.github' \
+                    --exclude='*.tar.gz' \
+                    .
+                  echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
+
+            - name: Calculate MD5 hash
+              id: hash
+              run: |
+                  MD5=$(md5sum "${TARBALL}" | awk '{print $1}')
+                  echo "md5=${MD5}" >> $GITHUB_OUTPUT
+                  echo "MD5 Hash: ${MD5}"
+
+            - name: Upload tarball to release
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: ./${{ env.TARBALL }}
+                  asset_name: ${{ env.TARBALL }}
+                  asset_content_type: application/gzip
+
+            - name: Update release notes with MD5
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const release = await github.rest.repos.getRelease({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        release_id: ${{ github.event.release.id }}
+                      });
+
+                      const md5Hash = '${{ steps.hash.outputs.md5 }}';
+                      const tarballName = '${{ env.TARBALL }}';
+                      const newBody = `${release.data.body || ''}\n\n## Download Verification\n\nMD5 Hash for \`${tarballName}\`: \`${md5Hash}\``;
+
+                      await github.rest.repos.updateRelease({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        release_id: ${{ github.event.release.id }},
+                        body: newBody
+                      });
