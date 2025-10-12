@@ -33,7 +33,7 @@ jobs:
             --exclude='.github' \
             -C /home/runner/work/ojs-rqcplugin \
             ojs-rqcplugin \
-            --transform 's^ojs-rqcplugin/rqc/'
+            --transform 's|^ojs-rqcplugin|rqc|'
             
           echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
           echo "TARBALL_PATH=${TARBALL_PATH}" >> $GITHUB_ENV
