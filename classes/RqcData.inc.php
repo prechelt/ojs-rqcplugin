@@ -34,7 +34,7 @@ class RqcData
 {
 	private Plugin|null $plugin;
 
-	public const string CONFIDENTIAL_FIELD_REGEXP = '/[Cc]onfidential/';  // review form fields with such names are excluded
+	public const CONFIDENTIAL_FIELD_REGEXP = '/[Cc]onfidential/';  // review form fields with such names are excluded
 
 	public function __construct()
 	{

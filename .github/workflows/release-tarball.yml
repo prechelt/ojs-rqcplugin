@@ -1,0 +1,20 @@
+name: build_tar.gz.yml
+
+on:
+    push:
+        tags:
+            -"v*"
+
+    jobs:
+        build-tarball:
+            runs-on: linux
+            permissions: write # needed to write to Github Release
+
+            steps:
+              - name: Checkout code
+                uses: actions/checkout@v4
+
+              - name: Get release info
+
+                  make tar.gz
+    md5sum
