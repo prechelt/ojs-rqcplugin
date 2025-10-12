@@ -1,77 +1,62 @@
-name: release-tarball.yml
+name: Build and Upload Release Tarball
 
 on:
-    push:
-        tags:
-            -"v*"
+  release:
+    types: [published, created]
 
 jobs:
-    build-tarball:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
+  build-tarball:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  ref: ${{ github.ref }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
 
-            - name: Get release info
-              id: release
-              run: |
-                  echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-                  echo "name=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
+      - name: Get tag name
+        id: tag
+        run: |
+          echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
 
-            - name: Create tarball
-              run: |
-                  TAG="${{ steps.release.outputs.tag }}"
-                  TARBALL="release-${TAG}.tar.gz"
-                  tar -czf "${TARBALL}" \
-                    --exclude tests \
-                    --exclude z
-                    --exclude='.git' \
-                    --exclude='.idea' \
-                    --exclude='.github' \
-                    --exclude='*.tar.gz' \
-                    .
-                  echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
+      - name: Create tarball
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          TARBALL="release-${TAG}.tar.gz"
+          tar -czf "${TARBALL}" \
+            --exclude='tests' \
+            --exclude='z' \
+            --exclude='.git' \
+            --exclude='.idea' \
+            --exclude='.github' \
+            --exclude='*.tar.gz' \
+            .
+          echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
 
-            - name: Calculate MD5 hash
-              id: hash
-              run: |
-                  MD5=$(md5sum "${TARBALL}" | awk '{print $1}')
-                  echo "md5=${MD5}" >> $GITHUB_OUTPUT
-                  echo "MD5 Hash: ${MD5}"
+      - name: Calculate MD5 hash
+        id: hash
+        run: |
+          MD5=$(md5sum "${TARBALL}" | awk '{print $1}')
+          echo "md5=${MD5}" >> $GITHUB_OUTPUT
+          echo "MD5 Hash: ${MD5}"
 
-            - name: Upload tarball to release
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: ./${{ env.TARBALL }}
-                  asset_name: ${{ env.TARBALL }}
-                  asset_content_type: application/gzip
+      - name: Upload tarball to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ steps.tag.outputs.tag }} "${{ env.TARBALL }}" --clobber
 
-            - name: Update release notes with MD5
-              uses: actions/github-script@v7
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  script: |
-                      const release = await github.rest.repos.getRelease({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        release_id: ${{ github.event.release.id }}
-                      });
+      - name: Update release notes with MD5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CURRENT_BODY=$(gh release view ${{ steps.tag.outputs.tag }} --json body --jq .body)
+          NEW_BODY="${CURRENT_BODY}
 
-                      const md5Hash = '${{ steps.hash.outputs.md5 }}';
-                      const tarballName = '${{ env.TARBALL }}';
-                      const newBody = `${release.data.body || ''}\n\n## Download Verification\n\nMD5 Hash for \`${tarballName}\`: \`${md5Hash}\``;
+## Download Verification
 
-                      await github.rest.repos.updateRelease({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        release_id: ${{ github.event.release.id }},
-                        body: newBody
-                      });
+MD5 Hash for \`${{ env.TARBALL }}\`: \`${{ steps.hash.outputs.md5 }}\`"
+
+  echo "$NEW_BODY" | gh release edit ${{ steps.tag.outputs.tag }} --notes-file -
