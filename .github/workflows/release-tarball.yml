@@ -26,11 +26,6 @@ jobs:
         env:
           TAG_NAME: ${{ steps.tag.outputs.name }}
         run: |
-          echo "$TAG_NAME"
-          echo "${TAG_NAME}"
-          echo "${{TAG_NAME}}"
-          echo "${{ TAG_NAME }}"
-          echo "${{ steps.tag.outputs.name }}"
           TARBALL="$RUNNER_TEMP/release-${TAG_NAME}.tar.gz"
           tar -czf "${TARBALL}" \
             --exclude='tests' \
