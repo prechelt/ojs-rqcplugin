@@ -2,7 +2,7 @@ name: Build and Upload Release Tarball
 
 on:
   release:
-    types: [published, created]
+    types: [created]
 
 jobs:
   build-tarball:
@@ -12,51 +12,55 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.release.tag_name }}
       
       - name: Get tag name
-        id: tag
         run: |
-          echo TAG='${{ github.event.release.tag_name }}' >> $GITHUB_OUTPUT
-      
+          echo "TAG_NAME=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+
       - name: Create tarball
         run: |
-          TARBALL="release-${{ env.TAG }}.tar.gz"
-          tar -czf "${TARBALL}" \
+          TARBALL="rqc-ojs-$TAG_NAME.tar.gz"
+          TARBALL_PATH="$RUNNER_TEMP/${TARBALL}"
+          echo "${TARBALL_PATH}"
+          tar -czf "${TARBALL_PATH}" \
             --exclude='tests' \
             --exclude='z' \
+            --exclude='patches' \
             --exclude='.git' \
             --exclude='.idea' \
             --exclude='.github' \
-            --exclude='*.tar.gz' \
-            .
+            --exclude='.gitignore' \
+            -C /home/runner/work/ojs-rqcplugin \
+            ojs-rqcplugin \
+            --transform 's|^ojs-rqcplugin|rqc|'
+            
           echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
+          echo "TARBALL_PATH=${TARBALL_PATH}" >> $GITHUB_ENV
       
       - name: Calculate MD5 hash
-        id: hash
         run: |
-          MD5=$(md5sum "${{ env.TARBALL }}" | awk '{print $1}')
-          echo "MD5=${MD5}" >> $GITHUB_OUTPUT
+          MD5=$(md5sum $TARBALL_PATH | awk '{print $1}')
           echo "MD5 Hash: ${MD5}"
+          echo "MD5=${MD5}" >> $GITHUB_ENV
       
       - name: Upload tarball to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ env.TAG }} "${{ env.TARBALL }}" --clobber
-      
+          gh release upload $TAG_NAME $TARBALL_PATH --clobber
+
       - name: Update release notes with MD5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ env.TAG }}
-          MD5_HASH: ${{ env.MD5 }}
         run: |
-          CURRENT_BODY=$(gh release view "${TAG}" --json body --jq .body)
-          NEW_BODY="${CURRENT_BODY} \
-           \
-          ## Download Verification \
-           \
-          MD5 Hash for \`${TARBALL}\`: \`${MD5_HASH}\`"
-          echo "$NEW_BODY" | gh release edit "${TAG}" --notes-file -
+          CURRENT_BODY="$(gh release view "$TAG_NAME" --json body --jq .body)"
+          gh release edit $TAG_NAME --notes "$(
+            printf '%s\n\n%s\n\n%s\n' \
+            "${CURRENT_BODY}" \
+            "## Download Verification" \
+            "MD5 Hash for $TARBALL: $MD5"
+          )"
+    
