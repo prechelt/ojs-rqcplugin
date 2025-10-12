@@ -28,9 +28,11 @@ jobs:
           tar -czf "${TARBALL_PATH}" \
             --exclude='tests' \
             --exclude='z' \
+            --exclude='patches' \
             --exclude='.git' \
             --exclude='.idea' \
             --exclude='.github' \
+            --exclude='.gitignore' \
             -C /home/runner/work/ojs-rqcplugin \
             ojs-rqcplugin \
             --transform 's|^ojs-rqcplugin|rqc|'
