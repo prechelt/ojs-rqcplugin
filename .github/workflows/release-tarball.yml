@@ -50,7 +50,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          CURRENT_BODY=$(gh release view $TAG_NAME --json body --jq .body)
+          CURRENT_BODY=$(gh release view "$TAG_NAME" --json body --jq .body)
           gh release edit $TAG_NAME --notes $(
             printf '%s\n\n%s\n\n%s\n' \
             "${CURRENT_BODY}" \
