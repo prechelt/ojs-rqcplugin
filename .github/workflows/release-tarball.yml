@@ -17,10 +17,14 @@ jobs:
           ref: ${{ github.event.release.tag_name }}
       
       - name: Get tag name
+        id: tag
         run: |
-          echo "TAG_NAME=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-      
+          echo "name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+
       - name: Create tarball
+        id: tar
+        env:
+          TAG_NAME: ${{ steps.tag.outputs.name }}
         run: |
           TARBALL="release-${TAG_NAME}.tar.gz"
           tar -czf "${TARBALL}" \
@@ -32,24 +36,30 @@ jobs:
             --exclude='*.tar.gz' \
             --exclude="${TARBALL}" \
             .
-          echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
+          echo "tarball=${TARBALL}" >> $GITHUB_ENV
       
       - name: Calculate MD5 hash
         id: hash
+        env:
+          TARBALL: ${{ steps.tar.outputs.tarball }}
         run: |
           MD5=$(md5sum "$TARBALL" | awk '{print $1}')
-          echo "MD5=${MD5}" >> $GITHUB_OUTPUT
+          echo "hash=${MD5}" >> $GITHUB_OUTPUT
           echo "MD5 Hash: ${MD5}"
       
       - name: Upload tarball to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.tag.outputs.name }}
+          TARBALL: ${{ steps.tar.outputs.tarball }}
         run: |
           gh release upload $TAG_NAME $TARBALL --clobber
 
       - name: Update release notes with MD5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.tag.outputs.name }}
+          TARBALL: ${{ steps.tar.outputs.tarball }}
         run: |
           CURRENT_BODY=$(gh release view "${TAG_NAME}" --json body --jq .body)
           gh release edit $TAG_NAME --notes $(
