@@ -23,7 +23,7 @@ jobs:
       - name: Create tarball
         run: |
           TARBALL="rqc-ojs-$TAG_NAME.tar.gz"
-          TARBALL_PATH="$RUNNER_TEMP/${TARBALL_NAME}"
+          TARBALL_PATH="$RUNNER_TEMP/${TARBALL}"
           echo "${TARBALL_PATH}"
           tar -czf "${TARBALL_PATH}" \
             --exclude='tests' \
