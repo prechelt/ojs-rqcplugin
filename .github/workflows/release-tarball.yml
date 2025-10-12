@@ -17,16 +17,12 @@ jobs:
           ref: ${{ github.event.release.tag_name }}
       
       - name: Get tag name
-        id: tag
         run: |
-          echo "name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
       - name: Create tarball
-        id: tar
-        env:
-          TAG_NAME: ${{ steps.tag.outputs.name }}
         run: |
-          TARBALL="$RUNNER_TEMP/release-${TAG_NAME}.tar.gz"
+          TARBALL="$RUNNER_TEMP/release-$TAG_NAME.tar.gz"
           echo "${TARBALL}"
           tar -czf "${TARBALL}" \
             --exclude='tests' \
@@ -36,31 +32,25 @@ jobs:
             --exclude='.github' \
             --exclude='*.tar.gz' \
             /home/runner/work/ojs-rqcplugin/ojs-rqcplugin
-          echo "tarball=${TARBALL}" >> $GITHUB_ENV
+          echo "TARBALL=${TARBALL}" >> $GITHUB_ENV
       
       - name: Calculate MD5 hash
-        id: hash
         run: |
-          echo "${{ steps.tar.outputs.tarball }}"
-          MD5=$(md5sum "${{ steps.tar.outputs.tarball }}" | awk '{print $1}')
-          echo "hash=${MD5}" >> $GITHUB_OUTPUT
+          MD5=$(md5sum $TARBALL | awk '{print $1}')
           echo "MD5 Hash: ${MD5}"
+          echo "MD5=${MD5}" >> $GITHUB_ENV
       
       - name: Upload tarball to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.tag.outputs.name }}
-          TARBALL: ${{ steps.tar.outputs.tarball }}
         run: |
           gh release upload $TAG_NAME $TARBALL --clobber
 
       - name: Update release notes with MD5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.tag.outputs.name }}
-          TARBALL: ${{ steps.tar.outputs.tarball }}
         run: |
-          CURRENT_BODY=$(gh release view "${TAG_NAME}" --json body --jq .body)
+          CURRENT_BODY=$(gh release view $TAG_NAME --json body --jq .body)
           gh release edit $TAG_NAME --notes $(
             printf '%s\n\n%s\n\n%s\n' \
             "${CURRENT_BODY}" \
