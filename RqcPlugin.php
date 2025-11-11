@@ -13,6 +13,7 @@ use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use PKP\plugins\interfaces\HasTaskScheduler;
 use PKP\scheduledTask\PKPScheduler;
+use APP\template\TemplateManager;
 
 use APP\plugins\generic\rqc\classes\ReviewerOpting;
 use APP\plugins\generic\rqc\classes\EditorActions;
