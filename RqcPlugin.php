@@ -13,6 +13,7 @@ use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use PKP\plugins\interfaces\HasTaskScheduler;
 use PKP\scheduledTask\PKPScheduler;
+use APP\template\TemplateManager;
 
 use APP\plugins\generic\rqc\classes\ReviewerOpting;
 use APP\plugins\generic\rqc\classes\EditorActions;
@@ -38,7 +39,7 @@ class RqcPlugin extends GenericPlugin implements HasTaskScheduler
 {
     public const RQC_API_VERSION = '2023-09-06'; // the API documentation version last used during development
     public const RQC_MHS_ADAPTER = 'https://github.com/prechelt/ojs-rqcplugin'; // the OJS version for which this code should work
-    public const RQC_PLUGIN_VERSION = '3.3.0';  // the OJS version for which this code should work
+    public const RQC_PLUGIN_VERSION = '3.5.0';  // the OJS version for which this code should work
     public const RQC_SERVER = 'https://reviewqualitycollector.org';
     public const RQC_LOCALE = 'en';  // Plugin will enforce this locale internally
 
@@ -65,9 +66,32 @@ class RqcPlugin extends GenericPlugin implements HasTaskScheduler
 			if (RqcPlugin::hasDeveloperFunctions()) {  // register the devFunctions independent of RQC-ID-Key-Pair
 				Hook::add('LoadHandler', $this->callbackSetupRqcDevHelperHandler(...));
 			}
+            // Register build file for JS to be loaded
+			$request = Application::get()->getRequest();
+            $templateMgr = TemplateManager::getManager($request);
+            $this->addJavaScript($request, $templateMgr);
 		}
 		return $success;
 	}
+
+	/**
+	 * Adds JavaScript files for the plugin to the TemplateManager
+	 * @param $request PKPRequest
+	 * @param $templateMgr TemplateManager
+	 * @return void
+	 */
+	public function addJavaScript($request, $templateMgr): void
+    {
+        $templateMgr->addJavaScript(
+            'RqcPlugin',
+            "{$request->getBaseUrl()}/{$this->getPluginPath()}/public/build/build.iife.js",
+            [
+                'inline' => false,
+                'contexts' => ['backend'],
+                'priority' => TemplateManager::STYLE_SEQUENCE_LAST
+            ]
+        );
+    }
 
 	/**
 	 * @copydoc Plugin::getDisplayName()

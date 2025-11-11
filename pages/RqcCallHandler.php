@@ -64,8 +64,14 @@ class RqcCallHandler extends WorkflowHandler
 	 */
 	public function submit($args, $request): void
 	{
-		$qargs = $this->plugin->getQueryArray($request);
-		$stageId = $qargs['stageId'];
+		$stageId = $args['stageId'] ?? null;
+    	$submissionId = $args['submissionId'] ?? null;
+		// Fallback to query parameters for backward compatibility
+		if ($stageId === null || $submissionId === null) {
+			$qargs = $this->plugin->getQueryArray($request);
+			$stageId = $qargs['stageId'];
+			$submissionId = $qargs['submissionId'];
+		}
 		if ($stageId != WORKFLOW_STAGE_ID_EXTERNAL_REVIEW) {
 			print("<html><body lang='en'>");
 			print("stageId is $stageId. ");
@@ -73,7 +79,6 @@ class RqcCallHandler extends WorkflowHandler
 			print("</body></html>");
 			return;
 		}
-		$submissionId = $qargs['submissionId'];
 		$rqcResult = $this->sendToRqc($request, $submissionId); // Explicit call
 		$this->processRqcResponse($rqcResult, $submissionId, true);
 	}

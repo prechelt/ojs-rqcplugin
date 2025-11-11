@@ -7,6 +7,14 @@ use Illuminate\Support\Facades\Event;
 use PKP\observers\events\DecisionAdded;
 use PKP\plugins\Hook;
 use APP\facades\Repo;
+use PKP\core\PKPBaseController;
+use PKP\handler\APIHandler;
+use Illuminate\Http\Request as IlluminateRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use PKP\security\Role;
+use APP\core\PageRouter;
+use APP\core\Application;
 
 use APP\plugins\generic\rqc\pages\RqcCallHandler;
 use APP\plugins\generic\rqc\classes\RqcData;
@@ -29,6 +37,8 @@ class EditorActions
         Hook::add('Workflow::Decisions', $this->callbackModifyDecisionOptions(...)); // TODO 3.5: https://docs.pkp.sfu.ca/dev/release-notebooks/en/3.4-release-notebook#editoraction
         Hook::add('LoadHandler', $this->callbackPageHandlers(...));
         Event::subscribe($this);
+        // Add an API endpoint for grading actions
+        $this->addRoute();
     }
 
     public function subscribe(Dispatcher $events): void
@@ -90,6 +100,8 @@ class EditorActions
 	 * Callback for installing page handlers.
 	 */
 	public function callbackPageHandlers($hookName, $params): bool
+     //TODO This methods for registering page handlers no longer works in OJS 3.5
+     // See addRoute() below for a possible replacement method for adding API endpoints.
 	{
 		$page =& $params[0];
 		$op =& $params[1];
@@ -99,6 +111,70 @@ class EditorActions
 		}
 		return false;
 	}
+
+     /**
+     * Add API route for RQC grading action
+     */
+
+    /**
+     * Define allowed roles for this API endpoint  
+     */ 
+    public array $allowedRoles = 
+    [
+        Role::ROLE_ID_SITE_ADMIN,
+        Role::ROLE_ID_MANAGER,
+        Role::ROLE_ID_SUB_EDITOR,
+        Role::ROLE_ID_ASSISTANT,
+    ];
+
+    /**
+     * Add API route for RQC grading action
+     * We extend the existing "submission" endpoint with an additional route
+     * that can be used for the explicit call to RQC.
+     * 
+     * @return void
+     */
+    public function addRoute(): void
+    {
+        Hook::add('APIHandler::endpoints::submissions', function(string $hookName, $apiController, APIHandler $apiHandler): bool {
+            $apiHandler->addRoute(
+                    'POST',
+                    'rqc/grade',
+                    function (IlluminateRequest $illuminateRequest) use ($apiHandler): JsonResponse 
+                    {              
+                        // Get submission ID from body
+                        $submissionId = (int) ($illuminateRequest->input('submissionId') 
+                            ?? $illuminateRequest->get('submissionId'));
+
+                        if (!$submissionId) {
+                            return response()->json([
+                                'success' => false,
+                                'error' => 'Submission ID is required.'
+                            ], Response::HTTP_BAD_REQUEST);
+                        }
+                        $submission = Repo::submission()->get(id: (int) $submissionId);
+                        $submissionData = $submission->getAllData();
+                        $submissionDataStageId = $submissionData['stageId'];
+                        $pkpRequest = Application::get()->getRequest();        
+                        $handler = new RqcCallHandler();
+                        $args = [
+                            'submissionId' => $submissionId,
+                            'stageId' => $submissionDataStageId
+                        ];
+                        // Call the submit method directly
+                        $handler->submit($args, $pkpRequest);
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'RQC grading completed'
+                        ], Response::HTTP_OK);
+                    },
+                    'rqc.grade',
+                    $this->allowedRoles
+            );
+            return Hook::CONTINUE;
+            }
+        );
+    }
 
     /**
      * Handler for DecisionAdded
