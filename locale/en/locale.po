@@ -36,6 +36,12 @@ msgstr "<br><p>Note: The following data will not be sent in full due to RQC size
 msgid "plugins.generic.rqc.editoraction.grade.notRedirect"
 msgstr "<p>Note: You are not redirected as normal. This could mean that you already performed the grading or someone else did it and it can be done just once.<p>"
 
+msgid "plugins.generic.rqc.editoraction.grade.proceed"
+msgstr "Proceed"
+
+msgid "plugins.generic.rqc.editoraction.grade.cancel"
+msgstr "Cancel"
+
 msgid "plugins.generic.rqc.reviewerOptIn.header"
 msgstr "Take part in Review Quality Collector?"
 
